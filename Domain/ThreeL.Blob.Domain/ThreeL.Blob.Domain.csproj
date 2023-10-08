@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Repository.EfCore\ThreeL.Blob.Infra.Repository.EfCore.csproj" />
+    <ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Domain\ThreeL.Blob.Shared.Domain.csproj" />
   </ItemGroup>
 
 </Project>

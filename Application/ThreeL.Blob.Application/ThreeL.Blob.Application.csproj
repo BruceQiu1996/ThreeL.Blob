@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Repository.EfCore.Mysql\ThreeL.Blob.Infra.Repository.EfCore.Mysql.csproj" />
+    <ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Application\ThreeL.Blob.Shared.Application.csproj" />
+    <ProjectReference Include="..\..\ThreeL.Blob.Migrations\ThreeL.Blob.Migrations.csproj" />
+    <ProjectReference Include="..\ThreeL.Blob.Application.Contract\ThreeL.Blob.Application.Contract.csproj" />
+  </ItemGroup>
+
+</Project>

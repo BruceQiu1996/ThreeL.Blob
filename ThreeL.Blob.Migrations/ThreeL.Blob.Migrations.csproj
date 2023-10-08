@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Repository.EfCore\ThreeL.Blob.Infra.Repository.EfCore.csproj" />
+    <ProjectReference Include="..\Infrastructures\ThreeL.Blob.Infra.Repository.EfCore.Mysql\ThreeL.Blob.Infra.Repository.EfCore.Mysql.csproj" />
   </ItemGroup>
+
 
 </Project>

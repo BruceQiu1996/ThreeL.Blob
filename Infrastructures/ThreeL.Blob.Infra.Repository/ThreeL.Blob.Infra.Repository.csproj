@@ -10,4 +10,8 @@
     <PackageReference Include="MongoDB.Driver" Version="2.21.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ThreeL.Blob.Infra.Core\ThreeL.Blob.Infra.Core.csproj" />
+  </ItemGroup>
+
 </Project>
