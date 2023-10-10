@@ -21,9 +21,55 @@ namespace ThreeL.Blob.Migrations.Migrations
 
             MySqlModelBuilderExtensions.HasCharSet(modelBuilder, "utf8mb4 ");
 
+            modelBuilder.Entity("ThreeL.Blob.Domain.Aggregate.FileObject.FileObject", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnOrder(1);
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<long>("CreateBy")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("CreateTime")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint(1)")
+                        .HasDefaultValue(false)
+                        .HasColumnOrder(2);
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<long>("ParentFolder")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Size")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FileObject");
+                });
+
             modelBuilder.Entity("ThreeL.Blob.Domain.Aggregate.User.User", b =>
                 {
                     b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasColumnOrder(1);
 
@@ -31,7 +77,15 @@ namespace ThreeL.Blob.Migrations.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<DateTime>("CreateTime")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime");
+
+                    b.Property<long>("DaliyUploadMaxSizeLimit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(10737418240L);
+
+                    b.Property<long?>("DownloadSpeedLimit")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -40,7 +94,10 @@ namespace ThreeL.Blob.Migrations.Migrations
                         .HasColumnOrder(2);
 
                     b.Property<DateTime?>("LastLoginTime")
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime");
+
+                    b.Property<long?>("MaxSpaceSize")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Password")
                         .IsRequired()
@@ -49,6 +106,14 @@ namespace ThreeL.Blob.Migrations.Migrations
 
                     b.Property<int>("Role")
                         .HasColumnType("int");
+
+                    b.Property<long>("TodayUploadMaxSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UploadMaxSizeLimit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(1073741824L);
 
                     b.Property<string>("UserName")
                         .IsRequired()

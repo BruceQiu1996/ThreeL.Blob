@@ -7,6 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Redis\ThreeL.Blob.Infra.Redis.csproj" />
 		<ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Repository.EfCore.Mysql\ThreeL.Blob.Infra.Repository.EfCore.Mysql.csproj" />
 		<ProjectReference Include="..\ThreeL.Blob.Shared.Application.Contract\ThreeL.Blob.Shared.Application.Contract.csproj" />
 	</ItemGroup>

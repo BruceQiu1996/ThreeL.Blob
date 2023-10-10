@@ -29,13 +29,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Application.Con
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Domain", "Domain\ThreeL.Blob.Domain\ThreeL.Blob.Domain.csproj", "{EB9C02BE-E10A-4C1A-91F2-D4BA6BD8F4C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Migrations", "ThreeL.Blob.Migrations\ThreeL.Blob.Migrations.csproj", "{B3E60A58-0564-41D2-8760-422658D5D1A6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Migrations", "ThreeL.Blob.Migrations\ThreeL.Blob.Migrations.csproj", "{B3E60A58-0564-41D2-8760-422658D5D1A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Shared.Application.Contract", "Shared\ThreeL.Blob.Shared.Application.Contract\ThreeL.Blob.Shared.Application.Contract.csproj", "{1E6E992A-A14E-491D-B3C9-B1E5DE29C105}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Shared.Application.Contract", "Shared\ThreeL.Blob.Shared.Application.Contract\ThreeL.Blob.Shared.Application.Contract.csproj", "{1E6E992A-A14E-491D-B3C9-B1E5DE29C105}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Application", "Application\ThreeL.Blob.Application\ThreeL.Blob.Application.csproj", "{B0F9BB39-35F1-4B3B-9E8C-110EA2E7DD45}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Shared.Application", "Shared\ThreeL.Blob.Shared.Application\ThreeL.Blob.Shared.Application.csproj", "{3338F73C-4F8F-450A-AC4B-1C81D05BDE4E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Shared.Application", "Shared\ThreeL.Blob.Shared.Application\ThreeL.Blob.Shared.Application.csproj", "{3338F73C-4F8F-450A-AC4B-1C81D05BDE4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Infra.Redis", "Infrastructures\ThreeL.Blob.Infra.Redis\ThreeL.Blob.Infra.Redis.csproj", "{BAB5D97C-FE85-4522-911D-632CB4195BCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Clients.Win", "Clients\ThreeL.Blob.Clients.Win\ThreeL.Blob.Clients.Win.csproj", "{3D8F74B1-1103-4177-B20B-9C5B77082BD1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,6 +95,14 @@ Global
 		{3338F73C-4F8F-450A-AC4B-1C81D05BDE4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3338F73C-4F8F-450A-AC4B-1C81D05BDE4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3338F73C-4F8F-450A-AC4B-1C81D05BDE4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAB5D97C-FE85-4522-911D-632CB4195BCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAB5D97C-FE85-4522-911D-632CB4195BCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAB5D97C-FE85-4522-911D-632CB4195BCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAB5D97C-FE85-4522-911D-632CB4195BCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D8F74B1-1103-4177-B20B-9C5B77082BD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D8F74B1-1103-4177-B20B-9C5B77082BD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D8F74B1-1103-4177-B20B-9C5B77082BD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D8F74B1-1103-4177-B20B-9C5B77082BD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -106,6 +118,8 @@ Global
 		{1E6E992A-A14E-491D-B3C9-B1E5DE29C105} = {8FBC0C97-D929-4E65-B834-F706F9926183}
 		{B0F9BB39-35F1-4B3B-9E8C-110EA2E7DD45} = {CE987770-CA16-4904-AB7E-71737D8E7B97}
 		{3338F73C-4F8F-450A-AC4B-1C81D05BDE4E} = {8FBC0C97-D929-4E65-B834-F706F9926183}
+		{BAB5D97C-FE85-4522-911D-632CB4195BCC} = {F7436AEE-70C8-4692-93B9-FC7C0E52C4BE}
+		{3D8F74B1-1103-4177-B20B-9C5B77082BD1} = {4D9A51E8-3F43-4816-A754-C4BA8554A978}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {68AB5572-40EC-406F-8D5A-35084C4FCC5B}

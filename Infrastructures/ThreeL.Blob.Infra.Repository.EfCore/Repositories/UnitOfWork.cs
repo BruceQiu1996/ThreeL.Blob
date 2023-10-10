@@ -9,7 +9,6 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
     {
         protected readonly TDbContext _dbContext;
         protected IDbContextTransaction? DbTransaction { get; set; }
-
         public bool IsStartingUow => _dbContext.Database.CurrentTransaction is not null;
 
         protected UnitOfWork(TDbContext context)

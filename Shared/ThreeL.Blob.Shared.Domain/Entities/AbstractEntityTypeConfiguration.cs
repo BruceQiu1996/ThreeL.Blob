@@ -14,10 +14,11 @@ namespace ThreeL.Blob.Shared.Domain.Entities
             ConfigureConcurrency(builder, entityType);
             ConfigureQueryFilter(builder, entityType);
         }
+
         protected virtual void ConfigureKey(EntityTypeBuilder<TEntity> builder, Type entityType)
         {
             builder.HasKey(x => x.Id);
-            builder.Property(x => x.Id).HasColumnOrder(1).ValueGeneratedNever();
+            builder.Property(x => x.Id).HasColumnOrder(1).ValueGeneratedOnAdd();
         }
 
         protected virtual void ConfigureConcurrency(EntityTypeBuilder<TEntity> builder, Type entityType)

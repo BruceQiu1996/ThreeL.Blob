@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net7.0</TargetFramework>
@@ -12,5 +12,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\Domain\ThreeL.Blob.Domain\ThreeL.Blob.Domain.csproj" />
+	  <ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Application.Contract\ThreeL.Blob.Shared.Application.Contract.csproj" />
 	</ItemGroup>
 </Project>

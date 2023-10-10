@@ -17,5 +17,6 @@ namespace ThreeL.Blob.Domain.Aggregate.User
         public long DaliyUploadMaxSizeLimit { get; set; }
         public long TodayUploadMaxSize { get; set; }
         public long? DownloadSpeedLimit { get; set; }
+        public long? MaxSpaceSize { get; set; }
     }
 }

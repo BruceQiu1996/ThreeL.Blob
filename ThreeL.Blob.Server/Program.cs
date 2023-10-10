@@ -1,11 +1,15 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Extensions;
 
 namespace ThreeL.Blob.Server
 {
@@ -52,24 +56,24 @@ namespace ThreeL.Blob.Server
                     });
                 });
                 //添加认证
-                //builder.Services.AddAuthentication(options =>
-                //{
-                //    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-                //}).AddJwtBearer(options =>
-                //{
-                //    options.TokenValidationParameters = new TokenValidationParameters()
-                //    {
-                //        ValidateIssuer = true,
-                //        ValidIssuer = hostContext.Configuration["Jwt:Issuer"],
-                //        ValidateAudience = true,
-                //        ValidAudiences = hostContext.Configuration.GetSection("Jwt:Audiences").Get<string[]>(),
-                //        ValidateIssuerSigningKey = true,
-                //        ValidateLifetime = true,
-                //        ClockSkew = TimeSpan.FromSeconds(int.Parse(hostContext.Configuration["Jwt:ClockSkew"]!)), //过期时间容错值，解决服务器端时间不同步问题（秒）
-                //        RequireExpirationTime = true,
-                //        IssuerSigningKeyResolver = host!.Services.GetRequiredService<IJwtService>().ValidateIssuerSigningKey
-                //    };
-                //});
+                builder.Services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                }).AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters()
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = hostContext.Configuration["Jwt:Issuer"],
+                        ValidateAudience = true,
+                        ValidAudiences = hostContext.Configuration.GetSection("Jwt:Audiences").Get<string[]>(),
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.FromSeconds(int.Parse(hostContext.Configuration["Jwt:ClockSkew"]!)), //过期时间容错值，解决服务器端时间不同步问题（秒）
+                        RequireExpirationTime = true,
+                        IssuerSigningKeyResolver = host!.Services.GetRequiredService<IJwtService>().ValidateIssuerSigningKey
+                    };
+                });
             }).UseSerilog((context, logger) =>
             {
                 logger.WriteTo.Console();
@@ -79,9 +83,10 @@ namespace ThreeL.Blob.Server
 
             //middleware
             host = builder.Build();
+            await host.PreheatService();
             host.UseRouting();
-            //host.UseAuthentication();
-            //host.UseAuthorization();
+            host.UseAuthentication();
+            host.UseAuthorization();
             //host.UseMiddleware<AuthorizeStaticFilesMiddleware>("/files"); //授权静态文件访问,如果使用，则表情获取那需要自己控制下载
             host.UseStaticFiles(new StaticFileOptions()
             {
