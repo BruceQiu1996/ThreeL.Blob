@@ -22,16 +22,18 @@ namespace ThreeL.Blob.Migrations.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false, defaultValue: false),
-                    FileName = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false)
+                    Name = table.Column<string>(type: "varchar(256)", maxLength: 256, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4 "),
-                    Location = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                    Location = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4 "),
-                    Code = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                    Code = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4 "),
-                    Size = table.Column<long>(type: "bigint", nullable: false),
-                    ParentFolder = table.Column<long>(type: "bigint", nullable: false),
+                    Size = table.Column<long>(type: "bigint", nullable: true),
+                    ParentFolder = table.Column<long>(type: "bigint", nullable: true),
                     CreateBy = table.Column<long>(type: "bigint", nullable: false),
-                    CreateTime = table.Column<DateTime>(type: "datetime", nullable: false)
+                    CreateTime = table.Column<DateTime>(type: "datetime", nullable: false),
+                    IsFolder = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {

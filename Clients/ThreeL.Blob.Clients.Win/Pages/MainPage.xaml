@@ -22,10 +22,10 @@
                 <Button Content="立即上传" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
                 <Button Content="新建文件夹" Margin="5 0 0 0" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
 
-                <TextBox Style="{StaticResource TextBoxExtend}" hc:InfoElement.Placeholder="搜索文件"
-                         Height="30" Width="150"
-                         Margin="10 0  0 0"
-                         HorizontalAlignment="Right"></TextBox>
+                <hc:SearchBar Style="{StaticResource SearchBarExtend}" hc:InfoElement.Placeholder="搜索文件"
+                              Height="30" Width="250"
+                              Margin="10 0  0 0"
+                              HorizontalAlignment="Right"></hc:SearchBar>
             </StackPanel>
         </Border>
     </Grid>

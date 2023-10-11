@@ -9,6 +9,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Extensions;
+using ThreeL.Blob.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
 
 namespace ThreeL.Blob.Server
@@ -102,7 +103,7 @@ namespace ThreeL.Blob.Server
                 option.SwaggerEndpoint($"/swagger/v1/swagger.json", "v1");
             });
             host.MapControllers();
-
+            host.MapGrpcService<GrpcController>();
             await host.RunAsync();
         }
     }

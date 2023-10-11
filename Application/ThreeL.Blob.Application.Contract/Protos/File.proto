@@ -1,0 +1,15 @@
+﻿syntax = "proto3";
+option csharp_namespace = "ThreeL.Blob.Application.Contract.Protos";
+
+message UploadFileRequest {
+  string FileName = 1;
+  bytes Content = 2;
+}
+
+message UploadFileResponse {
+  string FilePath = 1;
+}
+
+service FileGrpcService{
+	rpc UploadFile(UploadFileRequest) returns (UploadFileResponse);
+}

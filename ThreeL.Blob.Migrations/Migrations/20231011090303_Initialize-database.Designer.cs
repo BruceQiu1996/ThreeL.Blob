@@ -11,7 +11,7 @@ using ThreeL.Blob.Infra.Repository.EfCore.Mysql;
 namespace ThreeL.Blob.Migrations.Migrations
 {
     [DbContext(typeof(MySqlDbContext))]
-    [Migration("20231010075032_Initialize-database")]
+    [Migration("20231011090303_Initialize-database")]
     partial class Initializedatabase
     {
         /// <inheritdoc />
@@ -32,7 +32,6 @@ namespace ThreeL.Blob.Migrations.Migrations
                         .HasColumnOrder(1);
 
                     b.Property<string>("Code")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -42,27 +41,32 @@ namespace ThreeL.Blob.Migrations.Migrations
                     b.Property<DateTime>("CreateTime")
                         .HasColumnType("datetime");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(false)
                         .HasColumnOrder(2);
 
+                    b.Property<bool>("IsFolder")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Location")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<long>("ParentFolder")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<long?>("ParentFolder")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("Size")
+                    b.Property<long?>("Size")
                         .HasColumnType("bigint");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
