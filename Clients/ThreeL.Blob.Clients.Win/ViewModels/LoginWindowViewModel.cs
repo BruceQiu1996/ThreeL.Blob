@@ -25,19 +25,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         public AsyncRelayCommand<PasswordBox> LoginCommandAsync { get; set; }
 
         private readonly HttpRequest _httpRequest;
+        private readonly GrpcService _grpcService;
         private readonly GrowlHelper _growlHelper;
         private readonly IMapper _mapper;
-        public LoginWindowViewModel(HttpRequest httpRequest, GrowlHelper growlHelper, IMapper mapper)
+        public LoginWindowViewModel(HttpRequest httpRequest, GrowlHelper growlHelper, IMapper mapper, GrpcService grpcService)
         {
             _httpRequest = httpRequest;
             _growlHelper = growlHelper;
             _mapper = mapper;
             httpRequest.ExcuteWhileBadRequest += _growlHelper.Warning;
             LoginCommandAsync = new AsyncRelayCommand<PasswordBox>(LoginAsync);
+            _grpcService = grpcService;
         }
 
         private async Task LoginAsync(PasswordBox password)
         {
+            UserName = "bruce";
+            password.Password = "123456";
             if (string.IsNullOrEmpty(UserName) || string.IsNullOrEmpty(password.Password))
                 return;
 
@@ -52,8 +56,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             {
                 var data = JsonSerializer.Deserialize<UserLoginResponseDto>(await resp.Content.ReadAsStringAsync(),
                     SystemTextJsonSerializer.GetDefaultOptions());
-                _httpRequest.SetToken($"{data.AccessToken}");
-                _mapper.Map(data, App.UserProfile);
+                _httpRequest.SetToken(data.AccessToken);
+                _grpcService.SetToken(data.AccessToken);
+                App.UserProfile = _mapper.Map<UserProfile>(data);
                 App.ServiceProvider.GetRequiredService<LoginWindow>().Hide();
                 App.ServiceProvider.GetRequiredService<MainWindow>().Show();
             }

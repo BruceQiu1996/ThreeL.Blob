@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using StackExchange.Redis;
 using System.Net;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Dtos;
@@ -13,7 +12,7 @@ using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 
 namespace ThreeL.Blob.Application.Services
 {
-    public class FileService : IFileService
+    public class FileService : IFileService, IAppService
     {
         private readonly IEfBasicRepository<User, long> _userBasicRepository;
         private readonly IEfBasicRepository<FileObject, long> _fileBasicRepository;
@@ -44,16 +43,28 @@ namespace ThreeL.Blob.Application.Services
                     return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "文件夹不存在");
 
                 location = folder.Location!;
-            }else
-                location = user.; //用户根目录
+            }
+            else
+                location = user.Location;
 
+            if (!Directory.Exists(location))
+                return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "数据异常");
+
+            var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
+            File.Create(tempFileName);
             var fileObj = _mapper.Map<FileObject>(uploadFileDto);
             fileObj.CreateBy = userId;
             fileObj.CreateTime = DateTime.UtcNow;
             fileObj.Status = FileStatus.Wait;
+            fileObj.TempFileLocation = tempFileName;
 
             await _fileBasicRepository.InsertAsync(fileObj);
             await _redisProvider.HSetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userId}", fileObj.Id.ToString(), fileObj);
+
+            return new ServiceResult<UploadFileResponseDto>(new UploadFileResponseDto()
+            {
+                FileId = fileObj.Id
+            });
         }
     }
 }

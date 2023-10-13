@@ -7,7 +7,7 @@ namespace ThreeL.Blob.Clients.Win.Profiles
     {
         public UserProfile()
         {
-            CreateMap<UserLoginResponseDto, ThreeL.Blob.Clients.Win.Entities.UserProfile>();
+            CreateMap<UserLoginResponseDto, Entities.UserProfile>();
         }
     }
 }

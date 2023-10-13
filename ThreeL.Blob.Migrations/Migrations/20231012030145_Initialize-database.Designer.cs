@@ -11,7 +11,7 @@ using ThreeL.Blob.Infra.Repository.EfCore.Mysql;
 namespace ThreeL.Blob.Migrations.Migrations
 {
     [DbContext(typeof(MySqlDbContext))]
-    [Migration("20231011090303_Initialize-database")]
+    [Migration("20231012030145_Initialize-database")]
     partial class Initializedatabase
     {
         /// <inheritdoc />
@@ -68,6 +68,10 @@ namespace ThreeL.Blob.Migrations.Migrations
                     b.Property<int?>("Status")
                         .HasColumnType("int");
 
+                    b.Property<string>("TempFileLocation")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
                     b.ToTable("FileObject");
@@ -102,6 +106,10 @@ namespace ThreeL.Blob.Migrations.Migrations
 
                     b.Property<DateTime?>("LastLoginTime")
                         .HasColumnType("datetime");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<long?>("MaxSpaceSize")
                         .HasColumnType("bigint");

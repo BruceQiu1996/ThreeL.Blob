@@ -1,5 +1,6 @@
 ﻿syntax = "proto3";
-option csharp_namespace = "ThreeL.Blob.Application.Contract.Protos";
+
+option csharp_namespace = "ThreeL.Blob.Clients.Grpc.Protos";
 
 message UploadFileRequest {
   int64 fileId = 1;

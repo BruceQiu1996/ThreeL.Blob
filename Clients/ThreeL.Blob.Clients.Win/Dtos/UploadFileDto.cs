@@ -1,4 +1,4 @@
-﻿namespace ThreeL.Blob.Application.Contract.Dtos
+﻿namespace ThreeL.Blob.Clients.Win.Dtos
 {
     public class UploadFileDto
     {

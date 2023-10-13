@@ -2,7 +2,7 @@
 {
     public class UserProfile
     {
-        public long UserId { get; set; }
+        public long Id { get; set; }
         public string UserName { get; set; }
         public string Role { get; set; }
         public string AccessToken { get; set; }
@@ -15,7 +15,7 @@
 
         public void Clear()
         {
-            UserId = 0;
+            Id = 0;
             UserName = null;
             AccessToken = null;
             RefreshToken = null;

@@ -8,23 +8,29 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="appsettings.json" />
+		<None Remove="appsettings.json" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Include="appsettings.json">
-	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="AutoMapper" Version="12.0.1" />
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="7.0.12" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.12">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Core\ThreeL.Blob.Infra.Core.csproj" />
+		<ProjectReference Include="..\ThreeL.Blob.Clients.Grpc\ThreeL.Blob.Clients.Grpc.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />

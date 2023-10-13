@@ -4,11 +4,152 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win.Pages"
+      xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+      xmlns:hc="https://handyorg.github.io/handycontrol"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="TransferPage">
 
+    <behaviors:Interaction.Triggers>
+        <behaviors:EventTrigger EventName="Loaded">
+            <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <hc:Card Grid.Column="0" 
+                 Background="White" 
+                 Margin="2 5"
+                 Effect="{DynamicResource EffectShadow2}"
+                 BorderThickness="0">
+            <ListBox Background="White" BorderThickness="0">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Vertical"></StackPanel>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBoxItem Height="35" Width="135" Margin="-1 1 0 0" IsSelected="True">
+                    <behaviors:Interaction.Triggers>
+                        <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                            <behaviors:InvokeCommandAction Command="{Binding ShiftUploadingPageCommand}"></behaviors:InvokeCommandAction>
+                        </behaviors:EventTrigger>
+                    </behaviors:Interaction.Triggers>
+                    <ListBoxItem.Style>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="False">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#888"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBoxItem.Style>
+                    <StackPanel Orientation="Horizontal">
+                        <Label BorderThickness="0"
+                               Cursor="Hand"
+                               ToolTip="正在上传"
+                               Height="40" Width="40"
+                               Background="Transparent"
+                               VerticalContentAlignment="Center"
+                               Grid.Column="1">
+                            <Path Data="{StaticResource UpGeometry}" 
+                                  SnapsToDevicePixels="True"
+                                  Height="20" Width="20"
+                                  Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                  Stretch="Uniform"/>
+                        </Label>
+                        <TextBlock Text="正在上传" VerticalAlignment="Center"></TextBlock>
+                    </StackPanel>
+                </ListBoxItem>
+
+                <ListBoxItem Height="35" Width="135" Margin="-1 20 0 0">
+                    <ListBoxItem.Style>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="False">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#888"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBoxItem.Style>
+                    <behaviors:Interaction.Triggers>
+                        <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                            <behaviors:InvokeCommandAction Command="{Binding ShifDownloadingPageCommand}"></behaviors:InvokeCommandAction>
+                        </behaviors:EventTrigger>
+                    </behaviors:Interaction.Triggers>
+                    <StackPanel Orientation="Horizontal">
+                        <Label BorderThickness="0"
+                               Cursor="Hand"
+                               ToolTip="正在下载"
+                               Height="40" Width="40"
+                               Background="Transparent"
+                               VerticalContentAlignment="Center"
+                               Grid.Column="1">
+                            <Path Data="{StaticResource DownGeometry}" 
+                                  SnapsToDevicePixels="True"
+                                  Height="20" Width="20"
+                                  Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                  Stretch="Uniform"/>
+                        </Label>
+                        <TextBlock Text="正在下载" VerticalAlignment="Center"></TextBlock>
+                    </StackPanel>
+                </ListBoxItem>
+
+                <ListBoxItem Height="35" Width="135" Margin="-1 20 0 0">
+                    <ListBoxItem.Style>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="False">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#888"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ListBoxItem.Style>
+                    <behaviors:Interaction.Triggers>
+                        <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                            <behaviors:InvokeCommandAction Command="{Binding ShiftCompletePageCommand}"></behaviors:InvokeCommandAction>
+                        </behaviors:EventTrigger>
+                    </behaviors:Interaction.Triggers>
+                    <StackPanel Orientation="Horizontal">
+                        <Label BorderThickness="0"
+                               Cursor="Hand"
+                               ToolTip="传输完成"
+                               Height="40" Width="40"
+                               Background="Transparent"
+                               VerticalContentAlignment="Center"
+                               Grid.Column="1">
+                            <Path Data="{StaticResource SuccessGeometry}" 
+                                  SnapsToDevicePixels="True"
+                                  Height="20" Width="20"
+                                  Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                  Stretch="Uniform"/>
+                        </Label>
+                        <TextBlock Text="传输完成" VerticalAlignment="Center"></TextBlock>
+                    </StackPanel>
+                </ListBoxItem>
+            </ListBox>
+        </hc:Card>
+
+        <Frame Content="{Binding CurrentPage,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" BorderThickness="0"
+               NavigationUIVisibility="Hidden">
+        </Frame>
     </Grid>
 </Page>

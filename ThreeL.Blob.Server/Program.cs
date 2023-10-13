@@ -2,11 +2,14 @@
 using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Net;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Extensions;
 using ThreeL.Blob.Server.Controllers;
@@ -27,6 +30,10 @@ namespace ThreeL.Blob.Server
 
             builder.Host.ConfigureServices((hostContext, services) =>
             {
+                services.AddGrpc(options => 
+                {
+                    options.MaxReceiveMessageSize = 1024 * 1024 * 10;//最大10M
+                });
                 services.AddApplicationService();
                 services.AddControllers();
                 services.AddEndpointsApiExplorer();
@@ -65,7 +72,7 @@ namespace ThreeL.Blob.Server
                     options.TokenValidationParameters = new TokenValidationParameters()
                     {
                         ValidateIssuer = true,
-                        ValidIssuer = hostContext.Configuration["Jwt:Issuer"],
+                        ValidIssuer = hostContext.Configuration["System:Name"],
                         ValidateAudience = true,
                         ValidAudiences = hostContext.Configuration.GetSection("Jwt:Audiences").Get<string[]>(),
                         ValidateIssuerSigningKey = true,
@@ -78,6 +85,19 @@ namespace ThreeL.Blob.Server
             }).UseSerilog((context, logger) =>
             {
                 logger.WriteTo.Console();
+            });
+
+            builder.WebHost.UseKestrel((context, options) =>
+            {
+                options.Listen(IPAddress.Any, context.Configuration.GetSection("Ports:API")!.Get<int>(), listenOptions =>
+                {
+                    listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+                });
+
+                options.Listen(IPAddress.Any, context.Configuration.GetSection("Ports:Grpc")!.Get<int>(), listenOptions =>
+                {
+                    listenOptions.Protocols = HttpProtocols.Http2;
+                });
             });
 
             builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);

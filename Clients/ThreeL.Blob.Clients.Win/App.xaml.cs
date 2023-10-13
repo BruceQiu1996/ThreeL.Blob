@@ -1,4 +1,6 @@
 ﻿using Autofac.Extensions.DependencyInjection;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,8 +13,10 @@ using ThreeL.Blob.Clients.Win.Configurations;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Pages;
+using ThreeL.Blob.Clients.Win.Profiles;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.ViewModels;
+using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
 
 namespace ThreeL.Blob.Clients.Win
@@ -24,7 +28,7 @@ namespace ThreeL.Blob.Clients.Win
     {
         internal static IServiceProvider? ServiceProvider;
         internal static IHost host;
-        internal static UserProfile UserProfile;
+        internal static Entities.UserProfile UserProfile;
         protected async override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -46,8 +50,23 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<SettingsPage>();
                 service.AddSingleton<SettingsPageViewModel>();
 
+                service.AddSingleton<UploadingPage>();
+                service.AddSingleton<UploadingPageViewModel>();
+                service.AddSingleton<UploadItemViewModel>();
+                service.AddSingleton<DownloadingPage>();
+                service.AddSingleton<DownloadingPageViewModel>();
+                service.AddSingleton<TransferComplete>();
+                service.AddSingleton<TransferCompletePageViewModel>();
+
                 service.AddSingleton<HttpRequest>();
+                service.AddSingleton<GrpcService>();
                 service.AddSingleton<GrowlHelper>();
+
+                var connString = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"db.db");
+                service.AddDbContextFactory<MyDbContext>(option => 
+                {
+                    option.UseSqlite(connString);
+                });
             }).UseSerilog();
 
             builder.ConfigureHostConfiguration(options =>
@@ -63,13 +82,21 @@ namespace ThreeL.Blob.Clients.Win
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             //Task线程内未捕获异常处理事件
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
-            host.Services.GetRequiredService<MainWindow>().Show();
+            host.Services.GetRequiredService<LoginWindow>().Show();
         }
 
         public void Configure(IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<RemoteOptions>(configuration.GetSection("RemoteOptions"));
-            services.AddAutoMapper(typeof(UserProfile));
+
+            AutoMapper.IConfigurationProvider config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<Profiles.UserProfile>();
+                cfg.AddProfile<TransferProfile>();
+            });
+
+            services.AddSingleton(config);
+            services.AddScoped<IMapper, Mapper>();
         }
 
         private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)

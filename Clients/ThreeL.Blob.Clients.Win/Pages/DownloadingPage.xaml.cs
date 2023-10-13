@@ -4,11 +4,11 @@ using ThreeL.Blob.Clients.Win.ViewModels.Page;
 namespace ThreeL.Blob.Clients.Win.Pages
 {
     /// <summary>
-    /// Interaction logic for TransferPage.xaml
+    /// Interaction logic for DownloadingPage.xaml
     /// </summary>
-    public partial class TransferPage : Page
+    public partial class DownloadingPage : Page
     {
-        public TransferPage(TransferPageViewModel viewModel)
+        public DownloadingPage(DownloadingPageViewModel viewModel)
         {
             InitializeComponent();
             DataContext = viewModel;

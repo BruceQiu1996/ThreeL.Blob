@@ -65,6 +65,10 @@ namespace ThreeL.Blob.Migrations.Migrations
                     b.Property<int?>("Status")
                         .HasColumnType("int");
 
+                    b.Property<string>("TempFileLocation")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.HasKey("Id");
 
                     b.ToTable("FileObject");
@@ -99,6 +103,10 @@ namespace ThreeL.Blob.Migrations.Migrations
 
                     b.Property<DateTime?>("LastLoginTime")
                         .HasColumnType("datetime");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<long?>("MaxSpaceSize")
                         .HasColumnType("bigint");

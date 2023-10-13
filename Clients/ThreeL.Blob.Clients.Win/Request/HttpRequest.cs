@@ -133,7 +133,7 @@ namespace ThreeL.Blob.Clients.Win.Request
         {
             if (api)
             {
-                httpClient.BaseAddress = new Uri($"http://{_remoteOptions.Host}:{_remoteOptions.Port}/api/");
+                httpClient.BaseAddress = new Uri($"http://{_remoteOptions.Host}:{_remoteOptions.APIPort}/api/");
             }
             httpClient.Timeout = TimeSpan.FromSeconds(600); //Test
             httpClient.DefaultRequestVersion = HttpVersion.Version10;

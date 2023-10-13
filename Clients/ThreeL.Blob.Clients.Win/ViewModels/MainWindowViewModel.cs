@@ -22,7 +22,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             _settingsPage = settingsPage;
             ShiftSettingsPageCommand = new RelayCommand(OpenSettingsPage);
             ShiftMainPageCommand = new RelayCommand(OpenMainPage);
-            ShiftTransferPageCommand = new RelayCommand(OpenMainPage);
+            ShiftTransferPageCommand = new RelayCommand(OpenTransferPage);
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
         }
 
@@ -48,6 +48,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private void OpenMainPage()
         {
             CurrentPage = _mainPage;
+        }
+
+        private void OpenTransferPage()
+        {
+            CurrentPage = _transferPage;
         }
     }
 }

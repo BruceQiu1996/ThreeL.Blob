@@ -33,7 +33,9 @@ namespace ThreeL.Blob.Migrations.Migrations
                     CreateBy = table.Column<long>(type: "bigint", nullable: false),
                     CreateTime = table.Column<DateTime>(type: "datetime", nullable: false),
                     IsFolder = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: true)
+                    Status = table.Column<int>(type: "int", nullable: true),
+                    TempFileLocation = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4 ")
                 },
                 constraints: table =>
                 {
@@ -60,7 +62,9 @@ namespace ThreeL.Blob.Migrations.Migrations
                     DaliyUploadMaxSizeLimit = table.Column<long>(type: "bigint", nullable: false, defaultValue: 10737418240L),
                     TodayUploadMaxSize = table.Column<long>(type: "bigint", nullable: false),
                     DownloadSpeedLimit = table.Column<long>(type: "bigint", nullable: true),
-                    MaxSpaceSize = table.Column<long>(type: "bigint", nullable: true)
+                    MaxSpaceSize = table.Column<long>(type: "bigint", nullable: true),
+                    Location = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4 ")
                 },
                 constraints: table =>
                 {
