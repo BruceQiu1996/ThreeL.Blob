@@ -9,6 +9,7 @@ namespace ThreeL.Blob.Application.Contract.Profiles
         public FileObjectProfile()
         {
             CreateMap<UploadFileDto, FileObject>();
+            CreateMap<FileObject, FileObjDto>();
         }
     }
 }

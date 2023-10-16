@@ -1,10 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Windows.Media.Imaging;
 
 namespace ThreeL.Blob.Clients.Win.Helpers
 {
     public class FileHelper
     {
-        public string GetIconByFileExtension(string fileName)
+        public BitmapImage GetIconByFileExtension(string fileName)
         {
             var extensionName = Path.GetExtension(fileName)?.ToLower();
             var icon = string.Empty;
@@ -38,7 +40,25 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                     break;
             }
 
-            return icon;
+            return GetBitmapImageByFileExtension(icon);
+        }
+
+        public BitmapImage GetBitmapImageByFileExtension(string imageName)
+        {
+            var source = new BitmapImage();
+            try
+            {
+                string imgUrl = $"pack://application:,,,/ThreeL.Blob.Clients.Win;component/Images/{imageName}";
+                source.BeginInit();
+                source.UriSource = new Uri(imgUrl, UriKind.RelativeOrAbsolute);
+                source.EndInit();
+
+                return source;
+            }
+            finally
+            {
+                source.Freeze();
+            }
         }
     }
 }

@@ -36,5 +36,23 @@ namespace ThreeL.Blob.Server.Controllers
                 return Problem();
             }
         }
+
+        [HttpGet("{parent}")]
+        [Authorize]
+        public async Task<ActionResult> GetItemsAsync(long parent)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.GetItemsAsync(parent, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
     }
 }

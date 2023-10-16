@@ -17,14 +17,7 @@ namespace ThreeL.Blob.Server.Controllers
         [Authorize]
         public async override Task<UploadFileResponse> UploadFile(IAsyncStreamReader<UploadFileRequest> request, ServerCallContext context)
         {
-            try
-            {
-                return await _grpcService.UploadFileAsync(request, context);
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
+            return await _grpcService.UploadFileAsync(request, context);
         }
     }
 }

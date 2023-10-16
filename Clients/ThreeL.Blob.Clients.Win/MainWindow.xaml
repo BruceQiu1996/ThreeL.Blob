@@ -74,7 +74,7 @@
             <hc:Card Grid.Row="1" 
                      Grid.Column="0" 
                      Background="White" 
-                     Margin="5"
+                     Margin="5 5 2 5"
                      Effect="{DynamicResource EffectShadow2}"
                      BorderThickness="0">
                 <ListBox Background="White" BorderThickness="0">

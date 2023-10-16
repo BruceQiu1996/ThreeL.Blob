@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Entities;
@@ -39,7 +40,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref _canSuspend, value);
         }
 
-        public BitmapImage Icon => GetIconByFileExtension(App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName));
+        public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName);
         public AsyncRelayCommand ResumeCommandAsync { get; set; }
         public AsyncRelayCommand PauseCommandAsync { get; set; }
         public AsyncRelayCommand CancelCommandAsync { get; set; }
@@ -48,7 +49,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         private readonly GrpcService _grpcService;
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
-        public UploadItemViewModel(GrpcService grpcService,IDbContextFactory<MyDbContext> dbContextFactory)
+        public UploadItemViewModel(GrpcService grpcService, IDbContextFactory<MyDbContext> dbContextFactory)
         {
             _grpcService = grpcService;
             _dbContextFactory = dbContextFactory;
@@ -63,8 +64,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             _uploadTask = Task.Run(async () =>
             {
-                await _grpcService
+                var resp = await _grpcService
                     .UploadFileAsync(_tokenSource.Token, _resetEvent, FileLocation, FileId, TransferBytes, 1024 * 1024, SetTransferBytes);
+                if (resp.Result)
+                {
+
+                }
+                else
+                {
+                    HandyControl.Controls.MessageBox.Show(resp.Message, "警告", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             });
 
             CanSuspend = true;
@@ -87,9 +96,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             _resetEvent.Reset();
             CanSuspend = false;
-            using (var context = _dbContextFactory.CreateDbContext()) 
+            using (var context = _dbContextFactory.CreateDbContext())
             {
-                var record = await context.UploadFileRecords.FirstOrDefaultAsync(x=>x.Id== Id);
+                var record = await context.UploadFileRecords.FirstOrDefaultAsync(x => x.Id == Id);
                 if (record != null)
                 {
                     record.Status = Status.Suspend;
@@ -112,24 +121,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             TransferBytes = bytes;
             Progress = TransferBytes / (double)Size * 100;
-        }
-
-        private BitmapImage GetIconByFileExtension(string imageName) 
-        {
-            var source = new BitmapImage();
-            try
-            {
-                string imgUrl = $"pack://application:,,,/ThreeL.Blob.Clients.Win;component/Images/{imageName}";
-                source.BeginInit();
-                source.UriSource = new Uri(imgUrl, UriKind.RelativeOrAbsolute);
-                source.EndInit();
-
-                return source;
-            }
-            finally
-            {
-                source.Freeze();
-            }
         }
     }
 }

@@ -54,7 +54,7 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                                     <ColumnDefinition Width="200"></ColumnDefinition>
-                                                    <ColumnDefinition Width="250"></ColumnDefinition>
+                                                    <ColumnDefinition Width="200"></ColumnDefinition>
                                                 </Grid.ColumnDefinitions>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="*"></RowDefinition>
@@ -75,9 +75,11 @@
                                                 <ProgressBar Grid.Column="1" Value="{Binding Progress}"></ProgressBar>
                                                 <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Center">
                                                     <Button Content="暂停" 
+                                                            Visibility="{Binding CanSuspend,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}"
                                                             Command="{Binding PauseCommandAsync}"
                                                             Style="{StaticResource ButtonWarning}" Margin="5 0" Cursor="Hand"></Button>
                                                     <Button Content="继续" 
+                                                            Visibility="{Binding CanSuspend,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityReConverter}}"
                                                             Command="{Binding ResumeCommandAsync}"
                                                             Style="{StaticResource ButtonInfo}" Margin="5 0" Cursor="Hand"></Button>
                                                     <Button Content="取消" 

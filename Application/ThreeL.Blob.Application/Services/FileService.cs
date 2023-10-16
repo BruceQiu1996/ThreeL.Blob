@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Dtos;
@@ -27,6 +28,14 @@ namespace ThreeL.Blob.Application.Services
             _redisProvider = redisProvider;
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
+        }
+
+        public async Task<ServiceResult<IEnumerable<FileObjDto>>> GetItemsAsync(long parentId, long userId)
+        {
+            var items = await _fileBasicRepository.Where(x => x.ParentFolder == parentId && x.CreateBy == userId && x.Status == FileStatus.Normal)
+                .OrderByDescending(x => x.CreateTime).ToListAsync();
+
+            return new ServiceResult<IEnumerable<FileObjDto>>(items.Select(_mapper.Map<FileObjDto>));
         }
 
         public async Task<ServiceResult<UploadFileResponseDto>> UploadAsync(UploadFileDto uploadFileDto, long userId)
@@ -59,7 +68,7 @@ namespace ThreeL.Blob.Application.Services
             fileObj.TempFileLocation = tempFileName;
 
             await _fileBasicRepository.InsertAsync(fileObj);
-            await _redisProvider.HSetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userId}", fileObj.Id.ToString(), fileObj);
+            await _redisProvider.HSetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userId}", fileObj.Id.ToString(), fileObj, TimeSpan.FromDays(3));
 
             return new ServiceResult<UploadFileResponseDto>(new UploadFileResponseDto()
             {

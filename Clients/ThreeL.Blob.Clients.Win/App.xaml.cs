@@ -3,6 +3,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
@@ -94,6 +95,7 @@ namespace ThreeL.Blob.Clients.Win
             {
                 cfg.AddProfile<Profiles.UserProfile>();
                 cfg.AddProfile<TransferProfile>();
+                cfg.AddProfile<FileObjProfile>();
             });
 
             services.AddSingleton(config);
