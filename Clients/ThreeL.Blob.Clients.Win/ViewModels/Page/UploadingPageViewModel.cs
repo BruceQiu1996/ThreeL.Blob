@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
@@ -12,6 +13,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
     public class UploadingPageViewModel : ObservableObject
     {
+        public AsyncRelayCommand LoadedRelayCommand { get; set; }
         public ObservableCollection<UploadItemViewModel> UploadItemViewModels { get; set; }
 
         private readonly IMapper _mapper;
@@ -26,12 +28,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
              });
         }
 
-        private async Task AddNewUploadTaskAsync(UploadFileRecord uploadFileRecord) 
+        private async Task AddNewUploadTaskAsync(UploadFileRecord uploadFileRecord)
         {
-            var viewModel = App.ServiceProvider.GetRequiredService<UploadItemViewModel>();
-            _mapper.Map(uploadFileRecord,viewModel);
-
+            var viewModel = App.ServiceProvider!.GetRequiredService<UploadItemViewModel>();
+            _mapper.Map(uploadFileRecord, viewModel);
             UploadItemViewModels.Add(viewModel);
+
+            await viewModel.StartAsync();
         }
     }
 }

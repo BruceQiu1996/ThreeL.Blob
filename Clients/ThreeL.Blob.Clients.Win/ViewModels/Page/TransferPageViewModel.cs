@@ -24,7 +24,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             ShiftUploadingPageCommand = new RelayCommand(OpenUploadingPage);
             ShifDownloadingPageCommand = new RelayCommand(OpenDownloadingPage);
             ShiftCompletePageCommand = new RelayCommand(OpenCompletePage);
-            LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
+            CurrentPage = _uploadingPage;
         }
 
         private System.Windows.Controls.Page _currentPage;
@@ -32,13 +32,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         {
             get => _currentPage;
             set => SetProperty(ref _currentPage, value);
-        }
-
-        private Task LoadAsync()
-        {
-            CurrentPage = _uploadingPage;
-
-            return Task.CompletedTask;
         }
 
         private void OpenUploadingPage()

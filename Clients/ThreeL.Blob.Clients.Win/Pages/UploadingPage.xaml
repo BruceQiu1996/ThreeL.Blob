@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
 
         <Border CornerRadius="5" Grid.Row="1">
-            <ScrollViewer Margin="0" RequestBringIntoView="ScrollViewer_RequestBringIntoView">
+            <ScrollViewer Margin="2 0 0 5" RequestBringIntoView="ScrollViewer_RequestBringIntoView">
                 <ListBox ScrollViewer.CanContentScroll="False"
                          Padding="0"
                          PreviewMouseWheel="ListView_PreviewMouseWheel"
@@ -42,13 +42,14 @@
                             <Setter Property="OverridesDefaultStyle" Value="True" />
                             <Setter Property="SnapsToDevicePixels" Value="True" />
                             <Setter Property="Foreground" Value="Black" />
-                            <Setter Property="Height" Value="65" />
+                            <Setter Property="Height" Value="55" />
                             <Setter Property="Padding" Value="0" />
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                        <Border Margin="0 0 4 1" CornerRadius="0 2 2 0"
-                                                Background="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem,Mode=FindAncestor},Path=Background}">
+                                        <Border Margin="0 0 4 1" CornerRadius="2" BorderThickness="0 0 0 1"
+                                                Background="White"
+                                                BorderBrush="#ddd">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"></ColumnDefinition>
@@ -57,28 +58,37 @@
                                                 </Grid.ColumnDefinitions>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="*"></RowDefinition>
-                                                    <RowDefinition Height="*"></RowDefinition>
                                                 </Grid.RowDefinitions>
 
-                                                <Grid Grid.Row="0">
-                                                    
+                                                <Grid Grid.Column="0">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Image Source="{Binding Icon}" Height="40"></Image>
+                                                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="5 0 0 0">
+                                                            <TextBlock Text="{Binding FileName}" VerticalAlignment="Center"
+                                                                       Margin="0 0 0 2"></TextBlock>
+                                                            <TextBlock Text="{Binding SizeText}" 
+                                                                       Margin="0 2 0 0"
+                                                                       VerticalAlignment="Center" Foreground="#888"></TextBlock>
+                                                        </StackPanel>
+                                                    </StackPanel>
                                                 </Grid>
+                                                <ProgressBar Grid.Column="1" Value="{Binding Progress}"></ProgressBar>
+                                                <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Center">
+                                                    <Button Content="暂停" 
+                                                            Command="{Binding PauseCommandAsync}"
+                                                            Style="{StaticResource ButtonWarning}" Margin="5 0" Cursor="Hand"></Button>
+                                                    <Button Content="继续" 
+                                                            Command="{Binding ResumeCommandAsync}"
+                                                            Style="{StaticResource ButtonInfo}" Margin="5 0" Cursor="Hand"></Button>
+                                                    <Button Content="取消" 
+                                                            Command="{Binding CancelCommandAsync}"
+                                                            Style="{StaticResource ButtonDanger}" Margin="5 0" Cursor="Hand"></Button>
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#444"></Setter>
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="False">
-                                    <Setter Property="Background" Value="#111"></Setter>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="True">
-                                    <Setter Property="Background" Value="#444"></Setter>
-                                </Trigger>
-                            </Style.Triggers>
                         </Style>
                     </ListBox.ItemContainerStyle>
                 </ListBox>

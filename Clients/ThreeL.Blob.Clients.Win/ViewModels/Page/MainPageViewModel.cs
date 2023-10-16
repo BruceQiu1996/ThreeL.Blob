@@ -12,6 +12,7 @@ using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
+using ThreeL.Blob.Infra.Core.Serializers;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -51,20 +52,22 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
                     if (resp != null && resp.IsSuccessStatusCode)
                     {
-                        var result = JsonSerializer.Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync());
+                        var result = JsonSerializer.
+                            Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
                         using (var context = await _dbContextFactory.CreateDbContextAsync())
                         {
                             var record = new UploadFileRecord()
                             {
                                 FileId = result.FileId,
                                 FileName = fileInfo.Name,
+                                Size = fileInfo.Length,
                                 FileLocation = fileInfo.FullName,
                                 TransferBytes = 0,
                                 Status = Status.Doing,
                                 Code = code
                             };
                             await context.UploadFileRecords.AddAsync(record);
-
+                            await context.SaveChangesAsync();
                             WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
                         };
                     }

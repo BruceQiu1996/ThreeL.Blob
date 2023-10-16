@@ -51,7 +51,7 @@ namespace ThreeL.Blob.Application.Services
                 return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "数据异常");
 
             var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
-            File.Create(tempFileName);
+            File.Create(tempFileName).Close();
             var fileObj = _mapper.Map<FileObject>(uploadFileDto);
             fileObj.CreateBy = userId;
             fileObj.CreateTime = DateTime.UtcNow;

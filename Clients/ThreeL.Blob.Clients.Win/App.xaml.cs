@@ -52,7 +52,7 @@ namespace ThreeL.Blob.Clients.Win
 
                 service.AddSingleton<UploadingPage>();
                 service.AddSingleton<UploadingPageViewModel>();
-                service.AddSingleton<UploadItemViewModel>();
+                service.AddTransient<UploadItemViewModel>();
                 service.AddSingleton<DownloadingPage>();
                 service.AddSingleton<DownloadingPageViewModel>();
                 service.AddSingleton<TransferComplete>();
@@ -61,9 +61,10 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<HttpRequest>();
                 service.AddSingleton<GrpcService>();
                 service.AddSingleton<GrowlHelper>();
+                service.AddSingleton<FileHelper>();
 
-                var connString = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"db.db");
-                service.AddDbContextFactory<MyDbContext>(option => 
+                var connString = $"Data Source = {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db.db")}";
+                service.AddDbContextFactory<MyDbContext>(option =>
                 {
                     option.UseSqlite(connString);
                 });
