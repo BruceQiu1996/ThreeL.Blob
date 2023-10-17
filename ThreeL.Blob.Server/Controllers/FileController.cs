@@ -37,6 +37,24 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpPost("folder")]
+        [Authorize]
+        public async Task<ActionResult> CreateFolderAsync(FolderCreationDto folderCreationDto)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.CreateFolderAsync(folderCreationDto, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpGet("{parent}")]
         [Authorize]
         public async Task<ActionResult> GetItemsAsync(long parent)

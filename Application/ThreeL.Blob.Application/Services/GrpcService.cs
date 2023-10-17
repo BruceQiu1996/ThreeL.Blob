@@ -68,6 +68,7 @@ namespace ThreeL.Blob.Application.Services
                 }
 
                 fileObj.Location = Path.ChangeExtension(file.TempFileLocation, Path.GetExtension(file.Name));
+                File.Move(file.TempFileLocation, fileObj.Location);
                 fileObj.Status = FileStatus.Normal;
                 await _efBasicRepository.UpdateAsync(fileObj);
                 return new UploadFileResponse() { Result = true, Message = "上传文件完成" };

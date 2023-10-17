@@ -30,12 +30,59 @@ namespace ThreeL.Blob.Application.Services
             _fileBasicRepository = fileBasicRepository;
         }
 
+        public async Task<ServiceResult<FileObjDto>> CreateFolderAsync(FolderCreationDto folderCreationDto, long userId)
+        {
+            string parentFolderLocation = null;
+            if (folderCreationDto.ParentId != 0)
+            {
+                var parentFolder = await _fileBasicRepository.GetAsync(folderCreationDto.ParentId);
+                if (parentFolder == null || !parentFolder.IsFolder || !Directory.Exists(parentFolder.Location))
+                {
+                    return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
+                }
+                parentFolderLocation = parentFolder.Location;
+            }
+            else
+            {
+                var user = await _userBasicRepository.GetAsync(userId);
+                if (user == null || !Directory.Exists(user.Location))
+                {
+                    return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
+                }
+                parentFolderLocation = user.Location;
+            }
+
+            var folderName = Guid.NewGuid().ToString();
+            var folderLocation = Path.Combine(parentFolderLocation, folderName);
+            Directory.CreateDirectory(folderLocation);
+            var fileObject = new FileObject()
+            {
+                CreateBy = userId,
+                CreateTime = DateTime.UtcNow,
+                LastUpdateTime = DateTime.UtcNow,
+                IsFolder = true,
+                Name = folderCreationDto.FolderName,
+                ParentFolder = folderCreationDto.ParentId,
+                Location = folderLocation,
+                Status = FileStatus.Normal
+            };
+            await _fileBasicRepository.InsertAsync(fileObject);
+
+            return new ServiceResult<FileObjDto>(_mapper.Map<FileObjDto>(fileObject));
+        }
+
         public async Task<ServiceResult<IEnumerable<FileObjDto>>> GetItemsAsync(long parentId, long userId)
         {
-            var items = await _fileBasicRepository.Where(x => x.ParentFolder == parentId && x.CreateBy == userId && x.Status == FileStatus.Normal)
+            var items = await _fileBasicRepository
+                .Where(x => x.ParentFolder == parentId && x.CreateBy == userId && x.Status == FileStatus.Normal)
                 .OrderByDescending(x => x.CreateTime).ToListAsync();
 
             return new ServiceResult<IEnumerable<FileObjDto>>(items.Select(_mapper.Map<FileObjDto>));
+        }
+
+        public async Task<ServiceResult<FileObjDto>> UpdateFileObjectNameAsync(UpdateFileObjectNameDto updateFileObjectNameDto, long userId)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<ServiceResult<UploadFileResponseDto>> UploadAsync(UploadFileDto uploadFileDto, long userId)
@@ -64,6 +111,7 @@ namespace ThreeL.Blob.Application.Services
             var fileObj = _mapper.Map<FileObject>(uploadFileDto);
             fileObj.CreateBy = userId;
             fileObj.CreateTime = DateTime.UtcNow;
+            fileObj.LastUpdateTime = DateTime.UtcNow;
             fileObj.Status = FileStatus.Wait;
             fileObj.TempFileLocation = tempFileName;
 

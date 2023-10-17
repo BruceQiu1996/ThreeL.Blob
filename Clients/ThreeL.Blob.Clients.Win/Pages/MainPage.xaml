@@ -7,6 +7,7 @@
       xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
       xmlns:hc="https://handyorg.github.io/handycontrol"
       mc:Ignorable="d" 
+      MouseDown="window_MouseDown"
       FontFamily="微软雅黑"
       d:DesignHeight="450" d:DesignWidth="800"
       Title="MainPage">
@@ -25,7 +26,7 @@
         <Border Grid.Row="0" BorderThickness="0 0 0 1" BorderBrush="#ccc">
             <StackPanel Orientation="Horizontal" Margin="2 0 0 0">
                 <Button Content="立即上传" Command="{Binding UploadCommandAsync}" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
-                <Button Content="新建文件夹" Margin="5 0 0 0" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
+                <Button Content="新建文件夹" Command="{Binding NewFolderCommand}" Margin="5 0 0 0" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
 
                 <hc:SearchBar Style="{StaticResource SearchBarExtend}" hc:InfoElement.Placeholder="搜索文件"
                               Height="30" Width="250"
@@ -45,14 +46,15 @@
                               RequestBringIntoView="ScrollViewer_RequestBringIntoView"
                               Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <ListBox ScrollViewer.CanContentScroll="False"
-                             Padding="0"
-                             hc:BorderElement.CornerRadius="0"
-                             ScrollViewer.IsDeferredScrollingEnabled="True"
-                             ScrollViewer.VerticalScrollBarVisibility="Visible"
-                             PreviewMouseWheel="ListView_PreviewMouseWheel"
-                             Background="Transparent"
-                             ItemsSource="{Binding FileObjDtos,UpdateSourceTrigger=PropertyChanged}"
-                             BorderThickness="0" BorderBrush="Transparent">
+                         Padding="0"
+                         hc:BorderElement.CornerRadius="0"
+                         ScrollViewer.IsDeferredScrollingEnabled="True"
+                         ScrollViewer.VerticalScrollBarVisibility="Visible"
+                         PreviewMouseWheel="ListView_PreviewMouseWheel"
+                         Background="Transparent"
+                         ItemsSource="{Binding FileObjDtos,UpdateSourceTrigger=PropertyChanged}"
+                         SelectedItem="{Binding FileObjDto,UpdateSourceTrigger=PropertyChanged}"
+                         BorderThickness="0" BorderBrush="Transparent">
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="SelectionChanged">
                             <behaviors:InvokeCommandAction Command="{Binding SelectFriendCommandAsync}"></behaviors:InvokeCommandAction>
@@ -96,8 +98,26 @@
                                                            Foreground="Black"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
-                                                           FontSize="13" >
+                                                           FontSize="13" 
+                                                           Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                 </TextBlock>
+                                                <TextBox Text="{Binding Name}"
+                                                         Grid.Row="1"
+                                                         Cursor="Hand"
+                                                         Foreground="Black"
+                                                         HorizontalAlignment="Center"
+                                                         VerticalAlignment="Center"
+                                                         FontSize="13"
+                                                         Margin="0 0 0 3"
+                                                         Initialized="TextBox_Initialized"
+                                                         BorderThickness="2 6"
+                                                         Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                    <behaviors:Interaction.Triggers>
+                                                        <behaviors:EventTrigger EventName="LostFocus">
+                                                            <behaviors:InvokeCommandAction Command="{Binding RenameTextSubmitCommandAsync}"></behaviors:InvokeCommandAction>
+                                                        </behaviors:EventTrigger>
+                                                    </behaviors:Interaction.Triggers>
+                                                </TextBox>
                                             </Grid>
                                         </Border>
                                     </ControlTemplate>

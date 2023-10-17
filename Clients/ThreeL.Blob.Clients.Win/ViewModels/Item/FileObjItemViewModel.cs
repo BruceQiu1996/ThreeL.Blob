@@ -1,13 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using HandyControl.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
-using System.Windows.Media;
+using System.Text.Json;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Helpers;
+using ThreeL.Blob.Clients.Win.Request;
+using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
-using static System.Net.Mime.MediaTypeNames;
+using ThreeL.Blob.Infra.Core.Serializers;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 {
@@ -16,15 +23,24 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public long Id { get; set; }
         public string Name { get; set; }
         public long? Size { get; set; }
-        public long? ParentFolder { get; set; }
+        public long ParentFolder { get; set; }
         public DateTime CreateTime { get; set; }
         public bool IsFolder { get; set; }
-        public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(Name);
+        public BitmapImage Icon => IsFolder ? App.ServiceProvider!.GetRequiredService<FileHelper>().GetBitmapImageByFileExtension("folder.png")
+            : App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(Name);
         public string SizeText => Size?.ToSizeText() ?? string.Empty;
         public string NameDesc => GetShortDesc();
+        private bool _isRename;
+        public bool IsRename
+        {
+            get => _isRename;
+            set => SetProperty(ref _isRename, value);
+        }
+       
+        public AsyncRelayCommand RenameTextSubmitCommandAsync { get; set; }
         public FileObjItemViewModel()
         {
-            
+            RenameTextSubmitCommandAsync = new AsyncRelayCommand(RenameTextSubmitAsync);
         }
 
         public string GetShortDesc()
@@ -44,6 +60,26 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
 
             return $"{temp}..";
+        }
+
+        private async Task RenameTextSubmitAsync() 
+        {
+            if (IsFolder && Id == 0) 
+            {
+                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>().PostAsync(Const.CREATE_FOLDER,new FolderCreationDto() 
+                {
+                    FolderName = Name,
+                    ParentId = ParentFolder
+                });
+
+                if (resp != null) 
+                {
+                    var data = JsonSerializer.Deserialize<FileObjDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                    Id = data.Id;
+                    CreateTime = data.CreateTime;
+                    IsRename = false;
+                }
+            }
         }
 
         private double MeasureTextWidth(string text, double fontSize, string fontFamily)

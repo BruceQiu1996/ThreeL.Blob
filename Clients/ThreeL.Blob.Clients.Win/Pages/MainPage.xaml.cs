@@ -33,5 +33,17 @@ namespace ThreeL.Blob.Clients.Win.Pages
         {
             e.Handled = true;
         }
+
+        private void window_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            Keyboard.ClearFocus();
+        }
+
+        private void TextBox_Initialized(object sender, System.EventArgs e)
+        {
+            var tbox = (sender as TextBox);
+            tbox.Focus();
+            tbox.SelectAll();
+        }
     }
 }

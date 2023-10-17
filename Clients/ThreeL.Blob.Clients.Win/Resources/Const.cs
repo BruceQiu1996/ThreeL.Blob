@@ -5,6 +5,7 @@
         public const string LOGIN = "user/login";
         public const string REFRESH_TOKEN = "user/refresh/token";
         public const string UPLOAD_FILE = "file";
+        public const string CREATE_FOLDER = "file/folder";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);

@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Win32;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -25,6 +24,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
     public class MainPageViewModel : ObservableObject
     {
         public AsyncRelayCommand UploadCommandAsync { get; set; }
+        public RelayCommand NewFolderCommand { get; set; }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand RefreshCommandAsync { get; set; }
         private readonly GrpcService _grpcService;
@@ -41,6 +41,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set => SetProperty(ref _fileObjDtos, value);
         }
 
+        private FileObjItemViewModel _fileObjDto;
+        public FileObjItemViewModel FileObjDto
+        {
+            get => _fileObjDto;
+            set => SetProperty(ref _fileObjDto, value);
+        }
+
         public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest, IDbContextFactory<MyDbContext> dbContextFactory,
                                  GrowlHelper growlHelper, IMapper mapper)
         {
@@ -52,17 +59,32 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             UploadCommandAsync = new AsyncRelayCommand(UploadAsync);
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
+            NewFolderCommand = new RelayCommand(NewFolder);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
         }
 
         private async Task LoadAsync() 
         {
-            await RefreshByParentAsync(0);
+            await RefreshByParentAsync(_currentParent);
         }
 
         private async Task RefreshAsync() 
         {
             await RefreshByParentAsync(_currentParent);
+        }
+
+        private void NewFolder()
+        {
+            var model = new FileObjItemViewModel()
+            {
+                Name = "新建文件夹",
+                ParentFolder = _currentParent,
+                IsFolder = true,
+                IsRename = true
+            };
+
+            FileObjDtos.Add(model);
+            FileObjDto = model;
         }
 
         private async Task RefreshByParentAsync(long parent) 
