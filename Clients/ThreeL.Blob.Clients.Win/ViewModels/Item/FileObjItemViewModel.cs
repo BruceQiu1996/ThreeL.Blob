@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using HandyControl.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
@@ -21,7 +20,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
     public class FileObjItemViewModel : ObservableObject
     {
         public long Id { get; set; }
-        public string Name { get; set; }
+        public string Name
+        {
+            get;
+            set;
+        }
         public long? Size { get; set; }
         public long ParentFolder { get; set; }
         public DateTime CreateTime { get; set; }
@@ -30,17 +33,31 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             : App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(Name);
         public string SizeText => Size?.ToSizeText() ?? string.Empty;
         public string NameDesc => GetShortDesc();
+
         private bool _isRename;
         public bool IsRename
         {
             get => _isRename;
             set => SetProperty(ref _isRename, value);
         }
-       
+
+        private bool _isFocus;
+        public bool IsFocus
+        {
+            get => _isFocus;
+            set => SetProperty(ref _isFocus, value);
+        }
+
         public AsyncRelayCommand RenameTextSubmitCommandAsync { get; set; }
+        public RelayCommand<HandyControl.Controls.TextBox> TextboxGetFocusCommand { get; set; }
         public FileObjItemViewModel()
         {
             RenameTextSubmitCommandAsync = new AsyncRelayCommand(RenameTextSubmitAsync);
+        }
+
+        private void TextboxGetFocus(HandyControl.Controls.TextBox textBox) 
+        {
+            textBox.SelectAll();
         }
 
         public string GetShortDesc()
@@ -62,17 +79,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             return $"{temp}..";
         }
 
-        private async Task RenameTextSubmitAsync() 
+        private async Task RenameTextSubmitAsync()
         {
-            if (IsFolder && Id == 0) 
+            if (IsFolder && Id == 0)
             {
-                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>().PostAsync(Const.CREATE_FOLDER,new FolderCreationDto() 
+                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>().PostAsync(Const.CREATE_FOLDER, new FolderCreationDto()
                 {
                     FolderName = Name,
                     ParentId = ParentFolder
                 });
 
-                if (resp != null) 
+                if (resp != null)
                 {
                     var data = JsonSerializer.Deserialize<FileObjDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
                     Id = data.Id;

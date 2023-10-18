@@ -24,7 +24,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
     public class MainPageViewModel : ObservableObject
     {
         public AsyncRelayCommand UploadCommandAsync { get; set; }
-        public RelayCommand NewFolderCommand { get; set; }
+        public AsyncRelayCommand NewFolderCommand { get; set; }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand RefreshCommandAsync { get; set; }
         private readonly GrpcService _grpcService;
@@ -59,7 +59,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             UploadCommandAsync = new AsyncRelayCommand(UploadAsync);
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
-            NewFolderCommand = new RelayCommand(NewFolder);
+            NewFolderCommand = new AsyncRelayCommand(NewFolder);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
         }
 
@@ -73,7 +73,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             await RefreshByParentAsync(_currentParent);
         }
 
-        private void NewFolder()
+        private async Task NewFolder()
         {
             var model = new FileObjItemViewModel()
             {
@@ -85,6 +85,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
             FileObjDtos.Add(model);
             FileObjDto = model;
+            await Task.Delay(100);
+            model.IsFocus = true;
         }
 
         private async Task RefreshByParentAsync(long parent) 

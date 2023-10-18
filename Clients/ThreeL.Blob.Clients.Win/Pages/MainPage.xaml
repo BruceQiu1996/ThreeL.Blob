@@ -16,13 +16,13 @@
             <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
-    <Grid>
+    <Grid Focusable="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="45"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="30"></RowDefinition>
         </Grid.RowDefinitions>
-
+        <TextBox Width="0" Name="focusHold"></TextBox>
         <Border Grid.Row="0" BorderThickness="0 0 0 1" BorderBrush="#ccc">
             <StackPanel Orientation="Horizontal" Margin="2 0 0 0">
                 <Button Content="立即上传" Command="{Binding UploadCommandAsync}" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
@@ -72,7 +72,7 @@
                             <Setter Property="SnapsToDevicePixels" Value="True" />
                             <Setter Property="Foreground" Value="Black" />
                             <Setter Property="Padding" Value="0" />
-                            <Setter Property="Width" Value="110" />
+                            <Setter Property="Width" Value="100" />
                             <Setter Property="Height" Value="120" />
                             <Setter Property="Margin" Value="5"></Setter>
                             <Setter Property="Template">
@@ -87,7 +87,7 @@
                                                     <RowDefinition Height="95"></RowDefinition>
                                                     <RowDefinition Height="*"></RowDefinition>
                                                 </Grid.RowDefinitions>
-                                                <hc:Gravatar Height="80" Width="80"
+                                                <hc:Gravatar Height="80" Width="70"
                                                              Grid.Row="0"
                                                              HorizontalAlignment="Center"
                                                              VerticalAlignment="Center"
@@ -102,16 +102,27 @@
                                                            Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                 </TextBlock>
                                                 <TextBox Text="{Binding Name}"
+                                                         Name="txtUserName"
                                                          Grid.Row="1"
                                                          Cursor="Hand"
                                                          Foreground="Black"
                                                          HorizontalAlignment="Center"
                                                          VerticalAlignment="Center"
+                                                         GotFocus="txtUserName_GotFocus"
                                                          FontSize="13"
+                                                         Focusable="True"
                                                          Margin="0 0 0 3"
-                                                         Initialized="TextBox_Initialized"
-                                                         BorderThickness="2 6"
+                                                         BorderThickness="1"
                                                          Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                    <TextBox.Style>
+                                                        <Style TargetType="TextBox">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsFocus}" Value="True">
+                                                                    <Setter Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtUserName}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBox.Style>
                                                     <behaviors:Interaction.Triggers>
                                                         <behaviors:EventTrigger EventName="LostFocus">
                                                             <behaviors:InvokeCommandAction Command="{Binding RenameTextSubmitCommandAsync}"></behaviors:InvokeCommandAction>
