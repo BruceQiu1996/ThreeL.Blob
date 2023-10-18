@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Linq;
@@ -9,6 +10,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Dtos;
+using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
@@ -20,19 +22,40 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
     public class FileObjItemViewModel : ObservableObject
     {
         public long Id { get; set; }
+        private string _name;
         public string Name
         {
-            get;
-            set;
+            get => _name;
+            set
+            {
+                SetProperty(ref _name, value);
+                NameDesc = GetShortDesc();
+            }
         }
         public long? Size { get; set; }
         public long ParentFolder { get; set; }
-        public DateTime CreateTime { get; set; }
+        public DateTime _createTime;
+        public DateTime CreateTime
+        {
+            get => _createTime;
+            set => SetProperty(ref _createTime, value);
+        }
+        private DateTime _lastUpdateTime;
+        public DateTime LastUpdateTime
+        {
+            get => _lastUpdateTime;
+            set => SetProperty(ref _lastUpdateTime, value);
+        }
         public bool IsFolder { get; set; }
         public BitmapImage Icon => IsFolder ? App.ServiceProvider!.GetRequiredService<FileHelper>().GetBitmapImageByFileExtension("folder.png")
             : App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(Name);
-        public string SizeText => Size?.ToSizeText() ?? string.Empty;
-        public string NameDesc => GetShortDesc();
+        public string SizeText => Size?.ToSizeText() ?? "未知";
+        private string _nameDesc;
+        public string NameDesc
+        {
+            get => _nameDesc;
+            set => SetProperty(ref _nameDesc, value);
+        }
 
         private bool _isRename;
         public bool IsRename
@@ -48,16 +71,41 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref _isFocus, value);
         }
 
+
+        private bool _isDetailOpen;
+        public bool IsDetailOpen
+        {
+            get => _isDetailOpen;
+            set => SetProperty(ref _isDetailOpen, value);
+        }
+
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                SetProperty(ref _isSelected, value);
+                WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.SelectItem);
+            }
+        }
+
         public AsyncRelayCommand RenameTextSubmitCommandAsync { get; set; }
-        public RelayCommand<HandyControl.Controls.TextBox> TextboxGetFocusCommand { get; set; }
+        public RelayCommand ClickFileObjectCommand { get; set; }
+
         public FileObjItemViewModel()
         {
             RenameTextSubmitCommandAsync = new AsyncRelayCommand(RenameTextSubmitAsync);
+            ClickFileObjectCommand = new RelayCommand(ClickFileObject);
         }
 
-        private void TextboxGetFocus(HandyControl.Controls.TextBox textBox) 
+        private void ClickFileObject()
         {
-            textBox.SelectAll();
+            IsSelected = !IsSelected;
+            if (IsSelected)
+            {
+                IsDetailOpen = true;
+            }
         }
 
         public string GetShortDesc()
@@ -93,8 +141,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     var data = JsonSerializer.Deserialize<FileObjDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
                     Id = data.Id;
+                    Name = data.Name;
                     CreateTime = data.CreateTime;
                     IsRename = false;
+                    LastUpdateTime = data.LastUpdateTime;
                 }
             }
         }

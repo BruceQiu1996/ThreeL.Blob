@@ -9,6 +9,7 @@ namespace ThreeL.Blob.Clients.Win.Dtos
         public long? Size { get; set; }
         public long? ParentFolder { get; set; }
         public DateTime CreateTime { get; set; }
+        public DateTime LastUpdateTime { get; set; }
         public bool IsFolder { get; set; }
     }
 }

@@ -41,11 +41,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set => SetProperty(ref _fileObjDtos, value);
         }
 
-        private FileObjItemViewModel _fileObjDto;
-        public FileObjItemViewModel FileObjDto
+        private int _allCount;
+        public int AllCount
         {
-            get => _fileObjDto;
-            set => SetProperty(ref _fileObjDto, value);
+            get => _allCount;
+            set => SetProperty(ref _allCount, value);
+        }
+
+        private int _selectedCount;
+        public int SelectedCount
+        {
+            get => _selectedCount;
+            set => SetProperty(ref _selectedCount, value);
         }
 
         public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest, IDbContextFactory<MyDbContext> dbContextFactory,
@@ -61,6 +68,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
             NewFolderCommand = new AsyncRelayCommand(NewFolder);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
+
+            //更新选中文件数量
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.SelectItem,  (x, y) =>
+            {
+                SelectedCount = FileObjDtos == null ? 0 : FileObjDtos.Count(x => x.IsSelected);
+            });
         }
 
         private async Task LoadAsync() 
@@ -80,17 +93,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 Name = "新建文件夹",
                 ParentFolder = _currentParent,
                 IsFolder = true,
-                IsRename = true
+                IsRename = true,
+                IsSelected = true,
             };
 
             FileObjDtos.Add(model);
-            FileObjDto = model;
             await Task.Delay(100);
             model.IsFocus = true;
         }
 
         private async Task RefreshByParentAsync(long parent) 
         {
+            FileObjDtos.Clear();
             var resp = await _httpRequest.GetAsync($"{Const.UPLOAD_FILE}/{parent}");
             if (resp != null)
             {
@@ -102,6 +116,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     FileObjDtos = new ObservableCollection<FileObjItemViewModel>(items.Select(_mapper.Map<FileObjItemViewModel>));
                 }
             }
+
+            AllCount = FileObjDtos == null ? 0 : FileObjDtos.Count;
         }
 
         private async Task UploadAsync()

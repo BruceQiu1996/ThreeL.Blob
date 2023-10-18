@@ -6,11 +6,15 @@
       xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win.Pages"
       xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
       xmlns:hc="https://handyorg.github.io/handycontrol"
+      xmlns:convert="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
       mc:Ignorable="d" 
       MouseDown="window_MouseDown"
       FontFamily="微软雅黑"
       d:DesignHeight="450" d:DesignWidth="800"
       Title="MainPage">
+    <Page.Resources>
+        <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
+    </Page.Resources>
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
             <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
@@ -47,13 +51,13 @@
                               Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <ListBox ScrollViewer.CanContentScroll="False"
                          Padding="0"
+                         SelectionMode="Multiple"
                          hc:BorderElement.CornerRadius="0"
                          ScrollViewer.IsDeferredScrollingEnabled="True"
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
                          PreviewMouseWheel="ListView_PreviewMouseWheel"
                          Background="Transparent"
                          ItemsSource="{Binding FileObjDtos,UpdateSourceTrigger=PropertyChanged}"
-                         SelectedItem="{Binding FileObjDto,UpdateSourceTrigger=PropertyChanged}"
                          BorderThickness="0" BorderBrush="Transparent">
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="SelectionChanged">
@@ -72,19 +76,25 @@
                             <Setter Property="SnapsToDevicePixels" Value="True" />
                             <Setter Property="Foreground" Value="Black" />
                             <Setter Property="Padding" Value="0" />
-                            <Setter Property="Width" Value="100" />
+                            <Setter Property="Width" Value="108" />
                             <Setter Property="Height" Value="120" />
-                            <Setter Property="Margin" Value="5"></Setter>
+                            <Setter Property="IsSelected" Value="{Binding IsSelected}" />
+                            <Setter Property="Margin" Value="10 5"></Setter>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                        <Border CornerRadius="5" 
-                                                Cursor="Hand"
+                                        <Button Cursor="Hand"
+                                                Padding="0"
+                                                Height="{TemplateBinding Height}"
+                                                Width="{TemplateBinding Width}"
+                                                Name="fileObjectDetail"
+                                                ToolTip="{Binding Name}"
+                                                Command="{Binding ClickFileObjectCommand}"
                                                 Background="{TemplateBinding Background}"
                                                 >
                                             <Grid>
                                                 <Grid.RowDefinitions>
-                                                    <RowDefinition Height="95"></RowDefinition>
+                                                    <RowDefinition Height="90"></RowDefinition>
                                                     <RowDefinition Height="*"></RowDefinition>
                                                 </Grid.RowDefinitions>
                                                 <hc:Gravatar Height="80" Width="70"
@@ -129,23 +139,34 @@
                                                         </behaviors:EventTrigger>
                                                     </behaviors:Interaction.Triggers>
                                                 </TextBox>
+
+                                                <Popup PopupAnimation="Fade"
+                                                       PlacementTarget="{Binding ElementName=fileObjectDetail}"
+                                                       Style="{x:Null}"
+                                                       HorizontalOffset="50"
+                                                       Effect="{StaticResource EffectShadow5}"
+                                                       Placement="Top" AllowsTransparency="True" StaysOpen="False" IsOpen="{Binding IsDetailOpen}">
+                                                    <Border Background="{StaticResource PrimaryBrush}" Height="100" Width="220" 
+                                                            CornerRadius="5"
+                                                            Padding="5"
+                                                            Effect="{StaticResource EffectShadow5}">
+                                                        <StackPanel Orientation="Vertical">
+                                                            <TextBlock Text="{Binding Name}" Margin="0 2" FontSize="14" Foreground="White"></TextBlock>
+                                                            <TextBlock Margin="0 2" Text="{Binding CreateTime,StringFormat=创建时间: {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
+                                                            <TextBlock Margin="0 2" Text="{Binding LastUpdateTime,StringFormat=修改时间: {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
+                                                            <TextBlock Margin="0 2" Text="{Binding SizeText,StringFormat=文件大小: {0}}" FontSize="14" Foreground="White"></TextBlock>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </Popup>
                                             </Grid>
-                                        </Border>
+                                        </Button>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
                             <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Foreground" Value="White"></Setter>
-                                    <Setter Property="Background" Value="#eee"></Setter>
-                                </Trigger>
-                                <Trigger Property="IsMouseOver" Value="False">
-                                    <Setter Property="Foreground" Value="#ccc"></Setter>
-                                    <Setter Property="Background" Value="Transparent"></Setter>
-                                </Trigger>
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter Property="Foreground" Value="White"></Setter>
-                                    <Setter Property="Background" Value="#eee"></Setter>
+                                    <Setter Property="Background" Value="#ddd"></Setter>
                                 </Trigger>
                                 <Trigger Property="IsSelected" Value="False">
                                     <Setter Property="Foreground" Value="#ccc"></Setter>
@@ -157,5 +178,19 @@
                 </ListBox>
             </ScrollViewer>
         </hc:Card>
+
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="{Binding AllCount,StringFormat=文件总数: {0}}" HorizontalAlignment="Right" FontSize="15" 
+                       Foreground="#555"
+                           Margin="5 0 20 0"
+                       VerticalAlignment="Center"></TextBlock>
+
+                <TextBlock Text="{Binding SelectedCount,StringFormat=选中文件: {0}}" HorizontalAlignment="Right" FontSize="15" 
+                       Foreground="#555"
+                           Margin="5 0 10 0"
+                       VerticalAlignment="Center"></TextBlock>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>
