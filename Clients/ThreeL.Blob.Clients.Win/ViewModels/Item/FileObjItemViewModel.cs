@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Dtos;
@@ -90,22 +91,46 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
         }
 
+        private bool _isUrlSelected;
+        public bool IsUrlSelected
+        {
+            get => _isUrlSelected;
+            set
+            {
+                SetProperty(ref _isUrlSelected, value);
+            }
+        }
+
         public AsyncRelayCommand RenameTextSubmitCommandAsync { get; set; }
-        public RelayCommand ClickFileObjectCommand { get; set; }
+        public RelayCommand<MouseButtonEventArgs> ClickFileObjectCommand { get; set; }
+        public RelayCommand ClickUrlObjectCommand { get; set; }
 
         public FileObjItemViewModel()
         {
             RenameTextSubmitCommandAsync = new AsyncRelayCommand(RenameTextSubmitAsync);
-            ClickFileObjectCommand = new RelayCommand(ClickFileObject);
+            ClickFileObjectCommand = new RelayCommand<MouseButtonEventArgs>(ClickFileObject);
+            ClickUrlObjectCommand = new RelayCommand(ClickUrlObject);
         }
 
-        private void ClickFileObject()
+        private void ClickFileObject(MouseButtonEventArgs e)
         {
-            IsSelected = !IsSelected;
-            if (IsSelected)
+            if (e.ClickCount == 1)
             {
-                IsDetailOpen = true;
+                IsSelected = !IsSelected;
+                if (IsSelected)
+                {
+                    IsDetailOpen = true;
+                }
             }
+            else if (e.ClickCount > 1)
+            {
+                WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.DoubleClickItem);
+            }
+        }
+
+        private void ClickUrlObject() 
+        {
+            WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.DoubleClickItem);
         }
 
         public string GetShortDesc()

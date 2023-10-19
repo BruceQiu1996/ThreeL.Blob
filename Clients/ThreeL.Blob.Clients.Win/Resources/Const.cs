@@ -10,5 +10,6 @@
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);
         public const string SelectItem = nameof(SelectItem);
+        public const string DoubleClickItem = nameof(DoubleClickItem);
     }
 }

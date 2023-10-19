@@ -23,6 +23,7 @@
     <Grid Focusable="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="45"></RowDefinition>
+            <RowDefinition Height="30"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="30"></RowDefinition>
         </Grid.RowDefinitions>
@@ -43,7 +44,67 @@
             </StackPanel>
         </Border>
 
-        <hc:Card Grid.Row="1" BorderThickness="0">
+        <ListBox ScrollViewer.CanContentScroll="False"
+                 Padding="0"
+                 Grid.Row="1"
+                 hc:BorderElement.CornerRadius="0"
+                 ScrollViewer.IsDeferredScrollingEnabled="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                 ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                 PreviewMouseWheel="ListView_PreviewMouseWheel"
+                 Background="#ddd"
+                 ItemsSource="{Binding Urls,UpdateSourceTrigger=PropertyChanged}"
+                 BorderThickness="0" BorderBrush="Transparent">
+            <behaviors:Interaction.Triggers>
+                <behaviors:EventTrigger EventName="SelectionChanged">
+                    <behaviors:InvokeCommandAction Command="{Binding SelectFriendCommandAsync}"></behaviors:InvokeCommandAction>
+                </behaviors:EventTrigger>
+            </behaviors:Interaction.Triggers>
+            <ListBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal"></StackPanel>
+                </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="OverridesDefaultStyle" Value="True" />
+                    <Setter Property="SnapsToDevicePixels" Value="True" />
+                    <Setter Property="Foreground" Value="Black" />
+                    <Setter Property="IsSelected" Value="{Binding IsUrlSelected}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                <Border Cursor="Hand" Background="{TemplateBinding Background}" Margin="0 0 0 0" BorderThickness="0">
+                                    <TextBlock VerticalAlignment="Center" Margin="3 0 0 0" FontSize="13.5" Text="{Binding NameDesc,StringFormat={}{0} &gt;}"></TextBlock>
+                                    <behaviors:Interaction.Triggers>
+                                        <behaviors:EventTrigger EventName="MouseLeftButtonDown">
+                                            <behaviors:InvokeCommandAction Command="{Binding ClickUrlObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                                        </behaviors:EventTrigger>
+                                    </behaviors:Interaction.Triggers>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"></Setter>
+                            <Setter Property="Background" Value="#ddd"></Setter>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="False">
+                            <Setter Property="Foreground" Value="#888"></Setter>
+                            <Setter Property="Background" Value="Transparent"></Setter>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"></Setter>
+                            <Setter Property="Background" Value="#ddd"></Setter>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.ItemContainerStyle>
+        </ListBox>
+
+        <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0">
             <ScrollViewer Grid.Column="0" Grid.Row="2" 
                               Margin="10 5"
                               Grid.ColumnSpan="2"
@@ -51,12 +112,12 @@
                               Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <ListBox ScrollViewer.CanContentScroll="False"
                          Padding="0"
-                         SelectionMode="Multiple"
                          hc:BorderElement.CornerRadius="0"
                          ScrollViewer.IsDeferredScrollingEnabled="True"
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
                          PreviewMouseWheel="ListView_PreviewMouseWheel"
                          Background="Transparent"
+                         SelectionMode="Multiple"
                          ItemsSource="{Binding FileObjDtos,UpdateSourceTrigger=PropertyChanged}"
                          BorderThickness="0" BorderBrush="Transparent">
                     <behaviors:Interaction.Triggers>
@@ -83,15 +144,18 @@
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                        <Button Cursor="Hand"
+                                        <Border Cursor="Hand"
                                                 Padding="0"
                                                 Height="{TemplateBinding Height}"
                                                 Width="{TemplateBinding Width}"
                                                 Name="fileObjectDetail"
-                                                ToolTip="{Binding Name}"
-                                                Command="{Binding ClickFileObjectCommand}"
                                                 Background="{TemplateBinding Background}"
                                                 >
+                                            <behaviors:Interaction.Triggers>
+                                                <behaviors:EventTrigger EventName="MouseLeftButtonDown">
+                                                    <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                                                </behaviors:EventTrigger>
+                                            </behaviors:Interaction.Triggers>
                                             <Grid>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition Height="90"></RowDefinition>
@@ -99,9 +163,11 @@
                                                 </Grid.RowDefinitions>
                                                 <hc:Gravatar Height="80" Width="70"
                                                              Grid.Row="0"
+                                                             Name="icon"
                                                              HorizontalAlignment="Center"
                                                              VerticalAlignment="Center"
-                                                             Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}"/>
+                                                             Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
+                                                </hc:Gravatar>
                                                 <TextBlock Text="{Binding NameDesc}"
                                                            Grid.Row="1"
                                                            Cursor="Hand"
@@ -141,14 +207,16 @@
                                                 </TextBox>
 
                                                 <Popup PopupAnimation="Fade"
-                                                       PlacementTarget="{Binding ElementName=fileObjectDetail}"
-                                                       Style="{x:Null}"
+                                                       Placement="Mouse"
+                                                       Focusable="False"
                                                        HorizontalOffset="50"
                                                        Effect="{StaticResource EffectShadow5}"
-                                                       Placement="Top" AllowsTransparency="True" StaysOpen="False" IsOpen="{Binding IsDetailOpen}">
+                                                       AllowsTransparency="True"
+                                                       IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
                                                     <Border Background="{StaticResource PrimaryBrush}" Height="100" Width="220" 
                                                             CornerRadius="5"
                                                             Padding="5"
+                                                            Opacity="0.8"
                                                             Effect="{StaticResource EffectShadow5}">
                                                         <StackPanel Orientation="Vertical">
                                                             <TextBlock Text="{Binding Name}" Margin="0 2" FontSize="14" Foreground="White"></TextBlock>
@@ -159,7 +227,7 @@
                                                     </Border>
                                                 </Popup>
                                             </Grid>
-                                        </Button>
+                                        </Border>
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
@@ -179,14 +247,14 @@
             </ScrollViewer>
         </hc:Card>
 
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Text="{Binding AllCount,StringFormat=文件总数: {0}}" HorizontalAlignment="Right" FontSize="15" 
+                <TextBlock Text="{Binding AllCount,StringFormat=文件总数: {0}}" HorizontalAlignment="Right" FontSize="14" 
                        Foreground="#555"
                            Margin="5 0 20 0"
                        VerticalAlignment="Center"></TextBlock>
 
-                <TextBlock Text="{Binding SelectedCount,StringFormat=选中文件: {0}}" HorizontalAlignment="Right" FontSize="15" 
+                <TextBlock Text="{Binding SelectedCount,StringFormat=选中文件: {0}}" HorizontalAlignment="Right" FontSize="14" 
                        Foreground="#555"
                            Margin="5 0 10 0"
                        VerticalAlignment="Center"></TextBlock>

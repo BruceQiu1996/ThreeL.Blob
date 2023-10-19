@@ -38,7 +38,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public ObservableCollection<FileObjItemViewModel> FileObjDtos
         {
             get => _fileObjDtos;
-            set => SetProperty(ref _fileObjDtos, value);
+            set
+            { 
+                SetProperty(ref _fileObjDtos, value);
+                SelectedCount = value == null ? 0 : value.Count(x => x.IsSelected);
+            }
+        }
+
+        private ObservableCollection<FileObjItemViewModel> _urls;
+        public ObservableCollection<FileObjItemViewModel> Urls
+        {
+            get => _urls;
+            set => SetProperty(ref _urls, value);
         }
 
         private int _allCount;
@@ -55,7 +66,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set => SetProperty(ref _selectedCount, value);
         }
 
-        public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest, IDbContextFactory<MyDbContext> dbContextFactory,
+        public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest, 
+                                 IDbContextFactory<MyDbContext> dbContextFactory,
                                  GrowlHelper growlHelper, IMapper mapper)
         {
             _mapper = mapper;
@@ -68,11 +80,27 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
             NewFolderCommand = new AsyncRelayCommand(NewFolder);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
+            Urls = new ObservableCollection<FileObjItemViewModel>() 
+            {
+                new FileObjItemViewModel
+                {
+                    Id = 0,
+                    Name = "我的网盘",
+                    IsUrlSelected = true,
+                    IsFolder = true
+                }
+            };
 
             //更新选中文件数量
             WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.SelectItem,  (x, y) =>
             {
                 SelectedCount = FileObjDtos == null ? 0 : FileObjDtos.Count(x => x.IsSelected);
+            });
+
+            //双击事件
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.DoubleClickItem, async (x, y) =>
+            {
+                await DoubleClickAsync(y);
             });
         }
 
@@ -102,9 +130,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             model.IsFocus = true;
         }
 
+        private async Task DoubleClickAsync(FileObjItemViewModel fileObjItemViewModel) 
+        {
+            if (fileObjItemViewModel.IsFolder) 
+            {
+                await RefreshByParentAsync(fileObjItemViewModel.Id);
+                Urls.Add(fileObjItemViewModel);
+                fileObjItemViewModel.IsUrlSelected = true;
+            }
+        }
+
         private async Task RefreshByParentAsync(long parent) 
         {
-            FileObjDtos.Clear();
             var resp = await _httpRequest.GetAsync($"{Const.UPLOAD_FILE}/{parent}");
             if (resp != null)
             {
@@ -114,6 +151,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 if (items != null && items.Count() > 0)
                 {
                     FileObjDtos = new ObservableCollection<FileObjItemViewModel>(items.Select(_mapper.Map<FileObjItemViewModel>));
+                }
+                else 
+                {
+                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
                 }
             }
 
