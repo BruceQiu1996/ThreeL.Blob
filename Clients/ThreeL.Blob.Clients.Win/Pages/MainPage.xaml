@@ -146,6 +146,7 @@
                                     <ControlTemplate TargetType="{x:Type ListBoxItem}">
                                         <Border Cursor="Hand"
                                                 Padding="0"
+                                                CornerRadius="3"
                                                 Height="{TemplateBinding Height}"
                                                 Width="{TemplateBinding Width}"
                                                 Name="fileObjectDetail"
@@ -232,14 +233,14 @@
                                 </Setter.Value>
                             </Setter>
                             <Style.Triggers>
-                                <Trigger Property="IsSelected" Value="True">
+                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                     <Setter Property="Foreground" Value="White"></Setter>
                                     <Setter Property="Background" Value="#ddd"></Setter>
-                                </Trigger>
-                                <Trigger Property="IsSelected" Value="False">
-                                    <Setter Property="Foreground" Value="#ccc"></Setter>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="Foreground" Value="White"></Setter>
                                     <Setter Property="Background" Value="Transparent"></Setter>
-                                </Trigger>
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </ListBox.ItemContainerStyle>

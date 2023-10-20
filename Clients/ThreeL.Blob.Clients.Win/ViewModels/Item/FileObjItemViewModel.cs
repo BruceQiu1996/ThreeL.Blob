@@ -72,14 +72,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref _isFocus, value);
         }
 
-
-        private bool _isDetailOpen;
-        public bool IsDetailOpen
-        {
-            get => _isDetailOpen;
-            set => SetProperty(ref _isDetailOpen, value);
-        }
-
         private bool _isSelected;
         public bool IsSelected
         {
@@ -117,10 +109,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             if (e.ClickCount == 1)
             {
                 IsSelected = !IsSelected;
-                if (IsSelected)
-                {
-                    IsDetailOpen = true;
-                }
             }
             else if (e.ClickCount > 1)
             {

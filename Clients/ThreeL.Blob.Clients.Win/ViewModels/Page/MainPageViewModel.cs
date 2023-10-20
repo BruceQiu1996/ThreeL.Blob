@@ -39,7 +39,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         {
             get => _fileObjDtos;
             set
-            { 
+            {
                 SetProperty(ref _fileObjDtos, value);
                 SelectedCount = value == null ? 0 : value.Count(x => x.IsSelected);
             }
@@ -66,7 +66,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set => SetProperty(ref _selectedCount, value);
         }
 
-        public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest, 
+        public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest,
                                  IDbContextFactory<MyDbContext> dbContextFactory,
                                  GrowlHelper growlHelper, IMapper mapper)
         {
@@ -80,7 +80,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
             NewFolderCommand = new AsyncRelayCommand(NewFolder);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
-            Urls = new ObservableCollection<FileObjItemViewModel>() 
+            Urls = new ObservableCollection<FileObjItemViewModel>()
             {
                 new FileObjItemViewModel
                 {
@@ -92,7 +92,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             };
 
             //更新选中文件数量
-            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.SelectItem,  (x, y) =>
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.SelectItem, (x, y) =>
             {
                 SelectedCount = FileObjDtos == null ? 0 : FileObjDtos.Count(x => x.IsSelected);
             });
@@ -104,12 +104,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             });
         }
 
-        private async Task LoadAsync() 
+        private async Task LoadAsync()
         {
             await RefreshByParentAsync(_currentParent);
         }
 
-        private async Task RefreshAsync() 
+        private async Task RefreshAsync()
         {
             await RefreshByParentAsync(_currentParent);
         }
@@ -130,17 +130,29 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             model.IsFocus = true;
         }
 
-        private async Task DoubleClickAsync(FileObjItemViewModel fileObjItemViewModel) 
+        private async Task DoubleClickAsync(FileObjItemViewModel fileObjItemViewModel)
         {
-            if (fileObjItemViewModel.IsFolder) 
+            if (fileObjItemViewModel.IsFolder)
             {
                 await RefreshByParentAsync(fileObjItemViewModel.Id);
-                Urls.Add(fileObjItemViewModel);
+                var index = Urls.IndexOf(fileObjItemViewModel);
+                if (index == -1)
+                {
+                    Urls.Add(fileObjItemViewModel);
+                }
+                else
+                {
+                    for (var i = Urls.Count - 1; i > index; i--)
+                    {
+                        Urls.RemoveAt(i);
+                    }
+                }
+
                 fileObjItemViewModel.IsUrlSelected = true;
             }
         }
 
-        private async Task RefreshByParentAsync(long parent) 
+        private async Task RefreshByParentAsync(long parent)
         {
             var resp = await _httpRequest.GetAsync($"{Const.UPLOAD_FILE}/{parent}");
             if (resp != null)
@@ -152,7 +164,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 {
                     FileObjDtos = new ObservableCollection<FileObjItemViewModel>(items.Select(_mapper.Map<FileObjItemViewModel>));
                 }
-                else 
+                else
                 {
                     FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
                 }
