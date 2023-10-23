@@ -16,6 +16,33 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 
+        <StackPanel Orientation="Horizontal">
+            <Button Margin="2 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonWarning}">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource pause}" 
+                          Stroke="White"
+                          Width="20" Height="20" Stretch="UniformToFill"></Path>
+                    <TextBlock Text="全部暂停" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
+                </StackPanel>
+            </Button>
+            <Button Margin="5 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonInfo}">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource start}" 
+                          Stroke="White"
+                          Width="20" Height="20" Stretch="UniformToFill"></Path>
+                    <TextBlock Text="全部恢复" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
+                </StackPanel>
+            </Button>
+            <Button Margin="5 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonDanger}">
+                <StackPanel Orientation="Horizontal">
+                    <Path Data="{StaticResource cancel}" 
+                          Stroke="White"
+                          Width="20" Height="20" Stretch="UniformToFill"></Path>
+                    <TextBlock Text="全部取消" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+        
         <Border CornerRadius="5" Grid.Row="1">
             <ScrollViewer Margin="2 0 0 5" RequestBringIntoView="ScrollViewer_RequestBringIntoView">
                 <ListBox ScrollViewer.CanContentScroll="False"
@@ -74,17 +101,36 @@
                                                 </Grid>
                                                 <ProgressBar Grid.Column="1" Value="{Binding Progress}"></ProgressBar>
                                                 <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Center">
-                                                    <Button Content="暂停" 
-                                                            Visibility="{Binding CanSuspend,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                                    <Button Margin="5 0 0 0" 
+                                                            Width="100"
                                                             Command="{Binding PauseCommandAsync}"
-                                                            Style="{StaticResource ButtonWarning}" Margin="5 0" Cursor="Hand"></Button>
-                                                    <Button Content="继续" 
-                                                            Visibility="{Binding CanSuspend,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                                                            Cursor="Hand" Visibility="{Binding CanSuspend,Converter={StaticResource Boolean2VisibilityConverter}}"  Padding="5" Height="32" Style="{StaticResource ButtonWarning}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Path Data="{StaticResource pause}" 
+                  Stroke="White"
+                  Width="20" Height="20" Stretch="UniformToFill"></Path>
+                                                            <TextBlock Text="暂停" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Margin="5 0 0 0" Cursor="Hand" 
+                                                            Width="100"
                                                             Command="{Binding ResumeCommandAsync}"
-                                                            Style="{StaticResource ButtonInfo}" Margin="5 0" Cursor="Hand"></Button>
-                                                    <Button Content="取消" 
-                                                            Command="{Binding CancelCommandAsync}"
-                                                            Style="{StaticResource ButtonDanger}" Margin="5 0" Cursor="Hand"></Button>
+                                                            Visibility="{Binding CanSuspend,Converter={StaticResource Boolean2VisibilityReConverter}}" Padding="5" Height="32" Style="{StaticResource ButtonInfo}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Path Data="{StaticResource start}" 
+                  Stroke="White"
+                  Width="20" Height="20" Stretch="UniformToFill"></Path>
+                                                            <TextBlock Text="恢复" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Margin="5 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonDanger}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Path Data="{StaticResource cancel}" 
+                  Stroke="White"
+                  Width="20" Height="20" Stretch="UniformToFill"></Path>
+                                                            <TextBlock Text="取消" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
+                                                        </StackPanel>
+                                                    </Button>
                                                 </StackPanel>
                                             </Grid>
                                         </Border>

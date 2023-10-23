@@ -4,7 +4,6 @@ using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Domain.Aggregate.FileObject;
-using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Services;
@@ -32,31 +31,27 @@ namespace ThreeL.Blob.Application.Services
                 var userid = long.Parse(userIdentity!);
                 await uploadFileRequest.MoveNext();
                 //寻找临时文件位置
+                var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
                 var file = await _redisProvider
-                    .HGetAsync<FileObject>($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userid}", uploadFileRequest.Current.FileId.ToString());
+                    .HGetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userid}", uploadFileRequest.Current.FileId.ToString());
 
-                if (file == null || !File.Exists(file.TempFileLocation))
+                if (file == null || fileObject == null || !File.Exists(fileObject.TempFileLocation) || file != new FileInfo(fileObject.TempFileLocation).Length)
                 {
-                    _logger.LogError($"缓存文件异常{uploadFileRequest.Current.FileId}");
+                    _logger.LogError($"文件数据异常{uploadFileRequest.Current.FileId}");
                     return new UploadFileResponse() { Result = false, Message = "上传文件失败" };
                 }
 
-                var fileObj = await _efBasicRepository.GetAsync(file.Id);
-                if (fileObj == null)
-                {
-                    _logger.LogError($"文件异常{uploadFileRequest.Current.FileId}");
-                    return new UploadFileResponse() { Result = false, Message = "上传文件失败" };
-                }
-
-                if (fileObj.Status != FileStatus.Wait && fileObj.Status != FileStatus.UploadSuspend) //上传暂停或者没有上传
+                if (fileObject.Status != FileStatus.Wait && fileObject.Status != FileStatus.UploadingSuspend)
                 {
                     _logger.LogError($"文件状态异常{uploadFileRequest.Current.FileId}");
                     return new UploadFileResponse() { Result = false, Message = "上传文件状态异常" };
                 }
 
-                using (var fileStream = File.Open(file.TempFileLocation, FileMode.Append, FileAccess.Write))
+                fileObject.Status = FileStatus.Uploading;
+                await _efBasicRepository.UpdateAsync(fileObject);
+                using (var fileStream = File.Open(fileObject.TempFileLocation, FileMode.Append, FileAccess.Write))
                 {
-                    var received = 0L;
+                    var received = file!.Value;
                     do
                     {
                         var request = uploadFileRequest.Current;
@@ -64,19 +59,25 @@ namespace ThreeL.Blob.Application.Services
                         fileStream.Seek(received, SeekOrigin.Begin);
                         await fileStream.WriteAsync(buffer);
                         received += buffer.Length;
+                        await _redisProvider.HSetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userid}", uploadFileRequest.Current.FileId.ToString(), received);
                     } while (await uploadFileRequest.MoveNext());
                 }
 
-                fileObj.Location = Path.ChangeExtension(file.TempFileLocation, Path.GetExtension(file.Name));
-                File.Move(file.TempFileLocation, fileObj.Location);
-                fileObj.Status = FileStatus.Normal;
-                await _efBasicRepository.UpdateAsync(fileObj);
+                fileObject.Location = Path.ChangeExtension(fileObject.TempFileLocation, Path.GetExtension(fileObject.Name));
+                File.Move(fileObject.TempFileLocation, fileObject.Location);
+                fileObject.Status = FileStatus.Normal;
+                await _efBasicRepository.UpdateAsync(fileObject);
+
                 return new UploadFileResponse() { Result = true, Message = "上传文件完成" };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                return new UploadFileResponse() { Result = false, Message = "上传文件异常结束" };
+                var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
+                fileObject.Status = FileStatus.UploadingSuspend;
+                await _efBasicRepository.UpdateAsync(fileObject);
+
+                return new UploadFileResponse() { Result = false, Message = "上传文件异常" };
             }
         }
     }

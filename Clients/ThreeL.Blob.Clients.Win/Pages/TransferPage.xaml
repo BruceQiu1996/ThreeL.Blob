@@ -17,7 +17,7 @@
     </behaviors:Interaction.Triggers>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150"></ColumnDefinition>
+            <ColumnDefinition Width="120"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
@@ -32,7 +32,7 @@
                         <StackPanel Orientation="Vertical"></StackPanel>
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
-                <ListBoxItem Height="35" Width="135" Margin="-1 1 0 0" IsSelected="True">
+                <ListBoxItem Padding="0" Height="35" Width="105" Margin="-1 1 0 0" IsSelected="True">
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
                             <behaviors:InvokeCommandAction Command="{Binding ShiftUploadingPageCommand}"></behaviors:InvokeCommandAction>
@@ -56,21 +56,20 @@
                         <Label BorderThickness="0"
                                Cursor="Hand"
                                ToolTip="正在上传"
-                               Height="40" Width="40"
                                Background="Transparent"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
                             <Path Data="{StaticResource UpGeometry}" 
                                   SnapsToDevicePixels="True"
-                                  Height="20" Width="20"
+                                  Height="15" Width="15"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
                                   Stretch="Uniform"/>
                         </Label>
-                        <TextBlock Text="正在上传" VerticalAlignment="Center"></TextBlock>
+                        <TextBlock Text="正在上传" FontSize="13.5" VerticalAlignment="Center"></TextBlock>
                     </StackPanel>
                 </ListBoxItem>
 
-                <ListBoxItem Height="35" Width="135" Margin="-1 20 0 0">
+                <ListBoxItem Padding="0" Height="35" Width="105" Margin="-1 20 0 0">
                     <ListBoxItem.Style>
                         <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                             <Style.Triggers>
@@ -94,21 +93,20 @@
                         <Label BorderThickness="0"
                                Cursor="Hand"
                                ToolTip="正在下载"
-                               Height="40" Width="40"
                                Background="Transparent"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
                             <Path Data="{StaticResource DownGeometry}" 
                                   SnapsToDevicePixels="True"
-                                  Height="20" Width="20"
+                                  Height="15" Width="15"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
                                   Stretch="Uniform"/>
                         </Label>
-                        <TextBlock Text="正在下载" VerticalAlignment="Center"></TextBlock>
+                        <TextBlock Text="正在下载" FontSize="13.5" VerticalAlignment="Center"></TextBlock>
                     </StackPanel>
                 </ListBoxItem>
 
-                <ListBoxItem Height="35" Width="135" Margin="-1 20 0 0">
+                <ListBoxItem Height="35" Width="105" Padding="0" Margin="-1 20 0 0">
                     <ListBoxItem.Style>
                         <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                             <Style.Triggers>
@@ -132,17 +130,16 @@
                         <Label BorderThickness="0"
                                Cursor="Hand"
                                ToolTip="传输完成"
-                               Height="40" Width="40"
                                Background="Transparent"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
                             <Path Data="{StaticResource SuccessGeometry}" 
                                   SnapsToDevicePixels="True"
-                                  Height="20" Width="20"
+                                  Height="15" Width="15"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
                                   Stretch="Uniform"/>
                         </Label>
-                        <TextBlock Text="传输完成" VerticalAlignment="Center"></TextBlock>
+                        <TextBlock Text="传输完成" FontSize="13.5" VerticalAlignment="Center"></TextBlock>
                     </StackPanel>
                 </ListBoxItem>
             </ListBox>

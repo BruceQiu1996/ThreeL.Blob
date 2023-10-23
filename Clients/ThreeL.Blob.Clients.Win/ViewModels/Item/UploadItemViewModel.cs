@@ -2,23 +2,26 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
+using System.IO;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
+using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
+using ThreeL.Blob.Infra.Core.Serializers;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 {
     public class UploadItemViewModel : ObservableObject
     {
-        private readonly CancellationTokenSource _tokenSource; //取消
-        private readonly ManualResetEvent _resetEvent;//暂停
+        private CancellationTokenSource _tokenSource; //取消
         private Task _uploadTask;
         public string Id { get; set; }
         public long FileId { get; set; }
@@ -49,12 +52,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         private readonly GrpcService _grpcService;
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
-        public UploadItemViewModel(GrpcService grpcService, IDbContextFactory<MyDbContext> dbContextFactory)
+        private readonly HttpRequest _httpRequest;
+        public UploadItemViewModel(GrpcService grpcService, IDbContextFactory<MyDbContext> dbContextFactory, HttpRequest httpRequest)
         {
             _grpcService = grpcService;
+            _httpRequest = httpRequest;
             _dbContextFactory = dbContextFactory;
-            _tokenSource = new CancellationTokenSource();
-            _resetEvent = new ManualResetEvent(true);
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
             PauseCommandAsync = new AsyncRelayCommand(PauseAsync);
             CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
@@ -62,10 +65,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public async Task StartAsync()
         {
+            _tokenSource = new CancellationTokenSource();
             _uploadTask = Task.Run(async () =>
             {
                 var resp = await _grpcService
-                    .UploadFileAsync(_tokenSource.Token, _resetEvent, FileLocation, FileId, TransferBytes, 1024 * 1024, SetTransferBytes);
+                    .UploadFileAsync(_tokenSource.Token, FileLocation, FileId, TransferBytes, 1024 * 1024, OccurException, SetTransferBytes);
                 if (resp.Result)
                 {
 
@@ -82,10 +86,29 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         private async Task ResumeAsync()
         {
+            if (!File.Exists(FileLocation))
+                return;
             //请求远端,本地是否启动任务
+            var resp = await _httpRequest.GetAsync(string.Format(Const.UPLOADING_STATUS, FileId));
+            if (resp != null && resp.IsSuccessStatusCode)
+            {
+                var status = JsonSerializer
+                    .Deserialize<FileUploadingStatusDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
 
-            _resetEvent.Set();
-            CanSuspend = true;
+                using (var fs = new FileStream(FileLocation, FileMode.Open, FileAccess.Read)) 
+                {
+                    if (status.Code != fs.ToSHA256()) 
+                    {
+                        return;
+                    }
+                }
+                if (status != null)
+                {
+                    TransferBytes = status.UploadedBytes;
+                    await StartAsync();
+                }
+                CanSuspend = true;
+            }
         }
 
         /// <summary>
@@ -94,17 +117,21 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         /// <returns></returns>
         private async Task PauseAsync()
         {
-            _resetEvent.Reset();
-            CanSuspend = false;
-            using (var context = _dbContextFactory.CreateDbContext())
+            var resp = await _httpRequest.PutAsync(string.Format(Const.UPLOADING_PAUSE, FileId), null);
+            if (resp != null && resp.IsSuccessStatusCode)
             {
-                var record = await context.UploadFileRecords.FirstOrDefaultAsync(x => x.Id == Id);
-                if (record != null)
+                _tokenSource?.Cancel();
+                CanSuspend = false;
+                using (var context = _dbContextFactory.CreateDbContext())
                 {
-                    record.Status = Status.Suspend;
-                    record.TransferBytes = TransferBytes;
+                    var record = await context.UploadFileRecords.FirstOrDefaultAsync(x => x.Id == Id);
+                    if (record != null)
+                    {
+                        record.Status = Status.Suspend;
+                        record.TransferBytes = TransferBytes;
 
-                    await context.SaveChangesAsync();
+                        await context.SaveChangesAsync();
+                    }
                 }
             }
         }
@@ -121,6 +148,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             TransferBytes = bytes;
             Progress = TransferBytes / (double)Size * 100;
+        }
+
+        public async void OccurException(string exception)
+        {
+            await PauseAsync();
         }
     }
 }

@@ -6,6 +6,8 @@
         public const string REFRESH_TOKEN = "user/refresh/token";
         public const string UPLOAD_FILE = "file";
         public const string CREATE_FOLDER = "file/folder";
+        public const string UPLOADING_STATUS = "file/upload-status/{0}";
+        public const string UPLOADING_PAUSE = "file/upload-pause/{0}";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);

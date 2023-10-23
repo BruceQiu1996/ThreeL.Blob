@@ -37,6 +37,42 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpGet("upload-status/{fileId}")]
+        [Authorize]
+        public async Task<ActionResult> UploadingStatusAsync(long fileId)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.GetUploadingStatusAsync(fileId, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [HttpPut("upload-pause/{fileId}")]
+        [Authorize]
+        public async Task<ActionResult> PauseUploadingAsync(long fileId)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.PauseUploadingAsync(fileId, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpPost("folder")]
         [Authorize]
         public async Task<ActionResult> CreateFolderAsync(FolderCreationDto folderCreationDto)

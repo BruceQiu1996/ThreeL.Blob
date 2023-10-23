@@ -80,6 +80,48 @@ namespace ThreeL.Blob.Application.Services
             return new ServiceResult<IEnumerable<FileObjDto>>(items.Select(_mapper.Map<FileObjDto>));
         }
 
+        public async Task<ServiceResult<FileUploadingStatusDto>> GetUploadingStatusAsync(long fileId, long userId)
+        {
+            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
+            if (file == null)
+                return new ServiceResult<FileUploadingStatusDto>(HttpStatusCode.BadRequest, "数据异常");
+
+            var status = await _redisProvider
+                    .HGetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userId}", fileId.ToString());
+            if (status == null)
+            {
+                return new ServiceResult<FileUploadingStatusDto>(HttpStatusCode.BadRequest, "数据异常");
+            }
+
+            return new ServiceResult<FileUploadingStatusDto>
+            (
+                new FileUploadingStatusDto()
+                {
+                    Id = fileId,
+                    UploadedBytes = status.Value,
+                    Code = file!.Code!,
+                    Status = file.Status!.Value
+                }
+            );
+        }
+
+        public async Task<ServiceResult> PauseUploadingAsync(long fileId, long userId)
+        {
+            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
+            if (file == null)
+                return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
+
+            if(file.Status != FileStatus.Uploading) 
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
+            }
+
+            file.Status = FileStatus.UploadingSuspend;
+            await _fileBasicRepository.UpdateAsync(file);
+
+            return new ServiceResult();
+        }
+
         public async Task<ServiceResult<FileObjDto>> UpdateFileObjectNameAsync(UpdateFileObjectNameDto updateFileObjectNameDto, long userId)
         {
             throw new NotImplementedException();
@@ -116,7 +158,7 @@ namespace ThreeL.Blob.Application.Services
             fileObj.TempFileLocation = tempFileName;
 
             await _fileBasicRepository.InsertAsync(fileObj);
-            await _redisProvider.HSetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userId}", fileObj.Id.ToString(), fileObj, TimeSpan.FromDays(3));
+            await _redisProvider.HSetAsync($"{Const.REDIS_UPLOADFILE_CACHE_KEY}{userId}", fileObj.Id.ToString(), (long)0, TimeSpan.FromDays(3));
 
             return new ServiceResult<UploadFileResponseDto>(new UploadFileResponseDto()
             {

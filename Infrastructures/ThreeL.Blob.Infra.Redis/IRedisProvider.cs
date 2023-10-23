@@ -9,7 +9,9 @@ namespace ThreeL.Blob.Infra.Redis
         Task<bool> StringSetAsync(string cacheKey, string cacheValue, TimeSpan? expiration = null, When when = When.Always);
         Task<string> StringGetAsync(string cacheKey);
         Task<bool> HSetAsync<T>(string cacheKey, string cacheValue, T value, TimeSpan? expiration = null, When when = When.Always);
+        Task<bool> HSetAsync(string cacheKey, string cacheValue, long value, TimeSpan? expiration = null, When when = When.Always);
         Task<T> HGetAsync<T>(string cacheKey, string field);
+        Task<long?> HGetAsync(string cacheKey, string field);
         Task<Dictionary<string, T>> HGetAllAsync<T>(string cacheKey);
         Task<bool> HExistsAsync(string cacheKey, string field);
         Task SetAddAsync(string cacheKey, string[] cacheValues, TimeSpan? expiration = null);

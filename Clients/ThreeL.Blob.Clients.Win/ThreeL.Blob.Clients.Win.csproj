@@ -10,6 +10,7 @@
 	<ItemGroup>
 		<None Remove="appsettings.json" />
 		<None Remove="Images\folder.png" />
+		<None Remove="Images\image.png" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,6 +36,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Core\ThreeL.Blob.Infra.Core.csproj" />
+		<ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Domain\ThreeL.Blob.Shared.Domain.csproj" />
 		<ProjectReference Include="..\ThreeL.Blob.Clients.Grpc\ThreeL.Blob.Clients.Grpc.csproj" />
 	</ItemGroup>
 	<ItemGroup>

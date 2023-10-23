@@ -35,6 +35,17 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 case ".rmvb":
                     icon = "vedio.png";
                     break;
+                case ".xbm":
+                case ".bmp":
+                case ".jpg":
+                case ".jpeg":
+                case ".png":
+                case ".gif":
+                case ".tif":
+                case ".tiff":
+                case ".ico":
+                    icon = "image.png";
+                    break;
                 case ".pdf":
                     icon = "pdf.png";
                     break;

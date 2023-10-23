@@ -27,6 +27,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand NewFolderCommand { get; set; }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand RefreshCommandAsync { get; set; }
+        public RelayCommand GridGotFocusCommand { get; set; }
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
@@ -79,6 +80,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
             NewFolderCommand = new AsyncRelayCommand(NewFolder);
+            GridGotFocusCommand = new RelayCommand(GridGotFocus);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
             {
@@ -112,6 +114,14 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task RefreshAsync()
         {
             await RefreshByParentAsync(_currentParent);
+        }
+
+        private void GridGotFocus() 
+        {
+            foreach (var item in FileObjDtos)
+            {
+                item.IsSelected = false;
+            }
         }
 
         private async Task NewFolder()
@@ -149,6 +159,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 }
 
                 fileObjItemViewModel.IsUrlSelected = true;
+                _currentParent = fileObjItemViewModel.Id;
             }
         }
 
@@ -186,7 +197,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     {
                         Name = fileInfo.Name,
                         Size = fileInfo.Length,
-                        ParentFolder = 0,
+                        ParentFolder = _currentParent,
                         Code = code
                     });
 

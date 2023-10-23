@@ -79,6 +79,48 @@ namespace ThreeL.Blob.Clients.Win.Request
             return default;
         }
 
+        public async Task<HttpResponseMessage> PutAsync(string url, dynamic body, bool excuted = false)
+        {
+            HttpResponseMessage resp = null;
+            if (body == null)
+            {
+                resp = await _httpClient.PutAsync(url, null);
+            }
+            else
+            {
+                var content = new StringContent(JsonSerializer.Serialize(body, _jsonOptions));
+                content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                resp = await _httpClient.PostAsync(url, content);
+            }
+            if (resp.IsSuccessStatusCode)
+            {
+                return resp;
+            }
+            else if (resp.StatusCode == HttpStatusCode.Unauthorized && !excuted)
+            {
+                var result = TryRefreshToken?.Invoke();
+                if (result == null || !result.Value)
+                {
+                    ExcuteWhileUnauthorized?.Invoke();
+                    return default;
+                }
+                excuted = true;
+                return await PostAsync(url, body, excuted);
+            }
+            else if (resp.StatusCode == HttpStatusCode.BadRequest)
+            {
+                var message = await resp.Content.ReadAsStringAsync();
+                ExcuteWhileBadRequest?.Invoke(message);
+            }
+            else if (resp.StatusCode == HttpStatusCode.InternalServerError)
+            {
+                var message = await resp.Content.ReadAsStringAsync();
+                ExcuteWhileInternalServerError?.Invoke(message);
+            }
+
+            return default;
+        }
+
         public async Task<HttpResponseMessage> GetAsync(string url, bool excuted = false)
         {
             var resp = await _httpClient.GetAsync(url).ConfigureAwait(false);

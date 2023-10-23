@@ -53,9 +53,8 @@ namespace ThreeL.Blob.Clients.Win.Request
         /// <param name="singlePacket">分片大小</param>
         /// <param name="sendedBytesCallBack">数据上传回调</param>
         /// <returns></returns>
-        public async Task<UploadFileResponse> UploadFileAsync(CancellationToken cancellationToken, ManualResetEvent manualReset,
-                                                              string file, long fileId, long statIndex = 0, int singlePacket = 1024 * 1024,
-                                                              Action<long> sendedBytesCallBack = null)
+        public async Task<UploadFileResponse> UploadFileAsync(CancellationToken cancellationToken, string file, long fileId, long statIndex = 0, int singlePacket = 1024 * 1024,
+                                                              Action<string> exceptionCallback = null, Action<long> sendedBytesCallBack = null)
         {
             var call = _fileGrpcServiceClient.UploadFile(new Metadata()
             {
@@ -64,33 +63,47 @@ namespace ThreeL.Blob.Clients.Win.Request
 
             using (var fileStream = File.OpenRead(file))
             {
-                var sended = 0L;
-                var totalLength = fileStream.Length;
-                var buffer = new byte[1024 * 10];
-                while (sended < totalLength)
+                try
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    var sended = statIndex;
+                    fileStream.Seek(statIndex, SeekOrigin.Begin);
+                    var totalLength = fileStream.Length;
+                    var buffer = new byte[1024 * 10];
+                    while (sended < totalLength)
                     {
-                        return new UploadFileResponse()
+                        if (cancellationToken.IsCancellationRequested)
                         {
-                            Result = true,
+                            await call.RequestStream.WriteAsync(new UploadFileRequest() 
+                            {
+                                
+                            })
+                            return new UploadFileResponse()
+                            {
+                                Result = false,
+                                Message = "用户暂停上传"
+                            };
+                        }
+                        var length = await fileStream.ReadAsync(buffer);
+                        sended += length;
+
+                        var request = new UploadFileRequest()
+                        {
+                            Content = ByteString.CopyFrom(buffer),
+                            FileId = fileId,
+                            
                         };
+
+                        await call.RequestStream.WriteAsync(request);
+                        sendedBytesCallBack(sended);
                     }
-                    manualReset.WaitOne();
-                    var length = await fileStream.ReadAsync(buffer);
-                    sended += length;
 
-                    var request = new UploadFileRequest()
-                    {
-                        Content = ByteString.CopyFrom(buffer),
-                        FileId = fileId
-                    };
-
-                    await call.RequestStream.WriteAsync(request);
-                    sendedBytesCallBack(sended);
+                    await call.RequestStream.CompleteAsync();
+                }
+                catch (Exception ex)
+                {
+                    exceptionCallback?.Invoke(ex.Message);
                 }
             }
-            await call.RequestStream.CompleteAsync();
 
             return await call.ResponseAsync;
         }

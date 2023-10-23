@@ -4,6 +4,7 @@ option csharp_namespace = "ThreeL.Blob.Application.Contract.Protos";
 message UploadFileRequest {
   int64 fileId = 1;
   bytes Content = 2;
+  byte type = 3;
 }
 
 message UploadFileResponse {

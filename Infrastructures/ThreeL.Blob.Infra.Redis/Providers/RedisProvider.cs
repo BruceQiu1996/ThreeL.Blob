@@ -183,6 +183,31 @@ namespace ThreeL.Blob.Infra.Redis.Providers
             }
             return;
         }
+
+        public async Task<bool> HSetAsync(string cacheKey, string cacheValue, long value, TimeSpan? expiration = null, When when = When.Always)
+        {
+            await _redisDb.HashSetAsync(cacheKey, cacheValue, value);
+            if (expiration != null)
+            {
+                await _redisDb.KeyExpireAsync(cacheKey, expiration);
+            }
+
+            return true;
+        }
+
+        public async Task<long?> HGetAsync(string cacheKey, string field)
+        {
+            var val = await _redisDb.HashGetAsync(cacheKey, field);
+            if (val.HasValue)
+            {
+                val.TryParse(out long result);
+                return result;
+            }
+            else
+            {
+                return null;
+            }
+        }
         #endregion
     }
 }
