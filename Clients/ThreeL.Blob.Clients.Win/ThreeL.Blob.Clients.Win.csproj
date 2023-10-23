@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 		<None Remove="appsettings.json" />
+		<None Remove="Images\exe.png" />
 		<None Remove="Images\folder.png" />
 		<None Remove="Images\image.png" />
 	</ItemGroup>

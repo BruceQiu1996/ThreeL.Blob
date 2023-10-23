@@ -68,29 +68,26 @@ namespace ThreeL.Blob.Clients.Win.Request
                     var sended = statIndex;
                     fileStream.Seek(statIndex, SeekOrigin.Begin);
                     var totalLength = fileStream.Length;
-                    var buffer = new byte[1024 * 10];
+                    Memory<byte> buffer = new byte[1024 * 10];
                     while (sended < totalLength)
                     {
                         if (cancellationToken.IsCancellationRequested)
                         {
-                            await call.RequestStream.WriteAsync(new UploadFileRequest() 
+                            await call.RequestStream.WriteAsync(new UploadFileRequest()
                             {
-                                
-                            })
-                            return new UploadFileResponse()
-                            {
-                                Result = false,
-                                Message = "用户暂停上传"
-                            };
+                                Type = UploadFileRequestType.Pause
+                            });
+
+                            break;
                         }
                         var length = await fileStream.ReadAsync(buffer);
                         sended += length;
 
                         var request = new UploadFileRequest()
                         {
-                            Content = ByteString.CopyFrom(buffer),
+                            Content = ByteString.CopyFrom(buffer.Slice(0, length).ToArray()),
                             FileId = fileId,
-                            
+                            Type = UploadFileRequestType.Data,
                         };
 
                         await call.RequestStream.WriteAsync(request);

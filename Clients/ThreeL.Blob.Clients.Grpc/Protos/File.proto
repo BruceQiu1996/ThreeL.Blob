@@ -5,12 +5,26 @@ option csharp_namespace = "ThreeL.Blob.Clients.Grpc.Protos";
 message UploadFileRequest {
   int64 fileId = 1;
   bytes Content = 2;
-
+  UploadFileRequestType type = 3;
 }
 
 message UploadFileResponse {
   bool result = 1;
   string message = 2;
+  UploadFileResponseStatus status = 3;
+}
+
+enum UploadFileRequestType{
+    Data = 0;
+    Pause = 1;
+    Cancel = 2;
+}
+
+enum UploadFileResponseStatus{
+    NormalStatus = 0;
+    PauseStatus = 1;
+    CancelStatus = 2;
+    ErrorStatus = 3;
 }
 
 service FileGrpcService{

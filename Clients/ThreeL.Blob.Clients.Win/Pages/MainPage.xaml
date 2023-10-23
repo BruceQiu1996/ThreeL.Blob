@@ -225,7 +225,6 @@
                                                     <Border Background="{StaticResource PrimaryBrush}"
                                                             CornerRadius="5"
                                                             Padding="5"
-                                                            Opacity="0.9"
                                                             Effect="{StaticResource EffectShadow5}">
                                                         <StackPanel Orientation="Vertical">
                                                             <TextBlock Text="{Binding Name}" Margin="0 2" TextDecorations="Underline"  FontSize="16" Foreground="White"></TextBlock>

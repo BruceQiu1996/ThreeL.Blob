@@ -20,7 +20,7 @@
             <Button Margin="2 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonWarning}">
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource pause}" 
-                          Stroke="White"
+                          Fill="White"
                           Width="20" Height="20" Stretch="UniformToFill"></Path>
                     <TextBlock Text="全部暂停" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
                 </StackPanel>
@@ -28,7 +28,7 @@
             <Button Margin="5 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonInfo}">
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource start}" 
-                          Stroke="White"
+                          Fill="White"
                           Width="20" Height="20" Stretch="UniformToFill"></Path>
                     <TextBlock Text="全部恢复" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
                 </StackPanel>
@@ -36,7 +36,7 @@
             <Button Margin="5 0 0 0" Cursor="Hand" Padding="5" Height="32" Style="{StaticResource ButtonDanger}">
                 <StackPanel Orientation="Horizontal">
                     <Path Data="{StaticResource cancel}" 
-                          Stroke="White"
+                          Fill="White"
                           Width="20" Height="20" Stretch="UniformToFill"></Path>
                     <TextBlock Text="全部取消" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
                 </StackPanel>
@@ -103,11 +103,11 @@
                                                 <StackPanel Orientation="Horizontal" Grid.Column="2" HorizontalAlignment="Center">
                                                     <Button Margin="5 0 0 0" 
                                                             Width="100"
-                                                            Command="{Binding PauseCommandAsync}"
+                                                            Command="{Binding PauseCommand}"
                                                             Cursor="Hand" Visibility="{Binding CanSuspend,Converter={StaticResource Boolean2VisibilityConverter}}"  Padding="5" Height="32" Style="{StaticResource ButtonWarning}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <Path Data="{StaticResource pause}" 
-                  Stroke="White"
+                                                                   Fill="White"
                   Width="20" Height="20" Stretch="UniformToFill"></Path>
                                                             <TextBlock Text="暂停" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
                                                         </StackPanel>
@@ -118,7 +118,7 @@
                                                             Visibility="{Binding CanSuspend,Converter={StaticResource Boolean2VisibilityReConverter}}" Padding="5" Height="32" Style="{StaticResource ButtonInfo}">
                                                         <StackPanel Orientation="Horizontal">
                                                             <Path Data="{StaticResource start}" 
-                  Stroke="White"
+                                                                   Fill="White"
                   Width="20" Height="20" Stretch="UniformToFill"></Path>
                                                             <TextBlock Text="恢复" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
                                                         </StackPanel>
@@ -127,6 +127,7 @@
                                                         <StackPanel Orientation="Horizontal">
                                                             <Path Data="{StaticResource cancel}" 
                   Stroke="White"
+                                                                   Fill="White"
                   Width="20" Height="20" Stretch="UniformToFill"></Path>
                                                             <TextBlock Text="取消" VerticalAlignment="Center" Margin="3 0 0 0"></TextBlock>
                                                         </StackPanel>

@@ -28,6 +28,5 @@ namespace ThreeL.Blob.Clients.Win
         {
             await App.CloseAsync();
         }
-
     }
 }
