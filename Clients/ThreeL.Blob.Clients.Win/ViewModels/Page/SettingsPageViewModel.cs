@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
-    class SettingsPageViewModel
+    public class SettingsPageViewModel
     {
+
     }
 }

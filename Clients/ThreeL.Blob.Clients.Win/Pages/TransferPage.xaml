@@ -5,11 +5,15 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win.Pages"
       xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+      xmlns:convert="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
       xmlns:hc="https://handyorg.github.io/handycontrol"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="TransferPage">
 
+    <Page.Resources>
+        <convert:String2BooleanConverter x:Key="String2BooleanConverter"></convert:String2BooleanConverter>
+    </Page.Resources>
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
             <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
@@ -17,14 +21,13 @@
     </behaviors:Interaction.Triggers>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="120"></ColumnDefinition>
+            <ColumnDefinition Width="80"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
 
         <hc:Card Grid.Column="0" 
                  Background="White" 
-                 Margin="2 5"
-                 Effect="{DynamicResource EffectShadow2}"
+                 Margin="1 5"
                  BorderThickness="0">
             <ListBox Background="White" BorderThickness="0">
                 <ListBox.ItemsPanel>
@@ -32,7 +35,7 @@
                         <StackPanel Orientation="Vertical"></StackPanel>
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
-                <ListBoxItem Padding="0" Height="35" Width="105" Margin="-1 1 0 0" IsSelected="True">
+                <ListBoxItem Padding="0" Cursor="Hand" Height="35" Width="70" Margin="-1 1 0 0" IsSelected="True">
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
                             <behaviors:InvokeCommandAction Command="{Binding ShiftUploadingPageCommand}"></behaviors:InvokeCommandAction>
@@ -52,24 +55,32 @@
                             </Style.Triggers>
                         </Style>
                     </ListBoxItem.Style>
-                    <StackPanel Orientation="Horizontal">
-                        <Label BorderThickness="0"
-                               Cursor="Hand"
-                               ToolTip="正在上传"
-                               Background="Transparent"
-                               VerticalContentAlignment="Center"
-                               Grid.Column="1">
-                            <Path Data="{StaticResource UpGeometry}" 
-                                  SnapsToDevicePixels="True"
-                                  Height="15" Width="15"
-                                  Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
-                                  Stretch="Uniform"/>
-                        </Label>
-                        <TextBlock Text="正在上传" FontSize="13.5" VerticalAlignment="Center"></TextBlock>
-                    </StackPanel>
+                    <hc:Badge Background="Red" Foreground="White" Text="{Binding UploadingTasksCountText}" Padding="4.5 0"
+                              ShowBadge="{Binding UploadingTasksCountText,Converter={StaticResource String2BooleanConverter}}"
+                              BadgeMargin="20 -3 -13 0" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal">
+                            <Label BorderThickness="0"
+                                   Cursor="Hand"
+                                   ToolTip="上传"
+                                   Padding="0"
+                                   Margin="8 0"
+                                   Background="Transparent"
+                                   VerticalContentAlignment="Center"
+                                   Grid.Column="1">
+                                <Path Data="{StaticResource UpGeometry}" 
+                                      SnapsToDevicePixels="True"
+                                      Height="15" Width="15"
+                                      Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                      Stretch="Uniform"/>
+                            </Label>
+                            <TextBlock Text="上传" FontSize="13.5" 
+                                       Foreground="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                       VerticalAlignment="Center"></TextBlock>
+                        </StackPanel>
+                    </hc:Badge>
                 </ListBoxItem>
 
-                <ListBoxItem Padding="0" Height="35" Width="105" Margin="-1 20 0 0">
+                <ListBoxItem Padding="0" Cursor="Hand" Height="35" Width="70" Margin="-1 20 0 0">
                     <ListBoxItem.Style>
                         <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                             <Style.Triggers>
@@ -89,24 +100,31 @@
                             <behaviors:InvokeCommandAction Command="{Binding ShifDownloadingPageCommand}"></behaviors:InvokeCommandAction>
                         </behaviors:EventTrigger>
                     </behaviors:Interaction.Triggers>
-                    <StackPanel Orientation="Horizontal">
-                        <Label BorderThickness="0"
+                    <hc:Badge Background="Red" Foreground="White" Text="1" Padding="4 0"
+          BadgeMargin="20 -3 -13 0" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal">
+                            <Label BorderThickness="0"
                                Cursor="Hand"
-                               ToolTip="正在下载"
+                               Padding="0"
+                               Margin="8 0"
+                               ToolTip="下载"
                                Background="Transparent"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
-                            <Path Data="{StaticResource DownGeometry}" 
+                                <Path Data="{StaticResource DownGeometry}" 
                                   SnapsToDevicePixels="True"
                                   Height="15" Width="15"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
                                   Stretch="Uniform"/>
-                        </Label>
-                        <TextBlock Text="正在下载" FontSize="13.5" VerticalAlignment="Center"></TextBlock>
-                    </StackPanel>
+                            </Label>
+                            <TextBlock Text="下载" 
+                                       Foreground="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                       FontSize="13.5" VerticalAlignment="Center"></TextBlock>
+                        </StackPanel>
+                    </hc:Badge>
                 </ListBoxItem>
 
-                <ListBoxItem Height="35" Width="105" Padding="0" Margin="-1 20 0 0">
+                <ListBoxItem Height="35" Cursor="Hand" Width="70" Padding="0" Margin="-1 20 0 0">
                     <ListBoxItem.Style>
                         <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                             <Style.Triggers>
@@ -129,7 +147,9 @@
                     <StackPanel Orientation="Horizontal">
                         <Label BorderThickness="0"
                                Cursor="Hand"
-                               ToolTip="传输完成"
+                               ToolTip="完成"
+                               Padding="0"
+                               Margin="8 0"
                                Background="Transparent"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
@@ -139,7 +159,9 @@
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
                                   Stretch="Uniform"/>
                         </Label>
-                        <TextBlock Text="传输完成" FontSize="13.5" VerticalAlignment="Center"></TextBlock>
+                        <TextBlock Text="完成" 
+                                   Foreground="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
+                                   FontSize="13.5" VerticalAlignment="Center"></TextBlock>
                     </StackPanel>
                 </ListBoxItem>
             </ListBox>

@@ -13,10 +13,24 @@ message UploadFileResponse {
   UploadFileResponseStatus status = 3;
 }
 
+message DownloadFileRequest {
+  int64 taskId = 1;
+  int64 start = 2;
+  DownloadFileRequestType type = 3;
+}
+
+message DownloadFileResponse {
+  int64 taskId = 1;
+  bytes Content = 2;
+  string message = 3;
+  DownloadFileResponseStatus type = 4;
+}
+
 enum UploadFileRequestType{
     Data = 0;
     Pause = 1;
     Cancel = 2;
+    NoDataAndComplete = 3;
 }
 
 enum UploadFileResponseStatus{
@@ -26,6 +40,19 @@ enum UploadFileResponseStatus{
     ErrorStatus = 3;
 }
 
+enum DownloadFileRequestType{
+    DownloadPause = 0;
+    DownloadCancel = 1;
+}
+
+enum DownloadFileResponseStatus{
+    DownloadNormalStatus = 0;
+    DownloadPauseStatus = 1;
+    DownloadCancelStatus = 2;
+    DownloadErrorStatus = 3;
+}
+
 service FileGrpcService{
 	rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
+    rpc DownloadFile(DownloadFileRequest) returns (stream DownloadFileResponse);
 }

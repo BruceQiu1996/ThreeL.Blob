@@ -19,5 +19,11 @@ namespace ThreeL.Blob.Server.Controllers
         {
             return await _grpcService.UploadFileAsync(request, context);
         }
+
+        [Authorize]
+        public async override Task DownloadFile(DownloadFileRequest request, IServerStreamWriter<DownloadFileResponse> responseStream, ServerCallContext context)
+        {
+            await _grpcService.DownloadFileAsync(request, responseStream, context);
+        }
     }
 }

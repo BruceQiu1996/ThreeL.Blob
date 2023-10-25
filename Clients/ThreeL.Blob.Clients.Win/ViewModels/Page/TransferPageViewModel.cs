@@ -1,7 +1,10 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.Messaging;
+using System.Collections.ObjectModel;
 using ThreeL.Blob.Clients.Win.Pages;
+using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Clients.Win.ViewModels.Item;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -16,6 +19,34 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private readonly DownloadingPage _downloadingPage;
         private readonly TransferComplete _transferComplete;
 
+        private int _uploadingTasksCount;
+        public int UploadingTasksCount
+        {
+            get => _uploadingTasksCount;
+            set => SetProperty(ref _uploadingTasksCount, value);
+        }
+
+        private int _downloadingTasksCount;
+        public int DownloadingTasksCount
+        {
+            get => _downloadingTasksCount;
+            set => SetProperty(ref _downloadingTasksCount, value);
+        }
+
+        private string _uploadingTasksCountText;
+        public string UploadingTasksCountText
+        {
+            get => _uploadingTasksCountText;
+            set => SetProperty(ref _uploadingTasksCountText, value);
+        }
+
+        private string _downloadingTasksCountText;
+        public string DownloadingTasksCountText
+        {
+            get => _downloadingTasksCountText;
+            set => SetProperty(ref _downloadingTasksCountText, value);
+        }
+
         public TransferPageViewModel(UploadingPage uploadingPage, DownloadingPage downloadingPage, TransferComplete transferComplete)
         {
             _uploadingPage = uploadingPage;
@@ -25,6 +56,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             ShifDownloadingPageCommand = new RelayCommand(OpenDownloadingPage);
             ShiftCompletePageCommand = new RelayCommand(OpenCompletePage);
             CurrentPage = _uploadingPage;
+
+            //通知上传文件的数量
+            WeakReferenceMessenger.Default.Register<TransferPageViewModel, ObservableCollection<UploadItemViewModel>, string>(this, Const.NotifyUploadingCount, async (x, y) =>
+            {
+                UploadingTasksCount = y.Count;
+                if (UploadingTasksCount == 0)
+                {
+                    UploadingTasksCountText = null;
+                }
+                else
+                {
+                    UploadingTasksCountText = UploadingTasksCount > 99 ? "99+" : $"{UploadingTasksCount}";
+                }
+            });
         }
 
         private System.Windows.Controls.Page _currentPage;

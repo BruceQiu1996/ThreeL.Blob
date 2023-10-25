@@ -37,6 +37,24 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpPost("download/{fileId}")]
+        [Authorize]
+        public async Task<ActionResult> DownloadFileAsync(long fileId)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.DownloadAsync(fileId, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpGet("upload-status/{fileId}")]
         [Authorize]
         public async Task<ActionResult> UploadingStatusAsync(long fileId)
@@ -55,14 +73,14 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
-        [HttpPut("upload-pause/{fileId}")]
+        [HttpPost("folder")]
         [Authorize]
-        public async Task<ActionResult> PauseUploadingAsync(long fileId)
+        public async Task<ActionResult> CreateFolderAsync(FolderCreationDto folderCreationDto)
         {
             try
             {
                 long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-                var result = await _fileService.PauseUploadingAsync(fileId, userId);
+                var result = await _fileService.CreateFolderAsync(folderCreationDto, userId);
 
                 return result.ToActionResult();
             }
@@ -73,14 +91,14 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
-        [HttpPost("folder")]
+        [HttpPut("cancel/{fileId}")]
         [Authorize]
-        public async Task<ActionResult> CreateFolderAsync(FolderCreationDto folderCreationDto)
+        public async Task<ActionResult> CancelUploadAsync(long fileId)
         {
             try
             {
                 long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-                var result = await _fileService.CreateFolderAsync(folderCreationDto, userId);
+                var result = await _fileService.CancelUploadingAsync(fileId, userId);
 
                 return result.ToActionResult();
             }

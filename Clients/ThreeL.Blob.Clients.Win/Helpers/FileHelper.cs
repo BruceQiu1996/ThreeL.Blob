@@ -39,6 +39,9 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 case ".msi":
                     icon = "exe.png";
                     break;
+                case ".sql":
+                    icon = "sql.png";
+                    break;
                 case ".xbm":
                 case ".bmp":
                 case ".jpg":

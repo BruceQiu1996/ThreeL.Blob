@@ -45,15 +45,15 @@ namespace ThreeL.Blob.Clients.Win.Request
         /// <summary>
         /// 上传文件
         /// </summary>
-        /// <param name="cancellationToken">取消令牌</param>
-        /// <param name="manualReset">本地暂停令牌</param>
+        /// <param name="pauseToken">取消令牌</param>
+        /// <param name="cancelToken">取消令牌</param>
         /// <param name="file">上传文件</param>
         /// <param name="fileId">上传文件唯一标识</param>
         /// <param name="statIndex">文件起点，包括</param>
         /// <param name="singlePacket">分片大小</param>
         /// <param name="sendedBytesCallBack">数据上传回调</param>
         /// <returns></returns>
-        public async Task<UploadFileResponse> UploadFileAsync(CancellationToken cancellationToken, string file, long fileId, long statIndex = 0, int singlePacket = 1024 * 1024,
+        public async Task<UploadFileResponse> UploadFileAsync(CancellationToken pauseToken, CancellationToken cancelToken, string file, long fileId, long statIndex = 0, int singlePacket = 1024 * 1024,
                                                               Action<string> exceptionCallback = null, Action<long> sendedBytesCallBack = null)
         {
             var call = _fileGrpcServiceClient.UploadFile(new Metadata()
@@ -68,10 +68,18 @@ namespace ThreeL.Blob.Clients.Win.Request
                     var sended = statIndex;
                     fileStream.Seek(statIndex, SeekOrigin.Begin);
                     var totalLength = fileStream.Length;
-                    Memory<byte> buffer = new byte[1024 * 10];
+                    Memory<byte> buffer = new byte[1024 * 100];
+                    if(sended == totalLength) //如果已发送等于文件总长度，则直接发送完成
+                    {
+                        await call.RequestStream.WriteAsync(new UploadFileRequest()
+                        {
+                            Type = UploadFileRequestType.NoDataAndComplete,
+                            FileId = fileId
+                        });
+                    }
                     while (sended < totalLength)
                     {
-                        if (cancellationToken.IsCancellationRequested)
+                        if (pauseToken.IsCancellationRequested)
                         {
                             await call.RequestStream.WriteAsync(new UploadFileRequest()
                             {
@@ -80,7 +88,19 @@ namespace ThreeL.Blob.Clients.Win.Request
 
                             break;
                         }
+
+                        if (cancelToken.IsCancellationRequested)
+                        {
+                            await call.RequestStream.WriteAsync(new UploadFileRequest()
+                            {
+                                Type = UploadFileRequestType.Cancel
+                            });
+
+                            break;
+                        }
+
                         var length = await fileStream.ReadAsync(buffer);
+                        await Task.Delay(200);
                         sended += length;
 
                         var request = new UploadFileRequest()

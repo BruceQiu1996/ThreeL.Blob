@@ -261,12 +261,12 @@
 
         <Grid Grid.Row="3">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Text="{Binding AllCount,StringFormat=文件总数: {0}}" HorizontalAlignment="Right" FontSize="14" 
+                <TextBlock Text="{Binding AllCount,StringFormat=文件总数: {0}}" HorizontalAlignment="Right" FontSize="13" 
                        Foreground="#555"
                            Margin="5 0 20 0"
                        VerticalAlignment="Center"></TextBlock>
 
-                <TextBlock Text="{Binding SelectedCount,StringFormat=选中文件: {0}}" HorizontalAlignment="Right" FontSize="14" 
+                <TextBlock Text="{Binding SelectedCount,StringFormat=选中文件: {0}}" HorizontalAlignment="Right" FontSize="13" 
                        Foreground="#555"
                            Margin="5 0 10 0"
                        VerticalAlignment="Center"></TextBlock>

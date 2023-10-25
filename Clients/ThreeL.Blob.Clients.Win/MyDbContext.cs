@@ -6,6 +6,8 @@ namespace ThreeL.Blob.Clients.Win
     public class MyDbContext : DbContext
     {
         public DbSet<UploadFileRecord> UploadFileRecords { get; set; }
+        public DbSet<DownloadFileRecord> DownloadFileRecords { get; set; }
+        public DbSet<TransferCompleteRecord> TransferCompleteRecords { get; set; }
 
         public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
         {
@@ -15,6 +17,7 @@ namespace ThreeL.Blob.Clients.Win
         {
             modelBuilder.Entity<UserProfile>();
             modelBuilder.Entity<UploadFileRecord>();
+            modelBuilder.Entity<DownloadFileRecord>();
         }
     }
 }

@@ -18,6 +18,8 @@ using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
+using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
+using static Google.Protobuf.Collections.MapField<TKey, TValue>;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -187,41 +189,77 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task UploadAsync()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Multiselect = true;
             if (openFileDialog.ShowDialog()!.Value)
             {
-                var fileInfo = new FileInfo(openFileDialog.FileName);
-                using (FileStream stream = new FileStream(openFileDialog.FileName, FileMode.Open, FileAccess.Read))
+                foreach (var file in openFileDialog.FileNames)
                 {
-                    var code = stream.ToSHA256();
-                    var resp = await _httpRequest.PostAsync(Const.UPLOAD_FILE, new UploadFileDto()
+                    var fileInfo = new FileInfo(file);
+                    using (FileStream stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read))
                     {
-                        Name = fileInfo.Name,
-                        Size = fileInfo.Length,
-                        ParentFolder = _currentParent,
-                        Code = code
-                    });
-
-                    if (resp != null && resp.IsSuccessStatusCode)
-                    {
-                        var result = JsonSerializer.
-                            Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
-                        using (var context = await _dbContextFactory.CreateDbContextAsync())
+                        var code = stream.ToSHA256();
+                        var resp = await _httpRequest.PostAsync(Const.UPLOAD_FILE, new UploadFileDto()
                         {
-                            var record = new UploadFileRecord()
+                            Name = fileInfo.Name,
+                            Size = fileInfo.Length,
+                            ParentFolder = _currentParent,
+                            Code = code
+                        });
+
+                        if (resp != null && resp.IsSuccessStatusCode)
+                        {
+                            var result = JsonSerializer.
+                                Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                            using (var context = await _dbContextFactory.CreateDbContextAsync())
                             {
-                                FileId = result.FileId,
-                                FileName = fileInfo.Name,
-                                Size = fileInfo.Length,
-                                FileLocation = fileInfo.FullName,
-                                TransferBytes = 0,
-                                Status = Status.Doing,
-                                Code = code
+                                var record = new UploadFileRecord()
+                                {
+                                    FileId = result.FileId,
+                                    FileName = fileInfo.Name,
+                                    Size = fileInfo.Length,
+                                    FileLocation = fileInfo.FullName,
+                                    TransferBytes = 0,
+                                    Status = FileUploadingStatus.Wait,
+                                    Code = code
+                                };
+                                await context.UploadFileRecords.AddAsync(record);
+                                await context.SaveChangesAsync();
+                                WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
                             };
-                            await context.UploadFileRecords.AddAsync(record);
-                            await context.SaveChangesAsync();
-                            WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
-                        };
+                        }
                     }
+                }
+            }
+        }
+
+        private async Task DownloadAsync(FileObjItemViewModel itemViewModel,string location) 
+        {
+            if (itemViewModel.IsFolder)
+            {
+                //TODO 文件夹下载待定
+            }
+            else 
+            {
+                var resp = await _httpRequest.PostAsync(string.Format(Const.DOWNLOAD_FILE, itemViewModel.Id), null);
+                if (resp != null) 
+                {
+                    var result = JsonSerializer.
+                               Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+
+                    using (var context = await _dbContextFactory.CreateDbContextAsync())
+                    {
+                        var record = new DownloadFileRecord()
+                        {
+                            FileId = result.FileId,
+                            TaskId = result.TaskId,
+                            TransferBytes = 0,
+                            Status = DownloadTaskStatus.Wait,
+                            Code = result.Code
+                        };
+                        await context.DownloadFileRecords.AddAsync(record);
+                        await context.SaveChangesAsync();
+                        WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
+                    };
                 }
             }
         }

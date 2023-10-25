@@ -6,12 +6,16 @@
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win"
+        xmlns:convert ="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
         mc:Ignorable="d"
         AllowsTransparency="True"
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
         Title="主界面" Height="600" Width="900">
+    <Window.Resources>
+        <convert:String2BooleanConverter x:Key="String2BooleanConverter"></convert:String2BooleanConverter>
+    </Window.Resources>
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
             <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
@@ -33,15 +37,15 @@
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="65"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Border MouseMove="Border_MouseMove" 
                     Grid.Column="0" Grid.ColumnSpan="2"
                     Background="#ddd" BorderThickness="0">
                 <Grid>
-                    <TextBlock Text="露西网盘客户端" FontSize="15" VerticalAlignment="Center" Margin="5 0 0 0" 
-                               Foreground="Black"></TextBlock>
+                    <TextBlock Text="头盘" FontSize="15" VerticalAlignment="Center" Margin="5 0 0 0" 
+                               Foreground="#888"></TextBlock>
                     <Label BorderThickness="0"
                            Cursor="Hand"
                            ToolTip="最小化"
@@ -61,7 +65,12 @@
                            ToolTip="关闭到托盘"
                            Margin="0 0 0 0"
                            Background="Transparent"
-                           HorizontalAlignment="Right" MouseLeftButtonDown="Label_MouseLeftButtonDown_1">
+                           HorizontalAlignment="Right">
+                        <behaviors:Interaction.Triggers>
+                            <behaviors:EventTrigger EventName="MouseLeftButtonDown">
+                                <behaviors:InvokeCommandAction Command="{Binding ExitCommandAsync}"></behaviors:InvokeCommandAction>
+                            </behaviors:EventTrigger>
+                        </behaviors:Interaction.Triggers>
                         <Path Data="{StaticResource CloseGeometry}" 
                               SnapsToDevicePixels="True"
                               Height="15"
@@ -83,7 +92,7 @@
                             <StackPanel Orientation="Vertical"></StackPanel>
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
-                    <ListBoxItem Height="50" Width="65" Margin="-1 1 0 0" IsSelected="True">
+                    <ListBoxItem Height="50" Width="55" Margin="-1 1 0 0" IsSelected="True">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
                                 <behaviors:InvokeCommandAction Command="{Binding ShiftMainPageCommand}"></behaviors:InvokeCommandAction>
@@ -118,7 +127,7 @@
                         </Label>
                     </ListBoxItem>
 
-                    <ListBoxItem Height="50" Width="65" Margin="-1 20 0 0">
+                    <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
                         <ListBoxItem.Style>
                             <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                                 <Style.Triggers>
@@ -138,21 +147,25 @@
                                 <behaviors:InvokeCommandAction Command="{Binding ShiftTransferPageCommand}"></behaviors:InvokeCommandAction>
                             </behaviors:EventTrigger>
                         </behaviors:Interaction.Triggers>
-                        <Label BorderThickness="0"
-                               Cursor="Hand"
-                               ToolTip="传输"
-                               Background="Transparent"
-                               Height="55" Width="55"
-                               VerticalContentAlignment="Center"
-                               Grid.Column="1">
-                            <Path Data="{StaticResource transfer}" 
+                        <hc:Badge Text="{Binding TransferCounts}" BorderThickness="0"
+                                  ShowBadge="{Binding TransferCounts,Converter={StaticResource String2BooleanConverter}}"
+                                  Background="Red" Foreground="White" BadgeMargin="10 3 -5 0">
+                            <Label BorderThickness="0"
+                                   Cursor="Hand"
+                                   ToolTip="传输"
+                                   Background="Transparent"
+                                   Height="55" Width="55"
+                                   VerticalContentAlignment="Center"
+                                   Grid.Column="1">
+                                <Path Data="{StaticResource transfer}" 
                                   SnapsToDevicePixels="True"
                                   Height="32" Width="32"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" Stretch="Uniform" />
-                        </Label>
+                            </Label>
+                        </hc:Badge>
                     </ListBoxItem>
 
-                    <ListBoxItem Height="50" Width="65" Margin="-1 20 0 0">
+                    <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
                         <ListBoxItem.Style>
                             <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                                 <Style.Triggers>

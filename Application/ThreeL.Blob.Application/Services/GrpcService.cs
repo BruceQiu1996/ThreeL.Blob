@@ -23,6 +23,11 @@ namespace ThreeL.Blob.Application.Services
             _efBasicRepository = efBasicRepository;
         }
 
+        public async Task DownloadFileAsync(DownloadFileRequest request, IServerStreamWriter<DownloadFileResponse> responseStream, ServerCallContext context)
+        {
+            
+        }
+
         public async Task<UploadFileResponse> UploadFileAsync(IAsyncStreamReader<UploadFileRequest> uploadFileRequest, ServerCallContext context)
         {
             try
@@ -38,13 +43,13 @@ namespace ThreeL.Blob.Application.Services
                 if (file == null || fileObject == null || !File.Exists(fileObject.TempFileLocation) || file != new FileInfo(fileObject.TempFileLocation).Length)
                 {
                     _logger.LogError($"文件数据异常{uploadFileRequest.Current.FileId}");
-                    return new UploadFileResponse() { Result = false, Message = "上传文件失败", Status = UploadFileResponseStatus.ErrorStatus };
+                    return new UploadFileResponse() { Result = false, Message = "文件数据异常或已过期", Status = UploadFileResponseStatus.ErrorStatus };
                 }
 
                 if (fileObject.Status != FileStatus.Wait && fileObject.Status != FileStatus.UploadingSuspend)
                 {
                     _logger.LogError($"文件状态异常{uploadFileRequest.Current.FileId}");
-                    return new UploadFileResponse() { Result = false, Message = "上传文件状态异常", Status = UploadFileResponseStatus.ErrorStatus };
+                    return new UploadFileResponse() { Result = false, Message = "文件状态异常", Status = UploadFileResponseStatus.ErrorStatus };
                 }
 
                 fileObject.Status = FileStatus.Uploading;
@@ -55,13 +60,27 @@ namespace ThreeL.Blob.Application.Services
                     do
                     {
                         var request = uploadFileRequest.Current;
-                        if (request.Type == UploadFileRequestType.Pause)
+                        if (request.Type == UploadFileRequestType.Pause) //暂停
                         {
                             //更新数据库文件状态
                             fileObject.Status = FileStatus.UploadingSuspend;
                             await _efBasicRepository.UpdateAsync(fileObject);
 
                             return new UploadFileResponse() { Result = false, Message = "暂停文件上传", Status = UploadFileResponseStatus.PauseStatus };
+                        }
+
+                        if (request.Type == UploadFileRequestType.Cancel) //取消
+                        {
+                            //更新数据库文件状态
+                            fileObject.Status = FileStatus.Cancel;
+                            await _efBasicRepository.UpdateAsync(fileObject);
+
+                            return new UploadFileResponse() { Result = false, Message = "取消文件上传", Status = UploadFileResponseStatus.CancelStatus };
+                        }
+
+                        else if (request.Type == UploadFileRequestType.NoDataAndComplete) //没有数据了直接完成
+                        {
+                            break;
                         }
                         var buffer = request.Content.ToByteArray();
                         fileStream.Seek(received, SeekOrigin.Begin);
@@ -78,11 +97,20 @@ namespace ThreeL.Blob.Application.Services
 
                 return new UploadFileResponse() { Result = true, Message = "上传文件完成", Status = UploadFileResponseStatus.NormalStatus };
             }
-            catch (Exception ex)
+            catch (IOException ex)
             {
                 _logger.LogError(ex.ToString());
                 var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
                 fileObject.Status = FileStatus.UploadingSuspend;
+                await _efBasicRepository.UpdateAsync(fileObject);
+
+                return new UploadFileResponse() { Result = false, Message = "通讯中断", Status = UploadFileResponseStatus.ErrorStatus };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
+                fileObject.Status = FileStatus.Faild;
                 await _efBasicRepository.UpdateAsync(fileObject);
 
                 return new UploadFileResponse() { Result = false, Message = "上传文件服务器出现异常", Status = UploadFileResponseStatus.ErrorStatus };

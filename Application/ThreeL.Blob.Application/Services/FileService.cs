@@ -17,17 +17,40 @@ namespace ThreeL.Blob.Application.Services
     {
         private readonly IEfBasicRepository<User, long> _userBasicRepository;
         private readonly IEfBasicRepository<FileObject, long> _fileBasicRepository;
+        private readonly IEfBasicRepository<DownloadFileTask, string> _downloadTaskBasicRepository;
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
         public FileService(IEfBasicRepository<User, long> userBasicRepository,
                            IEfBasicRepository<FileObject, long> fileBasicRepository,
+                           IEfBasicRepository<DownloadFileTask, string> downloadTaskBasicRepository,
                            IRedisProvider redisProvider,
                            IMapper mapper)
         {
             _mapper = mapper;
             _redisProvider = redisProvider;
+            _downloadTaskBasicRepository = downloadTaskBasicRepository;
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
+        }
+
+        public async Task<ServiceResult<FileUploadingStatusDto>> CancelUploadingAsync(long fileId, long userId)
+        {
+            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
+            if (file == null)
+                return new ServiceResult<FileUploadingStatusDto>(HttpStatusCode.BadRequest, "数据异常");
+
+            file.Status = FileStatus.Cancel;
+            file.UploadFinishTime = DateTime.UtcNow;
+            await _fileBasicRepository.UpdateAsync(file);
+
+            return new ServiceResult<FileUploadingStatusDto>
+            (
+                new FileUploadingStatusDto()
+                {
+                    Id = fileId,
+                    Status = file.Status!.Value
+                }
+            );
         }
 
         public async Task<ServiceResult<FileObjDto>> CreateFolderAsync(FolderCreationDto folderCreationDto, long userId)
@@ -55,11 +78,17 @@ namespace ThreeL.Blob.Application.Services
             var folderName = Guid.NewGuid().ToString();
             var folderLocation = Path.Combine(parentFolderLocation, folderName);
             Directory.CreateDirectory(folderLocation);
+            var exist = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName);
+            if (exist != null)
+            {
+                folderCreationDto.FolderName = $"{folderCreationDto.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";
+            }
             var fileObject = new FileObject()
             {
                 CreateBy = userId,
                 CreateTime = DateTime.UtcNow,
                 LastUpdateTime = DateTime.UtcNow,
+                UploadFinishTime = DateTime.UtcNow,
                 IsFolder = true,
                 Name = folderCreationDto.FolderName,
                 ParentFolder = folderCreationDto.ParentId,
@@ -69,6 +98,31 @@ namespace ThreeL.Blob.Application.Services
             await _fileBasicRepository.InsertAsync(fileObject);
 
             return new ServiceResult<FileObjDto>(_mapper.Map<FileObjDto>(fileObject));
+        }
+
+        public async Task<ServiceResult<DownloadFileResponseDto>> DownloadAsync(long fileId, long userId)
+        {
+            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
+            if (file == null || file.IsFolder || !File.Exists(file.Location) || file.Status != FileStatus.Normal)
+                return new ServiceResult<DownloadFileResponseDto>(HttpStatusCode.BadRequest, "数据异常");
+
+            var task = new DownloadFileTask()
+            {
+                CreateTime = DateTime.UtcNow,
+                FileId = fileId,
+                CreateBy = userId,
+                Status = DownloadTaskStatus.Wait,
+            };
+
+            await _downloadTaskBasicRepository.InsertAsync(task);
+            await _redisProvider.HSetAsync($"{Const.REDIS_DOWNLOADTASK_CACHE_KEY}{userId}", task.Id, (long)0, TimeSpan.FromDays(3));
+
+            return new ServiceResult<DownloadFileResponseDto>(new DownloadFileResponseDto()
+            {
+                FileId = fileId,
+                Code = file.Code,
+                TaskId = task.Id
+            });
         }
 
         public async Task<ServiceResult<IEnumerable<FileObjDto>>> GetItemsAsync(long parentId, long userId)
@@ -105,23 +159,6 @@ namespace ThreeL.Blob.Application.Services
             );
         }
 
-        public async Task<ServiceResult> PauseUploadingAsync(long fileId, long userId)
-        {
-            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
-            if (file == null)
-                return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
-
-            if(file.Status != FileStatus.Uploading) 
-            {
-                return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
-            }
-
-            file.Status = FileStatus.UploadingSuspend;
-            await _fileBasicRepository.UpdateAsync(file);
-
-            return new ServiceResult();
-        }
-
         public async Task<ServiceResult<FileObjDto>> UpdateFileObjectNameAsync(UpdateFileObjectNameDto updateFileObjectNameDto, long userId)
         {
             throw new NotImplementedException();
@@ -153,6 +190,7 @@ namespace ThreeL.Blob.Application.Services
             var fileObj = _mapper.Map<FileObject>(uploadFileDto);
             fileObj.CreateBy = userId;
             fileObj.CreateTime = DateTime.UtcNow;
+            fileObj.UploadFinishTime = DateTime.UtcNow;
             fileObj.LastUpdateTime = DateTime.UtcNow;
             fileObj.Status = FileStatus.Wait;
             fileObj.TempFileLocation = tempFileName;
