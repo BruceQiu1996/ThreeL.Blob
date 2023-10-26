@@ -15,13 +15,12 @@ message UploadFileResponse {
 }
 
 message DownloadFileRequest {
-  int64 taskId = 1;
+  string taskId = 1;
   int64 start = 2;
-  DownloadFileRequestType type = 3;
 }
 
 message DownloadFileResponse {
-  int64 taskId = 1;
+  string taskId = 1;
   bytes Content = 2;
   string message = 3;
   DownloadFileResponseStatus type = 4;
@@ -42,15 +41,17 @@ enum UploadFileResponseStatus{
 }
 
 enum DownloadFileRequestType{
-    DownloadPause = 0;
-    DownloadCancel = 1;
+    DownloadStart = 0;
+    DownloadPause = 1;
+    DownloadCancel = 2;
 }
 
 enum DownloadFileResponseStatus{
-    DownloadNormalStatus = 0;
-    DownloadPauseStatus = 1;
-    DownloadCancelStatus = 2;
-    DownloadErrorStatus = 3;
+    DownloadData = 0;
+    DownloadFinishStatus = 1;
+    DownloadPauseStatus = 2;
+    DownloadCancelStatus = 3;
+    DownloadErrorStatus = 4;
 }
 
 service FileGrpcService{

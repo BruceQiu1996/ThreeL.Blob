@@ -9,4 +9,13 @@
         Failed = 4,
         Cancelled = 5
     }
+
+    public enum FileDownloadingStatus
+    {
+        Wait = 1,
+        Downloading = 2,
+        DownloadingSuspend = 3,
+        DownloadingComplete = 4,
+        DownloadingFaild = 5,
+    }
 }

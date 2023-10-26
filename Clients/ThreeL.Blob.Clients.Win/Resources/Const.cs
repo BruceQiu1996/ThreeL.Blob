@@ -13,11 +13,13 @@
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);
+        public const string AddDownloadRecord = nameof(AddDownloadRecord);
         public const string SelectItem = nameof(SelectItem);
         public const string DoubleClickItem = nameof(DoubleClickItem);
         public const string Exit = nameof(Exit);
         public const string CanExit = nameof(CanExit);
         public const string UploadFinish = nameof(UploadFinish);
+        public const string DownloadFinish = nameof(DownloadFinish);
         public const string NotifyUploadingCount = nameof(NotifyUploadingCount);
         public const string NotifyDownloadingCount = nameof(NotifyDownloadingCount);
         public const string AddTransferRecord = nameof(AddTransferRecord);

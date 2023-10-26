@@ -10,6 +10,7 @@ namespace ThreeL.Blob.Domain.Aggregate.FileObject
         public long FileId { get; set; }
         public long CreateBy { get; set; }
         public DateTime CreateTime { get; set ; }
+        public DateTime FinishTime { get; set; }
         public DownloadTaskStatus Status { get; set; }
     }
 }

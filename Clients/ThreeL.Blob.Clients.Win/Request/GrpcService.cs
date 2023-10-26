@@ -69,7 +69,7 @@ namespace ThreeL.Blob.Clients.Win.Request
                     fileStream.Seek(statIndex, SeekOrigin.Begin);
                     var totalLength = fileStream.Length;
                     Memory<byte> buffer = new byte[1024 * 100];
-                    if(sended == totalLength) //如果已发送等于文件总长度，则直接发送完成
+                    if (sended == totalLength) //如果已发送等于文件总长度，则直接发送完成
                     {
                         await call.RequestStream.WriteAsync(new UploadFileRequest()
                         {
@@ -123,6 +123,64 @@ namespace ThreeL.Blob.Clients.Win.Request
             }
 
             return await call.ResponseAsync;
+        }
+
+        /// <summary>
+        /// 下载文件
+        /// </summary>
+        /// <param name="pauseToken">暂停</param>
+        /// <param name="cancelToken">取消</param>
+        /// <param name="tempFileLocation">下载临时文件位置</param>
+        /// <param name="taskId">下载任务id</param>
+        /// <param name="statIndex">下载文件开始点</param>
+        /// <param name="exceptionCallback"></param>
+        /// <param name="receiveBytesCallBack">下载字节回调</param>
+        /// <returns></returns>
+        public async Task DownloadFileAsync(CancellationToken pauseToken, CancellationToken cancelToken, string tempFileLocation, string taskId, long statIndex = 0,
+                                            Action completeCallback = null,
+                                            Action<string> exceptionCallback = null,
+                                            Action<long> receiveBytesCallBack = null)
+        {
+            var resp = _fileGrpcServiceClient.DownloadFile(new DownloadFileRequest()
+            {
+                TaskId = taskId,
+                Start = statIndex,
+            }, new Metadata()
+            {
+                 { "Authorization", $"Bearer {_token}" }
+            });
+            try
+            {
+                using (var fileStream = File.OpenWrite(tempFileLocation))
+                {
+                    var received = statIndex;
+                    while (await resp.ResponseStream.MoveNext())
+                    {
+                        if (pauseToken.IsCancellationRequested || cancelToken.IsCancellationRequested)
+                        {
+                            resp.Dispose();
+                            break;
+                        }
+                        var current = resp.ResponseStream.Current;
+                        if (current.Type == DownloadFileResponseStatus.DownloadFinishStatus)
+                        {
+                            //完成下载
+                            completeCallback?.Invoke();
+                            break;
+                        }
+                        var buffer = current.Content.ToByteArray();
+
+                        fileStream.Seek(received, SeekOrigin.Begin);
+                        await fileStream.WriteAsync(buffer);
+                        received += buffer.Length;
+                        receiveBytesCallBack?.Invoke(received);
+                    }
+                }
+            }
+            catch (Exception ex) 
+            {
+                exceptionCallback?.Invoke(ex.Message);
+            }
         }
 
         public void SetToken(string token)

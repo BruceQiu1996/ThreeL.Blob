@@ -56,6 +56,7 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddTransient<UploadItemViewModel>();
                 service.AddSingleton<DownloadingPage>();
                 service.AddSingleton<DownloadingPageViewModel>();
+                service.AddTransient<DownloadItemViewModel>();
                 service.AddSingleton<TransferComplete>();
                 service.AddSingleton<TransferCompletePageViewModel>();
 

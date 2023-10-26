@@ -59,12 +59,11 @@
                 <Grid>
                     <ListBox ScrollViewer.CanContentScroll="False"
                          Padding="0"
-                         Visibility="{Binding HadTask,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}"
                          PreviewMouseWheel="ListView_PreviewMouseWheel"
                          hc:BorderElement.CornerRadius="0"
                          ScrollViewer.IsDeferredScrollingEnabled="True"
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
-                         ItemsSource="{Binding UploadItemViewModels,UpdateSourceTrigger=PropertyChanged}"
+                         ItemsSource="{Binding DownloadItemViewModels,UpdateSourceTrigger=PropertyChanged}"
                          BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="SelectionChanged">

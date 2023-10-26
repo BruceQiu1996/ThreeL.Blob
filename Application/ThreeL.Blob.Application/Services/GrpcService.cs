@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using Google.Protobuf;
+using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Protos;
@@ -15,17 +16,130 @@ namespace ThreeL.Blob.Application.Services
     {
         private readonly IRedisProvider _redisProvider;
         private readonly IEfBasicRepository<FileObject, long> _efBasicRepository;
+        private readonly IEfBasicRepository<DownloadFileTask, string> _downloadFileTaskEfBasicRepository;
         private readonly ILogger<GrpcService> _logger;
-        public GrpcService(IRedisProvider redisProvider, IEfBasicRepository<FileObject, long> efBasicRepository, ILogger<GrpcService> logger)
+        public GrpcService(IRedisProvider redisProvider,
+                           IEfBasicRepository<FileObject, long> efBasicRepository,
+                           IEfBasicRepository<DownloadFileTask, string> downloadFileTaskEfBasicRepository,
+                           ILogger<GrpcService> logger)
         {
             _logger = logger;
             _redisProvider = redisProvider;
             _efBasicRepository = efBasicRepository;
+            _downloadFileTaskEfBasicRepository = downloadFileTaskEfBasicRepository;
         }
 
         public async Task DownloadFileAsync(DownloadFileRequest request, IServerStreamWriter<DownloadFileResponse> responseStream, ServerCallContext context)
         {
-            
+            try
+            {
+                var userIdentity = context.GetHttpContext().User.Identity?.Name;
+                var userid = long.Parse(userIdentity!);
+                //寻找临时文件位置
+                var task = await _downloadFileTaskEfBasicRepository.GetAsync(request.TaskId);
+                var cacheTask = await _redisProvider.HGetAsync($"{Const.REDIS_DOWNLOADTASK_CACHE_KEY}{userid}", request.TaskId);
+
+                if (task == null || cacheTask == null || request.Start != cacheTask)
+                {
+                    _logger.LogError($"下载异常,任务id:{request.TaskId}");
+                    await responseStream.WriteAsync(new DownloadFileResponse()
+                    {
+                        Type = DownloadFileResponseStatus.DownloadErrorStatus,
+                        Message = "下载数据异常",
+                        TaskId = request.TaskId
+                    });
+
+                    return;
+                }
+
+                if (task.Status!=DownloadTaskStatus.Wait && task.Status !=DownloadTaskStatus.DownloadingSuspend)
+                {
+                    _logger.LogError($"下载异常,任务id:{request.TaskId}");
+                    await responseStream.WriteAsync(new DownloadFileResponse()
+                    {
+                        Type = DownloadFileResponseStatus.DownloadErrorStatus,
+                        Message = "下载数据异常",
+                        TaskId = request.TaskId
+                    });
+
+                    return;
+                }
+
+                var fileObject = await _efBasicRepository.GetAsync(task.FileId);
+                if (fileObject == null || !File.Exists(fileObject.Location) || fileObject.Status != FileStatus.Normal)
+                {
+                    _logger.LogError($"文件异常,任务id:{request.TaskId}");
+                    await responseStream.WriteAsync(new DownloadFileResponse()
+                    {
+                        Type = DownloadFileResponseStatus.DownloadErrorStatus,
+                        Message = "文件异常",
+                        TaskId = request.TaskId
+                    });
+
+                    return;
+                }
+
+                task.Status = DownloadTaskStatus.Downloading;
+                await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
+
+                using (var fileStream = File.OpenRead(fileObject.Location))
+                {
+                    fileStream.Seek(request.Start, SeekOrigin.Begin);
+                    var sended = request.Start;
+                    var totalLength = fileStream.Length - sended;
+
+                    Memory<byte> buffer = new byte[1024 * 100];
+                    while (sended < totalLength)
+                    {
+                        await Task.Delay(100);
+                        var length = await fileStream.ReadAsync(buffer);
+                        sended += length;
+                        var response = new DownloadFileResponse()
+                        {
+                            Content = ByteString.CopyFrom(buffer.Slice(0, length).ToArray()),
+                            TaskId = request.TaskId,
+                            Type = DownloadFileResponseStatus.DownloadData
+                        };
+
+                        await responseStream.WriteAsync(response);
+                    }
+                }
+
+                //更新状态
+                task.Status = DownloadTaskStatus.Finished;
+                task.FinishTime = DateTime.UtcNow;
+                await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
+                //下载完成
+                await responseStream.WriteAsync(new DownloadFileResponse() 
+                {
+                    TaskId = request.TaskId,
+                    Type = DownloadFileResponseStatus.DownloadFinishStatus
+                });
+            }
+            catch (InvalidOperationException ex) //由于客户端断连等原因
+            {
+                _logger.LogError(ex.ToString());
+                var task = await _downloadFileTaskEfBasicRepository.GetAsync(request.TaskId);
+                if (task.Status == DownloadTaskStatus.Cancelled)
+                {
+                    task.FinishTime = DateTime.UtcNow;
+                    task.Status = DownloadTaskStatus.Failed;
+                }
+                else 
+                {
+                    task.Status = DownloadTaskStatus.DownloadingSuspend;
+                }
+                
+                await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                var task = await _downloadFileTaskEfBasicRepository.GetAsync(request.TaskId);
+                task.FinishTime = DateTime.UtcNow;
+                task.Status = DownloadTaskStatus.Failed;
+                await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
+            }
         }
 
         public async Task<UploadFileResponse> UploadFileAsync(IAsyncStreamReader<UploadFileRequest> uploadFileRequest, ServerCallContext context)
@@ -104,7 +218,7 @@ namespace ThreeL.Blob.Application.Services
                 fileObject.Status = FileStatus.UploadingSuspend;
                 await _efBasicRepository.UpdateAsync(fileObject);
 
-                return new UploadFileResponse() { Result = false, Message = "通讯中断", Status = UploadFileResponseStatus.ErrorStatus };
+                return new UploadFileResponse() { Result = false, Message = "通讯流中断", Status = UploadFileResponseStatus.PauseStatus };
             }
             catch (Exception ex)
             {

@@ -10,9 +10,12 @@ namespace ThreeL.Blob.Clients.Win.Entities
         public long FileId { get; set; }
         public string FileName { get; set; }
         public string Code { get; set; }
+        public string TempFileLocation { get; set; }
+        public string? Location { get; set; }
+        public long Size { get; set; }
         public long TransferBytes { get; set; }
         public DateTime CreateTime { get; set; } = DateTime.UtcNow;
         public DateTime DownloadFinishTime { get; set; }
-        public DownloadTaskStatus Status { get; set; }
+        public FileDownloadingStatus Status { get; set; }
     }
 }

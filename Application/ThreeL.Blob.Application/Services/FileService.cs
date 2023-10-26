@@ -121,7 +121,9 @@ namespace ThreeL.Blob.Application.Services
             {
                 FileId = fileId,
                 Code = file.Code,
-                TaskId = task.Id
+                TaskId = task.Id,
+                Size = file.Size!.Value,
+                FileName = file.Name
             });
         }
 

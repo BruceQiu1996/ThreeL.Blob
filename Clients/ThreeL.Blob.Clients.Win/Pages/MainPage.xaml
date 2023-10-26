@@ -14,6 +14,9 @@
       Title="MainPage">
     <Page.Resources>
         <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
+        <ContextMenu x:Key="mainpanelmenu" BorderThickness="0">
+            <MenuItem Header="下载" Command="{Binding DownloadCommandAsync}"></MenuItem>
+        </ContextMenu>
     </Page.Resources>
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
@@ -111,7 +114,8 @@
         </ListBox>
 
         <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0">
-            <ScrollViewer Grid.Column="0" Grid.Row="2" 
+            <ScrollViewer Grid.Column="0" Grid.Row="2"
+                          ContextMenu="{StaticResource mainpanelmenu}"
                               Margin="10 5"
                               Grid.ColumnSpan="2"
                               RequestBringIntoView="ScrollViewer_RequestBringIntoView"

@@ -19,7 +19,6 @@ using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
-using static Google.Protobuf.Collections.MapField<TKey, TValue>;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -29,6 +28,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand NewFolderCommand { get; set; }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand RefreshCommandAsync { get; set; }
+        public AsyncRelayCommand DownloadCommandAsync { get; set; }
         public RelayCommand GridGotFocusCommand { get; set; }
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
@@ -83,6 +83,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
             NewFolderCommand = new AsyncRelayCommand(NewFolder);
             GridGotFocusCommand = new RelayCommand(GridGotFocus);
+            DownloadCommandAsync = new AsyncRelayCommand(DownloadAsync);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
             {
@@ -186,6 +187,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             AllCount = FileObjDtos == null ? 0 : FileObjDtos.Count;
         }
 
+        private async Task DownloadAsync()
+        {
+            var file = FileObjDtos.Where(x => x.IsSelected).FirstOrDefault();
+            if (file == null)
+            {
+                return;
+            }
+            await DownloadAsync(file, "d:\\ThreeL_blob_download");
+        }
+
         private async Task UploadAsync()
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -246,19 +257,25 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     var result = JsonSerializer.
                                Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
 
+                    var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
+                    File.Create(tempFileName).Close();
                     using (var context = await _dbContextFactory.CreateDbContextAsync())
                     {
                         var record = new DownloadFileRecord()
                         {
                             FileId = result.FileId,
                             TaskId = result.TaskId,
+                            TempFileLocation = tempFileName,
+                            FileName = result.FileName,
                             TransferBytes = 0,
-                            Status = DownloadTaskStatus.Wait,
+                            Status = FileDownloadingStatus.Wait,
+                            Size = result.Size,
                             Code = result.Code
                         };
                         await context.DownloadFileRecords.AddAsync(record);
                         await context.SaveChangesAsync();
-                        WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
+                        //发送添加下载任务事件
+                        WeakReferenceMessenger.Default.Send<DownloadFileRecord, string>(record, Const.AddDownloadRecord);
                     };
                 }
             }
