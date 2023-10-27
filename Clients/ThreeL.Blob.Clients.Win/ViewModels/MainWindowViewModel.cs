@@ -63,6 +63,15 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
                     TransferCounts = UploadingTasksCount + DownloadingTasksCount  >  99?" 99+": $"{UploadingTasksCount + DownloadingTasksCount}";
             });
 
+            WeakReferenceMessenger.Default.Register<MainWindowViewModel, ObservableCollection<DownloadItemViewModel>, string>(this, Const.NotifyDownloadingCount, async (x, y) =>
+            {
+                DownloadingTasksCount = y.Count;
+                if (UploadingTasksCount + DownloadingTasksCount == 0)
+                    TransferCounts = null;
+                else
+                    TransferCounts = UploadingTasksCount + DownloadingTasksCount > 99 ? " 99+" : $"{UploadingTasksCount + DownloadingTasksCount}";
+            });
+
             WeakReferenceMessenger.Default.Register<MainWindowViewModel, string, string>(this, Const.CanExit, async (x, y) =>
             {
                 if (y == "uploading")

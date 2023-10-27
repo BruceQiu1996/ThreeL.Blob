@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using System.Net;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Dtos;
@@ -31,6 +32,20 @@ namespace ThreeL.Blob.Application.Services
             _downloadTaskBasicRepository = downloadTaskBasicRepository;
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
+        }
+
+        public async Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId)
+        {
+            var task = await _downloadTaskBasicRepository.GetAsync(taskId);
+            if (task == null || task.Status != DownloadTaskStatus.Downloading || task.CreateBy != userId)
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "取消下载任务异常");
+            }
+
+            task.Status = DownloadTaskStatus.Cancelled;
+            await _downloadTaskBasicRepository.UpdateAsync(task);
+
+            return new ServiceResult();
         }
 
         public async Task<ServiceResult<FileUploadingStatusDto>> CancelUploadingAsync(long fileId, long userId)

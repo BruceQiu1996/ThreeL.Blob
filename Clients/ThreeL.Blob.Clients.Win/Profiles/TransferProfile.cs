@@ -20,6 +20,15 @@ namespace ThreeL.Blob.Clients.Win.Profiles
             CreateMap<TransferCompleteRecord, TransferCompleteItemViewModel>();
 
             CreateMap<DownloadFileRecord, DownloadItemViewModel>();
+            CreateMap<DownloadFileRecord, TransferCompleteRecord>().ForMember(x => x.BeginTime, y =>
+            {
+                y.MapFrom(x => x.CreateTime);
+            }).ForMember(x => x.FinishTime, y =>
+            {
+                y.MapFrom(x => x.DownloadFinishTime);
+            }).ForMember(x => x.Id, y => y.Ignore())
+            .ForMember(x => x.TaskId, y => y.Ignore());
+            CreateMap<TransferCompleteRecord, TransferCompleteItemViewModel>();
         }
 
         public static string GetDescriptionByUploadStatus(FileUploadingStatus uploadingStatus)
@@ -42,11 +51,11 @@ namespace ThreeL.Blob.Clients.Win.Profiles
         {
             if (fileDownloadingStatus == FileDownloadingStatus.DownloadingComplete)
             {
-                return "上传完成";
+                return "下载完成";
             }
-            else if (fileDownloadingStatus == FileDownloadingStatus.DownloadingComplete)
+            else if (fileDownloadingStatus == FileDownloadingStatus.DownloadingFaild)
             {
-                return "上传异常";
+                return "下载异常";
             }
             else
             {

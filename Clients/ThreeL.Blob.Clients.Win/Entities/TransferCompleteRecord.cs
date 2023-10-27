@@ -8,7 +8,7 @@ namespace ThreeL.Blob.Clients.Win.Entities
         public string TaskId { get; set; }
         public long FileId { get; set; }
         public string FileName { get; set; }
-        public string FileLocation { get; set; }
+        public string? FileLocation { get; set; }
         public DateTime BeginTime { get; set; }
         public DateTime FinishTime { get; set; }
         public string Description { get; set; }

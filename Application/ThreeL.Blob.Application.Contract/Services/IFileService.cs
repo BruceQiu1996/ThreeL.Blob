@@ -13,6 +13,7 @@ namespace ThreeL.Blob.Application.Contract.Services
         Task<ServiceResult<FileObjDto>> CreateFolderAsync(FolderCreationDto folderCreationDto, long userId);
         Task<ServiceResult<FileUploadingStatusDto>> GetUploadingStatusAsync(long fileId, long userId);
         Task<ServiceResult<FileUploadingStatusDto>> CancelUploadingAsync(long fileId, long userId);
+        Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId);
         [Uow]
         Task<ServiceResult<DownloadFileResponseDto>> DownloadAsync(long fileId, long userId);
     }

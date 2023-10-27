@@ -109,6 +109,24 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpPut("cancel-download/{taskId}")]
+        [Authorize]
+        public async Task<ActionResult> CancelDownloadAsync(string taskId)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.CancelDownloadingAsync(taskId, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpGet("{parent}")]
         [Authorize]
         public async Task<ActionResult> GetItemsAsync(long parent)

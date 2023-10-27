@@ -8,8 +8,10 @@
         public const string DOWNLOAD_FILE = "file/download/{0}";
         public const string CREATE_FOLDER = "file/folder";
         public const string UPLOADING_STATUS = "file/upload-status/{0}";
+        public const string DOWNLOADING_STATUS = "file/download-status/{0}";
         public const string UPLOADING_PAUSE = "file/upload-pause/{0}";
         public const string CANCEL_UPLOADING = "file/cancel/{0}";
+        public const string CANCEL_DOWNLOADING = "file/cancel-download/{0}";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);

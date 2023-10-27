@@ -138,6 +138,8 @@ namespace ThreeL.Blob.Clients.Win.Request
         /// <returns></returns>
         public async Task DownloadFileAsync(CancellationToken pauseToken, CancellationToken cancelToken, string tempFileLocation, string taskId, long statIndex = 0,
                                             Action completeCallback = null,
+                                            Action pauseCallback = null,
+                                            Action<string> downloadErrorCallback = null,
                                             Action<string> exceptionCallback = null,
                                             Action<long> receiveBytesCallBack = null)
         {
@@ -156,17 +158,17 @@ namespace ThreeL.Blob.Clients.Win.Request
                     var received = statIndex;
                     while (await resp.ResponseStream.MoveNext())
                     {
-                        if (pauseToken.IsCancellationRequested || cancelToken.IsCancellationRequested)
-                        {
-                            resp.Dispose();
-                            break;
-                        }
                         var current = resp.ResponseStream.Current;
                         if (current.Type == DownloadFileResponseStatus.DownloadFinishStatus)
                         {
-                            //完成下载
-                            completeCallback?.Invoke();
                             break;
+                        }
+
+                        if (current.Type == DownloadFileResponseStatus.DownloadErrorStatus)
+                        {
+                            downloadErrorCallback?.Invoke(current.Message);
+
+                            return;
                         }
                         var buffer = current.Content.ToByteArray();
 
@@ -174,8 +176,25 @@ namespace ThreeL.Blob.Clients.Win.Request
                         await fileStream.WriteAsync(buffer);
                         received += buffer.Length;
                         receiveBytesCallBack?.Invoke(received);
+                        if (pauseToken.IsCancellationRequested)
+                        {
+                            resp.Dispose();
+                            pauseCallback?.Invoke();
+
+                            return;
+                        }
+
+                        if (cancelToken.IsCancellationRequested)
+                        {
+                            resp.Dispose();
+
+                            return;
+                        }
                     }
                 }
+
+                //完成下载
+                completeCallback?.Invoke();
             }
             catch (Exception ex) 
             {

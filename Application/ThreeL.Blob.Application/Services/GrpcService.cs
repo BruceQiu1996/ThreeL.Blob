@@ -52,7 +52,7 @@ namespace ThreeL.Blob.Application.Services
                     return;
                 }
 
-                if (task.Status!=DownloadTaskStatus.Wait && task.Status !=DownloadTaskStatus.DownloadingSuspend)
+                if (task.Status != DownloadTaskStatus.Wait && task.Status != DownloadTaskStatus.DownloadingSuspend)
                 {
                     _logger.LogError($"下载异常,任务id:{request.TaskId}");
                     await responseStream.WriteAsync(new DownloadFileResponse()
@@ -86,14 +86,12 @@ namespace ThreeL.Blob.Application.Services
                 {
                     fileStream.Seek(request.Start, SeekOrigin.Begin);
                     var sended = request.Start;
-                    var totalLength = fileStream.Length - sended;
 
                     Memory<byte> buffer = new byte[1024 * 100];
-                    while (sended < totalLength)
+                    while (sended < fileStream.Length)
                     {
                         await Task.Delay(100);
                         var length = await fileStream.ReadAsync(buffer);
-                        sended += length;
                         var response = new DownloadFileResponse()
                         {
                             Content = ByteString.CopyFrom(buffer.Slice(0, length).ToArray()),
@@ -102,6 +100,8 @@ namespace ThreeL.Blob.Application.Services
                         };
 
                         await responseStream.WriteAsync(response);
+                        sended += length;
+                        await _redisProvider.HSetAsync($"{Const.REDIS_DOWNLOADTASK_CACHE_KEY}{userid}", request.TaskId, sended);
                     }
                 }
 
@@ -110,7 +110,7 @@ namespace ThreeL.Blob.Application.Services
                 task.FinishTime = DateTime.UtcNow;
                 await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
                 //下载完成
-                await responseStream.WriteAsync(new DownloadFileResponse() 
+                await responseStream.WriteAsync(new DownloadFileResponse()
                 {
                     TaskId = request.TaskId,
                     Type = DownloadFileResponseStatus.DownloadFinishStatus
@@ -125,11 +125,11 @@ namespace ThreeL.Blob.Application.Services
                     task.FinishTime = DateTime.UtcNow;
                     task.Status = DownloadTaskStatus.Failed;
                 }
-                else 
+                else
                 {
                     task.Status = DownloadTaskStatus.DownloadingSuspend;
                 }
-                
+
                 await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
             }
             catch (Exception ex)

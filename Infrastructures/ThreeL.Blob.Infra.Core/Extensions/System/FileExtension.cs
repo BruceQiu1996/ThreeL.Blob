@@ -16,7 +16,7 @@ namespace ThreeL.Blob.Infra.Core.Extensions.System
             return code;
         }
 
-        public static string GetAvailableFileName(this string fileName, string folder)
+        public static string GetAvailableFileLocation(this string fileName, string folder)
         {
             var newName = Path.Combine(folder, fileName);
             var onlyName = Path.GetFileNameWithoutExtension(fileName);

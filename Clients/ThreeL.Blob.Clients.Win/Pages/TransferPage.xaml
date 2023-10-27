@@ -100,7 +100,8 @@
                             <behaviors:InvokeCommandAction Command="{Binding ShifDownloadingPageCommand}"></behaviors:InvokeCommandAction>
                         </behaviors:EventTrigger>
                     </behaviors:Interaction.Triggers>
-                    <hc:Badge Background="Red" Foreground="White" Text="1" Padding="4 0"
+                    <hc:Badge Background="Red" Foreground="White" Text="{Binding DownloadingTasksCountText}" Padding="4.5 0"
+                              ShowBadge="{Binding DownloadingTasksCountText,Converter={StaticResource String2BooleanConverter}}"
           BadgeMargin="20 -3 -13 0" BorderThickness="0">
                         <StackPanel Orientation="Horizontal">
                             <Label BorderThickness="0"

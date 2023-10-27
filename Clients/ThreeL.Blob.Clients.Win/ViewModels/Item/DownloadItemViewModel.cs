@@ -15,8 +15,8 @@ using ThreeL.Blob.Clients.Win.Profiles;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
+using ThreeL.Blob.Infra.Core.Utils;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
-using Z.Expressions;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 {
@@ -86,6 +86,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             _httpRequest = httpRequest;
             _dbContextFactory = dbContextFactory;
             PauseCommand = new RelayCommand(Pause);
+            CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
+            ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
         }
 
         public async Task StartAsync()
@@ -97,21 +99,51 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 await UpdateStatusAsync(FileDownloadingStatus.Downloading);
                 Message = null;
                 await _grpcService
-                    .DownloadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token, TempFileLocation, TaskId, TransferBytes, OnComplete, OccurException, SetTransferBytes);
+                    .DownloadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token, 
+                    TempFileLocation, TaskId, TransferBytes, OnComplete, OnPause, OnError, OccurException, SetTransferBytes);
             });
 
             CanSuspend = true;
             await _downloadTask;
         }
 
+        private async Task ResumeAsync()
+        {
+            if (!File.Exists(TempFileLocation))
+                return;
+
+            await StartAsync();
+        }
+
         private void Pause()
         {
             _pauseTokenSource?.Cancel();
-            //本地暂停
-
         }
 
-        private async Task UpdateStatusAsync(FileDownloadingStatus fileStatus)
+        private async void OnPause() 
+        {
+            Message = "下载暂停";
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingSuspend);
+            CanSuspend = false;
+        }
+
+        private async Task CancelAsync()
+        {
+            await _httpRequest.PutAsync(string.Format(Const.CANCEL_DOWNLOADING, TaskId), null);
+            _cancelTokenSource?.Cancel();
+            Message = "取消下载";
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingComplete);
+            WeakReferenceMessenger.Default.Send<DownloadItemViewModel, string>(this, Const.DownloadFinish);
+            if (await ExpressionWaiter.WaitInTime(() => _downloadTask == null || _downloadTask.IsCompleted))
+            {
+                if (File.Exists(TempFileLocation))
+                {
+                    File.Delete(TempFileLocation);
+                }
+            }
+        }
+
+        private async Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
         {
             using (var context = _dbContextFactory.CreateDbContext())
             {
@@ -129,6 +161,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                         transferRecord.Description = TransferProfile.GetDescriptionByDownloadStatus(fileStatus);
                         transferRecord.Success = fileStatus == FileDownloadingStatus.DownloadingComplete;
                         transferRecord.Reason = Message;
+                        transferRecord.FileLocation = fileLocation;
 
                         await context.TransferCompleteRecords.AddAsync(transferRecord);
                     }
@@ -151,8 +184,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             Progress = TransferBytes / (double)Size * 100;
         }
 
+        public async void OnError(string error)
+        {
+            Message = error;
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingFaild);
+        }
+
         public async void OccurException(string exception)
         {
+            Message = "下载出现异常";
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingSuspend);
         }
 
         private async void OnComplete()
@@ -168,11 +209,14 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
                     return;
                 }
-
-                //文件改名
-                FileName.GetAvailableFileName(new FileInfo(TempFileLocation).DirectoryName);
-                File.Move(TempFileLocation, Location);
             }
+
+            //文件改名
+            var fileLocation = FileName.GetAvailableFileLocation(new FileInfo(TempFileLocation).DirectoryName);
+            File.Move(TempFileLocation, fileLocation);
+
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingComplete, fileLocation);
+            WeakReferenceMessenger.Default.Send<DownloadItemViewModel, string>(this, Const.DownloadFinish);
         }
     }
 }

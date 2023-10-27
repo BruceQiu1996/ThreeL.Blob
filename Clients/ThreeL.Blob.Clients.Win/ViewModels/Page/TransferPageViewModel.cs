@@ -70,6 +70,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     UploadingTasksCountText = UploadingTasksCount > 99 ? "99+" : $"{UploadingTasksCount}";
                 }
             });
+
+            //通知下载文件的数量
+            WeakReferenceMessenger.Default.Register<TransferPageViewModel, ObservableCollection<DownloadItemViewModel>, string>(this, Const.NotifyDownloadingCount, async (x, y) =>
+            {
+                DownloadingTasksCount = y.Count;
+                if (DownloadingTasksCount == 0)
+                {
+                    DownloadingTasksCountText = null;
+                }
+                else
+                {
+                    DownloadingTasksCountText = DownloadingTasksCount > 99 ? "99+" : $"{DownloadingTasksCount}";
+                }
+            });
         }
 
         private System.Windows.Controls.Page _currentPage;

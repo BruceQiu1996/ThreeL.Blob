@@ -5,11 +5,15 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
+using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -38,12 +42,42 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             _mapper = mapper;
             _logger = logger;
             _dbContextFactory = dbContextFactory;
+            LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             DownloadItemViewModels = new ObservableCollection<DownloadItemViewModel>();
             //new download task
             WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, DownloadFileRecord, string>(this, Const.AddDownloadRecord, async (x, y) =>
             {
                 await AddNewDownloadTaskAsync(y, true, true);
             });
+
+            //task complete
+            WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, DownloadItemViewModel, string>(this, Const.DownloadFinish, async (x, y) =>
+            {
+                RemoveTask(y);
+                //增加到传输界面
+                using (var context = dbContextFactory.CreateDbContext())
+                {
+                    var record = await context
+                        .TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
+                    var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
+                    WeakReferenceMessenger.Default.Send<TransferCompleteItemViewModel, string>(vm, Const.AddTransferRecord);
+                }
+            });
+        }
+
+        /// <summary>
+        /// 移除task
+        /// </summary>
+        /// <param name="uploadFileRecord"></param>
+        private void RemoveTask(DownloadItemViewModel downloadItemViewModel)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                DownloadItemViewModels.Remove(downloadItemViewModel);
+                HadTask = DownloadItemViewModels.Count != 0;
+            });
+
+            WeakReferenceMessenger.Default.Send<ObservableCollection<DownloadItemViewModel>, string>(DownloadItemViewModels, Const.NotifyDownloadingCount);
         }
 
         /// <summary>
@@ -62,9 +96,36 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             else
                 DownloadItemViewModels.Add(viewModel);
             HadTask = true;
-            //WeakReferenceMessenger.Default.Send<ObservableCollection<UploadItemViewModel>, string>(UploadItemViewModels, Const.NotifyUploadingCount);
+            WeakReferenceMessenger.Default.Send<ObservableCollection<DownloadItemViewModel>, string>(DownloadItemViewModels, Const.NotifyDownloadingCount);
             if (start)
                 await viewModel.StartAsync();
+        }
+
+        private async Task LoadAsync()
+        {
+            try
+            {
+                if (_isLoaded)
+                    return;
+
+                using (var context = _dbContextFactory.CreateDbContext())
+                {
+                    var downloadFileRecords = await context.DownloadFileRecords.Where(x => x.Status == FileDownloadingStatus.DownloadingSuspend
+                    || x.Status == FileDownloadingStatus.DownloadingSuspend || x.Status == FileDownloadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToListAsync();
+
+                    foreach (var item in downloadFileRecords)
+                    {
+                        await AddNewDownloadTaskAsync(item, false);
+                    }
+                }
+
+                _isLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                _isLoaded = false;
+            }
         }
     }
 }
