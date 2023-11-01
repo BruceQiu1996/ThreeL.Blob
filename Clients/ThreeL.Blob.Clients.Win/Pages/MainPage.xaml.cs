@@ -44,5 +44,17 @@ namespace ThreeL.Blob.Clients.Win.Pages
             var textbox = sender as TextBox;
             textbox.SelectAll();
         }
+
+        private void ListBox_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Link;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+        }
     }
 }

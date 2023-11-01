@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using HandyControl.Controls;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -12,6 +13,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
@@ -44,6 +48,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand DownloadCommandAsync { get; set; }
         public RelayCommand SearchFileByKeywordCommand { get; set; }
         public AsyncRelayCommand DeleteCommandAsync { get; set; }
+        public RelayCommand<MouseEventArgs> PreviewMouseMoveCommand { get; set; }
+        public RelayCommand<DragEventArgs> DropCommand { get; set; }
         public RelayCommand GridGotFocusCommand { get; set; }
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
@@ -123,6 +129,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             DownloadCommandAsync = new AsyncRelayCommand(DownloadAsync);
             SearchFileByKeywordCommand = new RelayCommand(SearchFileByKeyword);
             DeleteCommandAsync = new AsyncRelayCommand(DeleteAsync);
+            PreviewMouseMoveCommand = new RelayCommand<MouseEventArgs>(PreviewMouseMove);
+            DropCommand = new RelayCommand<DragEventArgs>(Drop);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
             AllFileObjDtos = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
@@ -170,6 +178,51 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 item.IsSelected = false;
             }
+        }
+
+        private Point _dragStartPoint;
+        private void PreviewMouseMove(MouseEventArgs e) 
+        {
+            Point point = e.GetPosition(null);
+            Vector diff = _dragStartPoint - point;
+            if (e.LeftButton == MouseButtonState.Pressed &&
+                (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance))
+            {
+                var lbi = FindVisualParent<ListBoxItem>(((DependencyObject)e.OriginalSource));
+                if (lbi != null)
+                {
+                    DragDrop.DoDragDrop(lbi, lbi.DataContext, DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void Drop(DragEventArgs e)
+        {
+            var item = FindVisualParent<ListBoxItem>(((DependencyObject)e.OriginalSource));
+            if (item == null) 
+            {
+                //查看鼠标上是否有文件
+
+            }
+            var target = item.DataContext as FileObjItemViewModel;
+
+            if (target != null && target.IsFolder) //可以接受移动或者外部文件
+            { 
+                
+            }
+        }
+
+        private T FindVisualParent<T>(DependencyObject child)
+            where T : DependencyObject
+        {
+            var parentObject = VisualTreeHelper.GetParent(child);
+            if (parentObject == null)
+                return null;
+            T parent = parentObject as T;
+            if (parent != null)
+                return parent;
+            return FindVisualParent<T>(parentObject);
         }
 
         private async Task NewFolder()

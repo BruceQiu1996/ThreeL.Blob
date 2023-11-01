@@ -135,6 +135,8 @@
                           Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <ListBox ScrollViewer.CanContentScroll="False"
                          Padding="0"
+                         DragEnter="ListBox_DragEnter"
+                         AllowDrop="True"
                          hc:BorderElement.CornerRadius="0"
                          ScrollViewer.IsDeferredScrollingEnabled="True"
                          ScrollViewer.VerticalScrollBarVisibility="Visible"
@@ -144,8 +146,11 @@
                          ItemsSource="{Binding FileObjDtos,UpdateSourceTrigger=PropertyChanged}"
                          BorderThickness="0" BorderBrush="Transparent">
                     <behaviors:Interaction.Triggers>
-                        <behaviors:EventTrigger EventName="SelectionChanged">
-                            <behaviors:InvokeCommandAction Command="{Binding SelectFriendCommandAsync}"></behaviors:InvokeCommandAction>
+                        <behaviors:EventTrigger EventName="PreviewMouseMove">
+                            <behaviors:InvokeCommandAction Command="{Binding PreviewMouseMoveCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                        </behaviors:EventTrigger>
+                        <behaviors:EventTrigger EventName="Drop">
+                            <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
                         </behaviors:EventTrigger>
                     </behaviors:Interaction.Triggers>
                     <ListBox.ItemsPanel>

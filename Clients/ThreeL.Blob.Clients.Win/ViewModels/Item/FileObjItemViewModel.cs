@@ -169,7 +169,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             if (e.ClickCount == 1)
             {
-                IsSelected = !IsSelected;
+                IsSelected = true;
             }
             else if (e.ClickCount > 1)
             {
