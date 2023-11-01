@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using Autofac.Extras.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
+using ThreeL.Blob.Application.Channels;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Infra.Core.Extensions.Microsoft;
 using ThreeL.Blob.Shared.Application.Contract;
@@ -21,6 +22,7 @@ namespace ThreeL.Blob.Application.Extensions
 
         public static void AddApplicationService(this IServiceCollection services)
         {
+            services.AddSingleton<GenerateThumbnailChannel>();
             services.Configure<JwtOptions>(services.GetConfiguration().GetSection("Jwt"));
             services.Configure<SystemOptions>(services.GetConfiguration().GetSection("System"));
             ApplicationDependencyRegistrar applicationDependencyRegistrar = new ApplicationDependencyRegistrar(_applicationAssemblyInfo, services);

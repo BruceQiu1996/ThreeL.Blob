@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
+using Microsoft.Extensions.Configuration;
 using System.Net;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Dtos;
@@ -21,17 +21,20 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<DownloadFileTask, string> _downloadTaskBasicRepository;
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
+        private readonly IConfiguration _configuration;
         public FileService(IEfBasicRepository<User, long> userBasicRepository,
                            IEfBasicRepository<FileObject, long> fileBasicRepository,
                            IEfBasicRepository<DownloadFileTask, string> downloadTaskBasicRepository,
                            IRedisProvider redisProvider,
-                           IMapper mapper)
+                           IMapper mapper,
+                           IConfiguration configuration)
         {
             _mapper = mapper;
             _redisProvider = redisProvider;
             _downloadTaskBasicRepository = downloadTaskBasicRepository;
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
+            _configuration = configuration;
         }
 
         public async Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId)
@@ -115,6 +118,28 @@ namespace ThreeL.Blob.Application.Services
             return new ServiceResult<FileObjDto>(_mapper.Map<FileObjDto>(fileObject));
         }
 
+        //TODO删除逻辑完善
+        public async Task<ServiceResult> DeleteItemsAsync(long[] fileIds, long userId)
+        {
+            List<FileObject> fileObjects = new List<FileObject>();
+            var roots = await _fileBasicRepository.Where(x => fileIds.Contains(x.Id) && x.CreateBy == userId).ToListAsync();
+            if (roots == null || roots.Count <= 0)
+            {
+                return new ServiceResult();
+            }
+
+
+            fileObjects.AddRange(roots.Where(x => !x.IsFolder));
+            foreach (var root in roots.Where(x => x.IsFolder))
+            {
+                var files = await _fileBasicRepository
+                    .QuerySqlAsync($"WITH RECURSIVE file_teee As(SELECT * FROM fileobject WHERE fileobject.Id = {root.Id} UNION SELECT f1.* FROM fileobject f1 JOIN file_teee ON f1.ParentFolder = file_teee.id) SELECT * FROM file_teee");
+                fileObjects.AddRange(files);
+            }
+
+            return new ServiceResult();
+        }
+
         public async Task<ServiceResult<DownloadFileResponseDto>> DownloadAsync(long fileId, long userId)
         {
             var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
@@ -148,7 +173,13 @@ namespace ThreeL.Blob.Application.Services
                 .Where(x => x.ParentFolder == parentId && x.CreateBy == userId && x.Status == FileStatus.Normal)
                 .OrderByDescending(x => x.CreateTime).ToListAsync();
 
-            return new ServiceResult<IEnumerable<FileObjDto>>(items.Select(_mapper.Map<FileObjDto>));
+            return new ServiceResult<IEnumerable<FileObjDto>>(items.Select(x =>
+            {
+                x.ThumbnailImageLocation = (string.IsNullOrEmpty(x.ThumbnailImageLocation) || !File.Exists(x.ThumbnailImageLocation)) ? null :
+                    Path.GetFileName(x.ThumbnailImageLocation);
+
+                return _mapper.Map<FileObjDto>(x);
+            }));
         }
 
         public async Task<ServiceResult<FileUploadingStatusDto>> GetUploadingStatusAsync(long fileId, long userId)

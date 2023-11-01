@@ -63,6 +63,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     WeakReferenceMessenger.Default.Send<TransferCompleteItemViewModel, string>(vm, Const.AddTransferRecord);
                 }
             });
+
+            PauseAllCommandAsync = new AsyncRelayCommand(PauseAllAsync);
+            ResumeAllCommandAsync = new AsyncRelayCommand(ResumeAllAsync);
+            CancelAllCommandAsync = new AsyncRelayCommand(CancelAllAsync);
         }
 
         /// <summary>
@@ -99,6 +103,32 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             WeakReferenceMessenger.Default.Send<ObservableCollection<DownloadItemViewModel>, string>(DownloadItemViewModels, Const.NotifyDownloadingCount);
             if (start)
                 await viewModel.StartAsync();
+        }
+
+        private Task PauseAllAsync()
+        {
+            foreach (var item in DownloadItemViewModels)
+            {
+                item.PauseCommand.Execute(null);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private async Task ResumeAllAsync()
+        {
+            foreach (var item in DownloadItemViewModels)
+            {
+                item.ResumeCommandAsync.ExecuteAsync(null);
+            }
+        }
+
+        private async Task CancelAllAsync()
+        {
+            foreach (var item in DownloadItemViewModels)
+            {
+                item.CancelCommandAsync.ExecuteAsync(null);
+            }
         }
 
         private async Task LoadAsync()

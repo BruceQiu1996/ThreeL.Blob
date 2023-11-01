@@ -14,8 +14,11 @@
       Title="MainPage">
     <Page.Resources>
         <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
-        <ContextMenu x:Key="mainpanelmenu" BorderThickness="0">
-            <MenuItem Header="下载" Command="{Binding DownloadCommandAsync}"></MenuItem>
+        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="140" Padding="0" Cursor="Hand">
+            <MenuItem Header="下载" 
+                      Command="{Binding DownloadCommandAsync}" Padding="5 5" FontSize="16"></MenuItem>
+            <MenuItem Header="删除" 
+                      Command="{Binding DeleteCommandAsync}" Padding="5 5" FontSize="16"></MenuItem>
         </ContextMenu>
     </Page.Resources>
     <behaviors:Interaction.Triggers>
@@ -45,8 +48,18 @@
                 <hc:SearchBar Style="{StaticResource SearchBarExtend}" hc:InfoElement.Placeholder="搜索文件"
                               Height="30" Width="250"
                               Margin="10 0  0 0"
+                              Text="{Binding Keyword,UpdateSourceTrigger=PropertyChanged}"
+                              Command="{Binding SearchFileByKeywordCommand}"
                               HorizontalAlignment="Right"></hc:SearchBar>
 
+                <ComboBox Width="180" 
+                          Style="{StaticResource ComboBoxExtend}"
+                          hc:TitleElement.TitlePlacement="Left"
+                          hc:InfoElement.Placeholder="排序"
+                          Height="32" VerticalAlignment="Center" Margin="10 0"
+                          ItemsSource="{Binding SortOptions}"
+                          SelectedItem="{Binding SortOption}">
+                </ComboBox>
                 <Button Content="刷新" Margin="5 0 0 0" 
                         Command="{Binding RefreshCommandAsync}"
                         Width="120" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
@@ -115,11 +128,11 @@
 
         <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0">
             <ScrollViewer Grid.Column="0" Grid.Row="2"
-                          ContextMenu="{StaticResource mainpanelmenu}"
-                              Margin="10 5"
-                              Grid.ColumnSpan="2"
-                              RequestBringIntoView="ScrollViewer_RequestBringIntoView"
-                              Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
+                          ContextMenu="{StaticResource filemenu}"
+                          Margin="10 5"
+                          Grid.ColumnSpan="2"
+                          RequestBringIntoView="ScrollViewer_RequestBringIntoView"
+                          Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <ListBox ScrollViewer.CanContentScroll="False"
                          Padding="0"
                          hc:BorderElement.CornerRadius="0"
@@ -157,16 +170,18 @@
                                         <Border Cursor="Hand"
                                                 Padding="0"
                                                 CornerRadius="3"
-                                                BorderThickness="1"
+                                                BorderThickness="1.5"
                                                 BorderBrush="{TemplateBinding BorderBrush}"
                                                 Height="{TemplateBinding Height}"
                                                 Width="{TemplateBinding Width}"
                                                 Name="fileObjectDetail"
-                                                Background="{TemplateBinding Background}"
-                                                >
+                                                Background="{TemplateBinding Background}">
                                             <behaviors:Interaction.Triggers>
                                                 <behaviors:EventTrigger EventName="MouseLeftButtonDown">
                                                     <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                                                </behaviors:EventTrigger>
+                                                <behaviors:EventTrigger EventName="MouseRightButtonDown">
+                                                    <behaviors:InvokeCommandAction Command="{Binding RightClickFileObjectCommand}"></behaviors:InvokeCommandAction>
                                                 </behaviors:EventTrigger>
                                             </behaviors:Interaction.Triggers>
                                             <Grid>

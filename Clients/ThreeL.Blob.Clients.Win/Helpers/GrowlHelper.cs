@@ -10,7 +10,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             Growl.Info(new GrowlInfo()
             {
                 Message = message,
-                ShowDateTime = true,
+                ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
                 WaitTime = 2
@@ -22,7 +22,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             Growl.Success(new GrowlInfo()
             {
                 Message = message,
-                ShowDateTime = true,
+                ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
                 WaitTime = 2
@@ -34,7 +34,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             Growl.Warning(new GrowlInfo()
             {
                 Message = message,
-                ShowDateTime = true,
+                ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
                 WaitTime = 2

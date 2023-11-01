@@ -1,6 +1,7 @@
 ﻿using Google.Protobuf;
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
+using ThreeL.Blob.Application.Channels;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
@@ -18,14 +19,17 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<FileObject, long> _efBasicRepository;
         private readonly IEfBasicRepository<DownloadFileTask, string> _downloadFileTaskEfBasicRepository;
         private readonly ILogger<GrpcService> _logger;
+        private readonly GenerateThumbnailChannel _generateThumbnailChannel;
         public GrpcService(IRedisProvider redisProvider,
                            IEfBasicRepository<FileObject, long> efBasicRepository,
+                           GenerateThumbnailChannel generateThumbnailChannel,
                            IEfBasicRepository<DownloadFileTask, string> downloadFileTaskEfBasicRepository,
                            ILogger<GrpcService> logger)
         {
             _logger = logger;
             _redisProvider = redisProvider;
             _efBasicRepository = efBasicRepository;
+            _generateThumbnailChannel = generateThumbnailChannel;
             _downloadFileTaskEfBasicRepository = downloadFileTaskEfBasicRepository;
         }
 
@@ -208,6 +212,7 @@ namespace ThreeL.Blob.Application.Services
                 File.Move(fileObject.TempFileLocation, fileObject.Location);
                 fileObject.Status = FileStatus.Normal;
                 await _efBasicRepository.UpdateAsync(fileObject);
+                await _generateThumbnailChannel.WriteMessageAsync((userid, fileObject.Id)); //生成缩略图
 
                 return new UploadFileResponse() { Result = true, Message = "上传文件完成", Status = UploadFileResponseStatus.NormalStatus };
             }

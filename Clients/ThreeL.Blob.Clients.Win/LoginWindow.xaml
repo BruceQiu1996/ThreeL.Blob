@@ -121,14 +121,10 @@
                 <TextBlock Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center" Text="version : 1.0.0.0"/>
             </Grid>
 
-            <ScrollViewer VerticalScrollBarVisibility="Hidden"
-                          Background="Transparent"
-                          Margin="0 0 0 5"
-                          Grid.RowSpan="3"
-                          Grid.ColumnSpan="2"
-                          HorizontalAlignment="Center" >
-                <StackPanel hc:Growl.GrowlParent="True" VerticalAlignment="Top" Margin="0,10,10,0"/>
-            </ScrollViewer>
+            <StackPanel hc:Growl.GrowlParent="True" 
+                        Grid.RowSpan="3"
+                        Grid.ColumnSpan="2"
+                        VerticalAlignment="Top" Margin="5"/>
         </Grid>
     </Grid>
 </Window>

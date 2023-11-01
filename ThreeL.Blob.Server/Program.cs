@@ -6,12 +6,14 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using System.Net;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Extensions;
+using ThreeL.Blob.Application.Middlewares;
 using ThreeL.Blob.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
 
@@ -108,7 +110,22 @@ namespace ThreeL.Blob.Server
             host.UseRouting();
             host.UseAuthentication();
             host.UseAuthorization();
-            //host.UseMiddleware<AuthorizeStaticFilesMiddleware>("/files"); //授权静态文件访问,如果使用，则表情获取那需要自己控制下载
+            host.UseMiddleware<AuthorizeThumbnailImagesMiddleware>("/api/thumbnailImages"); //授权静态文件访问,如果使用，则表情获取那需要自己控制下载
+            host.UseStaticFiles(new StaticFileOptions()
+            {
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Add("Cache-Control", "public,max-age=600");
+                }
+            });
+
+            host.UseFileServer(new FileServerOptions()
+            {
+                FileProvider = new PhysicalFileProvider(host.Configuration.GetSection("FileStorage:ThumbnailImagesLocation").Value!),
+                RequestPath = new Microsoft.AspNetCore.Http.PathString("/api/thumbnailImages"),
+                EnableDirectoryBrowsing = false
+            });
+
             host.UseStaticFiles(new StaticFileOptions()
             {
                 OnPrepareResponse = ctx =>

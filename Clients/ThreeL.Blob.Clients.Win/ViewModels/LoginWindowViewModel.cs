@@ -34,6 +34,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             _growlHelper = growlHelper;
             _mapper = mapper;
             httpRequest.ExcuteWhileBadRequest += _growlHelper.Warning;
+            httpRequest.ExcuteWhileInternalServerError += _growlHelper.Warning;
             LoginCommandAsync = new AsyncRelayCommand<PasswordBox>(LoginAsync);
             _grpcService = grpcService;
         }

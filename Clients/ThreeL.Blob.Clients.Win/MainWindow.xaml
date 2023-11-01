@@ -204,6 +204,8 @@
             <Frame Content="{Binding CurrentPage,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" BorderThickness="0"
                    NavigationUIVisibility="Hidden">
             </Frame>
+
+            <StackPanel hc:Growl.GrowlParent="True" Grid.RowSpan="3" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="5"/>
         </Grid>
     </Grid>
 </Window>

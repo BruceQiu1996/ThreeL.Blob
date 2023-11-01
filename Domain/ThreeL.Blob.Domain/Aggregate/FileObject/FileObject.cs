@@ -19,5 +19,6 @@ namespace ThreeL.Blob.Domain.Aggregate.FileObject
         public bool IsFolder { get; set; }
         public FileStatus? Status { get; set; }
         public string? TempFileLocation { get; set; }
+        public string? ThumbnailImageLocation { get; set; }
     }
 }

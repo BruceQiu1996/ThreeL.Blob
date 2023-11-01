@@ -17,7 +17,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public bool Success { get; set; }
         public string Reason { get; set; }
         public string TaskId { get; set; }
-        public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName);
+        public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName).Item2;
 
         public TransferCompleteItemViewModel() 
         {

@@ -9,7 +9,7 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
        where TDbContext : DbContext
        where TEntity : EfEntity<TKey>, IEfEntity<TKey>
     {
-        protected virtual TDbContext DbContext { get; }
+        public virtual TDbContext DbContext { get; }
 
         protected AbstractEfBaseRepository(TDbContext dbContext) => DbContext = dbContext;
 

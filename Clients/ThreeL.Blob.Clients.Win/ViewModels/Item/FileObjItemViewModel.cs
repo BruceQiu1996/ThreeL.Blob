@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -11,7 +12,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Dtos;
-using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
@@ -47,8 +47,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref _lastUpdateTime, value);
         }
         public bool IsFolder { get; set; }
-        public BitmapImage Icon => IsFolder ? App.ServiceProvider!.GetRequiredService<FileHelper>().GetBitmapImageByFileExtension("folder.png")
-            : App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(Name);
+        public int Type { get; set; }
+        private BitmapImage _icon;
+        public BitmapImage Icon 
+        {
+            get => _icon;
+            set => SetProperty(ref _icon, value);
+        }
         public string SizeText => Size?.ToSizeText() ?? "未知";
         private string _nameDesc;
         public string NameDesc
@@ -78,7 +83,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set
             {
                 SetProperty(ref _isSelected, value);
-                WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.SelectItem);
+                WeakReferenceMessenger.Default.Send(this, Const.SelectItem);
             }
         }
 
@@ -92,15 +97,72 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
         }
 
+        private bool _isThumbnailDisplay;
+        public bool IsThumbnailDisplay
+        {
+            get => _isThumbnailDisplay;
+            set
+            {
+                SetProperty(ref _isThumbnailDisplay, value);
+            }
+        }
+
+        private string _thumbnailImageLocation;
+        public string? ThumbnailImageLocation
+        {
+            get => _thumbnailImageLocation;
+            set
+            {
+                _thumbnailImageLocation = value;
+                if (!string.IsNullOrEmpty(value))
+                {
+                    GetThumbnailImage(value);
+                }
+            }
+        }
+
         public AsyncRelayCommand RenameTextSubmitCommandAsync { get; set; }
         public RelayCommand<MouseButtonEventArgs> ClickFileObjectCommand { get; set; }
+        public RelayCommand RightClickFileObjectCommand { get; set; }
         public RelayCommand ClickUrlObjectCommand { get; set; }
 
         public FileObjItemViewModel()
         {
             RenameTextSubmitCommandAsync = new AsyncRelayCommand(RenameTextSubmitAsync);
             ClickFileObjectCommand = new RelayCommand<MouseButtonEventArgs>(ClickFileObject);
+            RightClickFileObjectCommand = new RelayCommand(RightClickFileObject);
             ClickUrlObjectCommand = new RelayCommand(ClickUrlObject);
+        }
+
+        public void GetThumbnailImage(string thumbnailImage)
+        {
+            var _ = Task.Run(async () =>
+            {
+                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>()
+                    .GetAsync(string.Format(Const.GET_THUMBNAIL_IMAGE, App.UserProfile.Id, thumbnailImage));
+
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    var bytes = await resp.Content.ReadAsByteArrayAsync();
+                    var source = new BitmapImage();
+                    try
+                    {
+                        using (MemoryStream ms = new MemoryStream(bytes))
+                        {
+                            source.BeginInit();
+                            source.StreamSource = ms;
+                            source.CacheOption = BitmapCacheOption.OnLoad;
+                            source.EndInit();
+
+                            Icon = source;
+                        }
+                    }
+                    finally
+                    {
+                        source.Freeze();
+                    }
+                }
+            });
         }
 
         private void ClickFileObject(MouseButtonEventArgs e)
@@ -115,7 +177,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
         }
 
-        private void ClickUrlObject() 
+        private void RightClickFileObject()
+        {
+            IsSelected = true;
+        }
+
+        private void ClickUrlObject()
         {
             WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.DoubleClickItem);
         }

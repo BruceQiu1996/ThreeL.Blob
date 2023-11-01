@@ -20,11 +20,16 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
 
         public async Task<TEntity?> GetAsync(TKey keyValue, Expression<Func<TEntity, dynamic>>? navigationPropertyPath = null, bool writeDb = false, CancellationToken cancellationToken = default)
         {
-            var query = this.GetDbSet(writeDb, false).Where(t => t.Id.Equals(keyValue));
+            var query = GetDbSet(writeDb, false).Where(t => t.Id.Equals(keyValue));
             if (navigationPropertyPath is null)
                 return await query.FirstOrDefaultAsync(cancellationToken);
             else
                 return await query.Include(navigationPropertyPath).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<TEntity>> QuerySqlAsync(string sql, bool writeDb = false, CancellationToken cancellationToken = default)
+        {
+            return await DbContext.Set<TEntity>().FromSqlRaw(sql).ToListAsync();
         }
 
         public async Task<int> RemoveAsync(TEntity entity, CancellationToken cancellationToken = default)

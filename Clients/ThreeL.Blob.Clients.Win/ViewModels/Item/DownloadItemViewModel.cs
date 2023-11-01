@@ -69,7 +69,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public DateTime DownloadFinishTime { get; set; }
         public FileDownloadingStatus Status { get; set; }
 
-        public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName);
+        public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName).Item2;
         public AsyncRelayCommand ResumeCommandAsync { get; set; }
         public RelayCommand PauseCommand { get; set; }
         public AsyncRelayCommand CancelCommandAsync { get; set; }

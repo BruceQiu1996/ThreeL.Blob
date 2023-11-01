@@ -4,6 +4,7 @@
     {
         public long Id { get; set; }
         public string Name { get; set; }
+        public string? ThumbnailImageLocation { get; set; }
         public long? Size { get; set; }
         public long? ParentFolder { get; set; }
         public DateTime CreateTime { get; set; }

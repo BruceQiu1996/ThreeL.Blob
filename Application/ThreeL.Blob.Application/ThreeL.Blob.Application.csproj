@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SixLabors.Fonts" Version="2.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.0.2" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Repository.EfCore.Mysql\ThreeL.Blob.Infra.Repository.EfCore.Mysql.csproj" />
     <ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Application\ThreeL.Blob.Shared.Application.csproj" />
     <ProjectReference Include="..\..\ThreeL.Blob.Migrations\ThreeL.Blob.Migrations.csproj" />

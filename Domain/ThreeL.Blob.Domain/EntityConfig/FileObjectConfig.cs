@@ -13,6 +13,7 @@ namespace ThreeL.Blob.Domain.EntityConfig
             builder.Property(x => x.Name).HasMaxLength(256);
             builder.Property(x => x.Location).HasMaxLength(500);
             builder.Property(x => x.TempFileLocation).HasMaxLength(500);
+            builder.Property(x => x.ThumbnailImageLocation).HasMaxLength(500);
             builder.Property(x => x.Code).HasMaxLength(500);
         }
     }
