@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
@@ -35,8 +36,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public string SortOption
         {
             get => _sortOption;
-            set 
-            { 
+            set
+            {
                 SetProperty(ref _sortOption, value);
                 OnSort(FileObjDtos);
             }
@@ -48,7 +49,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand DownloadCommandAsync { get; set; }
         public RelayCommand SearchFileByKeywordCommand { get; set; }
         public AsyncRelayCommand DeleteCommandAsync { get; set; }
-        public RelayCommand<MouseEventArgs> PreviewMouseMoveCommand { get; set; }
         public RelayCommand<DragEventArgs> DropCommand { get; set; }
         public RelayCommand GridGotFocusCommand { get; set; }
         private readonly GrpcService _grpcService;
@@ -129,7 +129,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             DownloadCommandAsync = new AsyncRelayCommand(DownloadAsync);
             SearchFileByKeywordCommand = new RelayCommand(SearchFileByKeyword);
             DeleteCommandAsync = new AsyncRelayCommand(DeleteAsync);
-            PreviewMouseMoveCommand = new RelayCommand<MouseEventArgs>(PreviewMouseMove);
             DropCommand = new RelayCommand<DragEventArgs>(Drop);
             FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
             AllFileObjDtos = new ObservableCollection<FileObjItemViewModel>();
@@ -172,7 +171,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             await RefreshByParentAsync(_currentParent);
         }
 
-        private void GridGotFocus() 
+        private void GridGotFocus()
         {
             foreach (var item in AllFileObjDtos)
             {
@@ -180,36 +179,37 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        private Point _dragStartPoint;
-        private void PreviewMouseMove(MouseEventArgs e) 
+        //拖拽上传文件
+        private async void Drop(DragEventArgs e)
         {
-            Point point = e.GetPosition(null);
-            Vector diff = _dragStartPoint - point;
-            if (e.LeftButton == MouseButtonState.Pressed &&
-                (Math.Abs(diff.X) > SystemParameters.MinimumHorizontalDragDistance ||
-                    Math.Abs(diff.Y) > SystemParameters.MinimumVerticalDragDistance))
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
-                var lbi = FindVisualParent<ListBoxItem>(((DependencyObject)e.OriginalSource));
-                if (lbi != null)
+                long parent = 0;
+                var item = FindVisualParent<ListBoxItem>(((DependencyObject)e.OriginalSource));
+                if (item == null)
                 {
-                    DragDrop.DoDragDrop(lbi, lbi.DataContext, DragDropEffects.Move);
+                    parent = _currentParent;
                 }
-            }
-        }
+                else
+                {
+                    var vm = item.DataContext as FileObjItemViewModel;
+                    if (vm == null || !vm.IsFolder)
+                        return;
 
-        private void Drop(DragEventArgs e)
-        {
-            var item = FindVisualParent<ListBoxItem>(((DependencyObject)e.OriginalSource));
-            if (item == null) 
-            {
-                //查看鼠标上是否有文件
-
-            }
-            var target = item.DataContext as FileObjItemViewModel;
-
-            if (target != null && target.IsFolder) //可以接受移动或者外部文件
-            { 
-                
+                    parent = vm.Id;
+                }
+                var files = (Array)e.Data.GetData(DataFormats.FileDrop);
+                foreach (var file in files)
+                {
+                    if (File.Exists(file.ToString()))
+                    {
+                        await UploadFileAsync(file.ToString(), parent);
+                    }
+                    else
+                    {
+                        _growlHelper.Warning($"文件：{file}不存在或不支持直接上传文件夹");
+                    }
+                }
             }
         }
 
@@ -277,11 +277,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
                 if (items != null && items.Count() > 0)
                 {
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(items.Select(x=>
+                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(items.Select(x =>
                     {
-                        var vm =  _mapper.Map<FileObjItemViewModel>(x);
+                        var vm = _mapper.Map<FileObjItemViewModel>(x);
                         vm.Icon = vm.IsFolder ? _fileHelper.GetBitmapImageByFileExtension("folder.png") : _fileHelper.GetIconByFileExtension(vm.Name).Item2;
-                        vm.Type = vm.IsFolder ? 0 : _fileHelper.GetIconByFileExtension(vm.Name,true).Item1;
+                        vm.Type = vm.IsFolder ? 0 : _fileHelper.GetIconByFileExtension(vm.Name, true).Item1;
 
                         return vm;
                     }));
@@ -327,19 +327,19 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         /// <summary>
         /// 根据关键字查找文件
         /// </summary>
-        private void SearchFileByKeyword() 
+        private void SearchFileByKeyword()
         {
             if (string.IsNullOrEmpty(Keyword))
             {
                 OnSort(AllFileObjDtos);
             }
-            else 
+            else
             {
                 OnSort(AllFileObjDtos.Where(x => x.Name.Contains(Keyword)));
             }
         }
 
-        private async Task DeleteAsync() 
+        private async Task DeleteAsync()
         {
             var files = FileObjDtos.Where(x => x.IsSelected);
             if (files == null)
@@ -351,12 +351,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
             if (result == MessageBoxResult.Yes)
             {
-                var resp = await _httpRequest.PostAsync(Const.DELETE_FILE,new DeleteFileObjectsDto() 
+                var resp = await _httpRequest.PostAsync(Const.DELETE_FILE, new DeleteFileObjectsDto()
                 {
                     FileIds = files.Select(x => x.Id).ToArray()
                 });
 
-                if (resp != null) 
+                if (resp != null)
                 {
                     //TODO okk
                 }
@@ -387,56 +387,61 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             openFileDialog.Multiselect = true;
             if (openFileDialog.ShowDialog()!.Value)
             {
-                foreach (var file in openFileDialog.FileNames)
+                foreach (var item in openFileDialog.FileNames)
                 {
-                    var fileInfo = new FileInfo(file);
-                    using (FileStream stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read))
-                    {
-                        var code = stream.ToSHA256();
-                        var resp = await _httpRequest.PostAsync(Const.UPLOAD_FILE, new UploadFileDto()
-                        {
-                            Name = fileInfo.Name,
-                            Size = fileInfo.Length,
-                            ParentFolder = _currentParent,
-                            Code = code
-                        });
-
-                        if (resp != null && resp.IsSuccessStatusCode)
-                        {
-                            var result = JsonSerializer.
-                                Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
-                            using (var context = await _dbContextFactory.CreateDbContextAsync())
-                            {
-                                var record = new UploadFileRecord()
-                                {
-                                    FileId = result.FileId,
-                                    FileName = fileInfo.Name,
-                                    Size = fileInfo.Length,
-                                    FileLocation = fileInfo.FullName,
-                                    TransferBytes = 0,
-                                    Status = FileUploadingStatus.Wait,
-                                    Code = code
-                                };
-                                await context.UploadFileRecords.AddAsync(record);
-                                await context.SaveChangesAsync();
-                                WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
-                            };
-                        }
-                    }
+                    await UploadFileAsync(item, _currentParent);
                 }
             }
         }
 
-        private async Task DownloadAsync(FileObjItemViewModel itemViewModel,string location) 
+        public async Task UploadFileAsync(string file, long parentFolder)
+        {
+            var fileInfo = new FileInfo(file);
+            using (FileStream stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read))
+            {
+                var code = stream.ToSHA256();
+                var resp = await _httpRequest.PostAsync(Const.UPLOAD_FILE, new UploadFileDto()
+                {
+                    Name = fileInfo.Name,
+                    Size = fileInfo.Length,
+                    ParentFolder = parentFolder,
+                    Code = code
+                });
+
+                if (resp != null && resp.IsSuccessStatusCode)
+                {
+                    var result = JsonSerializer.
+                        Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                    using (var context = await _dbContextFactory.CreateDbContextAsync())
+                    {
+                        var record = new UploadFileRecord()
+                        {
+                            FileId = result.FileId,
+                            FileName = fileInfo.Name,
+                            Size = fileInfo.Length,
+                            FileLocation = fileInfo.FullName,
+                            TransferBytes = 0,
+                            Status = FileUploadingStatus.Wait,
+                            Code = code
+                        };
+                        await context.UploadFileRecords.AddAsync(record);
+                        await context.SaveChangesAsync();
+                        WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
+                    };
+                }
+            }
+        }
+
+        private async Task DownloadAsync(FileObjItemViewModel itemViewModel, string location)
         {
             if (itemViewModel.IsFolder)
             {
                 //TODO 文件夹下载待定
             }
-            else 
+            else
             {
                 var resp = await _httpRequest.PostAsync(string.Format(Const.DOWNLOAD_FILE, itemViewModel.Id), null);
-                if (resp != null) 
+                if (resp != null)
                 {
                     var result = JsonSerializer.
                                Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());

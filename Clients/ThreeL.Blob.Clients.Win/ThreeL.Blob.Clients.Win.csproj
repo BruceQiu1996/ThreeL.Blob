@@ -11,6 +11,7 @@
 		<None Remove="appsettings.json" />
 		<None Remove="Images\exe.png" />
 		<None Remove="Images\folder.png" />
+		<None Remove="Images\html.png" />
 		<None Remove="Images\image.png" />
 		<None Remove="Images\sql.png" />
 	</ItemGroup>

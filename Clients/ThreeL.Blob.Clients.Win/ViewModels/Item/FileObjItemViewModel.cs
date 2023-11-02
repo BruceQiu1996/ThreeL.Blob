@@ -69,11 +69,21 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref _isRename, value);
         }
 
+        /// <summary>
+        /// 是否聚焦到该item的重命名box
+        /// </summary>
         private bool _isFocus;
         public bool IsFocus
         {
             get => _isFocus;
             set => SetProperty(ref _isFocus, value);
+        }
+
+        private bool _isHighlight;
+        public bool IsHighlight
+        {
+            get => _isHighlight;
+            set => SetProperty(ref _isHighlight, value);
         }
 
         private bool _isSelected;
@@ -83,6 +93,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set
             {
                 SetProperty(ref _isSelected, value);
+                IsHighlight = value;
                 WeakReferenceMessenger.Default.Send(this, Const.SelectItem);
             }
         }
@@ -125,6 +136,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand<MouseButtonEventArgs> ClickFileObjectCommand { get; set; }
         public RelayCommand RightClickFileObjectCommand { get; set; }
         public RelayCommand ClickUrlObjectCommand { get; set; }
+        public RelayCommand DragEnterFileObjectCommand { get; set; }
+        public RelayCommand DragLeaveFileObjectCommand { get; set; }
 
         public FileObjItemViewModel()
         {
@@ -132,6 +145,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             ClickFileObjectCommand = new RelayCommand<MouseButtonEventArgs>(ClickFileObject);
             RightClickFileObjectCommand = new RelayCommand(RightClickFileObject);
             ClickUrlObjectCommand = new RelayCommand(ClickUrlObject);
+            DragEnterFileObjectCommand = new RelayCommand(DragEnterFileObject);
+            DragLeaveFileObjectCommand = new RelayCommand(DragLeaveFileObject);
         }
 
         public void GetThumbnailImage(string thumbnailImage)
@@ -173,7 +188,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
             else if (e.ClickCount > 1)
             {
-                WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.DoubleClickItem);
+                WeakReferenceMessenger.Default.Send(this, Const.DoubleClickItem);
             }
         }
 
@@ -184,7 +199,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         private void ClickUrlObject()
         {
-            WeakReferenceMessenger.Default.Send<FileObjItemViewModel, string>(this, Const.DoubleClickItem);
+            WeakReferenceMessenger.Default.Send(this, Const.DoubleClickItem);
+        }
+
+        private void DragEnterFileObject() 
+        {
+            IsHighlight = true;
+        }
+
+
+        private void DragLeaveFileObject()
+        {
+            IsHighlight = IsSelected;
         }
 
         public string GetShortDesc()

@@ -65,6 +65,10 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                     key = 8;
                     icon = "pdf.png";
                     break;
+                case ".html":
+                    key = 9;
+                    icon = "html.png";
+                    break;
                 default:
                     icon = "unknown.png";
                     break;
