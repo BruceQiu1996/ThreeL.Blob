@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Net;
+using ThreeL.Blob.Application.Channels;
 using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
@@ -22,12 +23,14 @@ namespace ThreeL.Blob.Application.Services
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly DeleteFilesChannel _deleteFilesChannel;
         public FileService(IEfBasicRepository<User, long> userBasicRepository,
                            IEfBasicRepository<FileObject, long> fileBasicRepository,
                            IEfBasicRepository<DownloadFileTask, string> downloadTaskBasicRepository,
                            IRedisProvider redisProvider,
                            IMapper mapper,
-                           IConfiguration configuration)
+                           IConfiguration configuration,
+                           DeleteFilesChannel deleteFilesChannel)
         {
             _mapper = mapper;
             _redisProvider = redisProvider;
@@ -35,6 +38,7 @@ namespace ThreeL.Blob.Application.Services
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
             _configuration = configuration;
+            _deleteFilesChannel = deleteFilesChannel;
         }
 
         public async Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId)
@@ -55,7 +59,11 @@ namespace ThreeL.Blob.Application.Services
         {
             var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == fileId && x.CreateBy == userId);
             if (file == null)
-                return new ServiceResult<FileUploadingStatusDto>(HttpStatusCode.BadRequest, "数据异常");
+                return new ServiceResult<FileUploadingStatusDto>(new FileUploadingStatusDto()
+                {
+                    Id = fileId,
+                    Status = FileStatus.Cancel,
+                });
 
             file.Status = FileStatus.Cancel;
             file.UploadFinishTime = DateTime.UtcNow;
@@ -136,6 +144,9 @@ namespace ThreeL.Blob.Application.Services
                     .QuerySqlAsync($"WITH RECURSIVE file_teee As(SELECT * FROM fileobject WHERE fileobject.Id = {root.Id} UNION SELECT f1.* FROM fileobject f1 JOIN file_teee ON f1.ParentFolder = file_teee.id) SELECT * FROM file_teee");
                 fileObjects.AddRange(files);
             }
+
+            await _fileBasicRepository.RemoveRangeAsync(fileObjects);
+            await _deleteFilesChannel.WriteMessageAsync(fileObjects);
 
             return new ServiceResult();
         }

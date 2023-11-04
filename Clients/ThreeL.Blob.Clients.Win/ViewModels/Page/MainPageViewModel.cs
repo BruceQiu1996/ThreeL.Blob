@@ -2,8 +2,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using HandyControl.Controls;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -14,8 +14,6 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
@@ -23,6 +21,8 @@ using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
+using ThreeL.Blob.Clients.Win.ViewModels.Window;
+using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
@@ -39,7 +39,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set
             {
                 SetProperty(ref _sortOption, value);
-                OnSort(FileObjDtos);
+                OnSort(FileObjViewModels);
             }
         }
         public AsyncRelayCommand UploadCommandAsync { get; set; }
@@ -56,26 +56,27 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
         private readonly GrowlHelper _growlHelper;
         private readonly FileHelper _fileHelper;
+        private readonly IniSettings _iniSettings;
         private readonly IMapper _mapper;
         private long _currentParent = 0;
 
-        private ObservableCollection<FileObjItemViewModel> _allFileObjDtos;
-        public ObservableCollection<FileObjItemViewModel> AllFileObjDtos
+        private ObservableCollection<FileObjItemViewModel> _allFileObjViewModels;
+        public ObservableCollection<FileObjItemViewModel> AllFileObjViewModels
         {
-            get => _allFileObjDtos;
+            get => _allFileObjViewModels;
             set
             {
-                SetProperty(ref _allFileObjDtos, value);
+                SetProperty(ref _allFileObjViewModels, value);
             }
         }
 
-        private ObservableCollection<FileObjItemViewModel> _fileObjDtos;
-        public ObservableCollection<FileObjItemViewModel> FileObjDtos
+        private ObservableCollection<FileObjItemViewModel> _fileObjViewModels;
+        public ObservableCollection<FileObjItemViewModel> FileObjViewModels
         {
-            get => _fileObjDtos;
+            get => _fileObjViewModels;
             set
             {
-                SetProperty(ref _fileObjDtos, value);
+                SetProperty(ref _fileObjViewModels, value);
                 SelectedCount = value == null ? 0 : value.Count(x => x.IsSelected);
             }
         }
@@ -113,12 +114,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest,
                                  IDbContextFactory<MyDbContext> dbContextFactory,
-                                 GrowlHelper growlHelper, IMapper mapper, FileHelper fileHelper)
+                                 GrowlHelper growlHelper, IMapper mapper, FileHelper fileHelper, IniSettings iniSettings)
         {
             _mapper = mapper;
             _grpcService = grpcService;
             _httpRequest = httpRequest;
             _growlHelper = growlHelper;
+            _iniSettings = iniSettings;
             _fileHelper = fileHelper;
             _dbContextFactory = dbContextFactory;
             UploadCommandAsync = new AsyncRelayCommand(UploadAsync);
@@ -130,8 +132,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             SearchFileByKeywordCommand = new RelayCommand(SearchFileByKeyword);
             DeleteCommandAsync = new AsyncRelayCommand(DeleteAsync);
             DropCommand = new RelayCommand<DragEventArgs>(Drop);
-            FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
-            AllFileObjDtos = new ObservableCollection<FileObjItemViewModel>();
+            FileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
+            AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
             {
                 new FileObjItemViewModel
@@ -151,7 +153,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             //更新选中文件数量
             WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.SelectItem, (x, y) =>
             {
-                SelectedCount = FileObjDtos == null ? 0 : FileObjDtos.Count(x => x.IsSelected);
+                SelectedCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count(x => x.IsSelected);
             });
 
             //双击事件
@@ -173,11 +175,27 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private void GridGotFocus()
         {
-            foreach (var item in AllFileObjDtos)
+            foreach (var item in AllFileObjViewModels)
             {
                 item.IsSelected = false;
             }
         }
+
+        #region
+        public void AddFileObject(FileObjItemViewModel itemViewModel)
+        {
+            FileObjViewModels?.Add(itemViewModel);
+            AllCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count;
+            SelectedCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count(x => x.IsSelected);
+        }
+
+        public void RemoveFileObject(FileObjItemViewModel itemViewModel)
+        {
+            FileObjViewModels?.Remove(itemViewModel);
+            AllCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count;
+            SelectedCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count(x => x.IsSelected);
+        }
+        #endregion
 
         //拖拽上传文件
         private async void Drop(DragEventArgs e)
@@ -238,8 +256,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             };
 
             model.Icon = _fileHelper.GetBitmapImageByFileExtension("folder.png");
-            FileObjDtos.Add(model);
-            AllFileObjDtos.Add(model);
+            AllFileObjViewModels.Add(model);
+            AddFileObject(model);
             await Task.Delay(100);
             model.IsFocus = true;
         }
@@ -277,7 +295,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
                 if (items != null && items.Count() > 0)
                 {
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(items.Select(x =>
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(items.Select(x =>
                     {
                         var vm = _mapper.Map<FileObjItemViewModel>(x);
                         vm.Icon = vm.IsFolder ? _fileHelper.GetBitmapImageByFileExtension("folder.png") : _fileHelper.GetIconByFileExtension(vm.Name).Item2;
@@ -286,16 +304,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                         return vm;
                     }));
 
-                    AllFileObjDtos = new ObservableCollection<FileObjItemViewModel>(FileObjDtos);
+                    AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>(FileObjViewModels);
                 }
                 else
                 {
-                    AllFileObjDtos = new ObservableCollection<FileObjItemViewModel>();
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>();
+                    AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
                 }
             }
 
-            AllCount = FileObjDtos == null ? 0 : FileObjDtos.Count;
+            AllCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count;
         }
 
         //排序
@@ -304,22 +322,22 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             switch (SortOption)
             {
                 case "时间 ↑":
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.CreateTime));
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.CreateTime));
                     break;
                 case "时间 ↓":
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(target.OrderByDescending(x => x.CreateTime));
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(target.OrderByDescending(x => x.CreateTime));
                     break;
                 case "文件大小 ↑":
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.Size));
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.Size));
                     break;
                 case "文件大小 ↓":
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(target.OrderByDescending(x => x.Size));
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(target.OrderByDescending(x => x.Size));
                     break;
                 case "文件名":
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.Name));
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.Name));
                     break;
                 case "文件类型":
-                    FileObjDtos = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.Type));
+                    FileObjViewModels = new ObservableCollection<FileObjItemViewModel>(target.OrderBy(x => x.Type));
                     break;
             };
         }
@@ -331,34 +349,34 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         {
             if (string.IsNullOrEmpty(Keyword))
             {
-                OnSort(AllFileObjDtos);
+                OnSort(AllFileObjViewModels);
             }
             else
             {
-                OnSort(AllFileObjDtos.Where(x => x.Name.Contains(Keyword)));
+                OnSort(AllFileObjViewModels.Where(x => x.Name.Contains(Keyword)));
             }
         }
 
         private async Task DeleteAsync()
         {
-            var files = FileObjDtos.Where(x => x.IsSelected);
-            if (files == null)
+            var files = FileObjViewModels.Where(x => x.IsSelected).ToList();
+            if (files == null || files.Count() <= 0)
             {
                 return;
             }
 
-            var result = HandyControl.Controls.MessageBox.Show("确认删除?删除后不能够被找回", "提示", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
-
-            if (result == MessageBoxResult.Yes)
+            var tempParent = _currentParent;
+            var resp = await _httpRequest.PostAsync(Const.DELETE_FILE, new DeleteFileObjectsDto()
             {
-                var resp = await _httpRequest.PostAsync(Const.DELETE_FILE, new DeleteFileObjectsDto()
-                {
-                    FileIds = files.Select(x => x.Id).ToArray()
-                });
+                FileIds = files.Select(x => x.Id).ToArray()
+            });
 
-                if (resp != null)
+            if (resp != null)
+            {
+                foreach (var file in files)
                 {
-                    //TODO okk
+                    AllFileObjViewModels.Remove(file);
+                    RemoveFileObject(file);
                 }
             }
         }
@@ -369,15 +387,30 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         /// <returns></returns>
         private async Task DownloadAsync()
         {
-            var files = FileObjDtos.Where(x => x.IsSelected);
+            var files = FileObjViewModels.Where(x => x.IsSelected);
             if (files == null)
             {
                 return;
             }
 
-            foreach (var file in files)
+            var dialog = App.ServiceProvider!.GetRequiredService<DownloadEnsure>();
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            dialog.Owner = App.ServiceProvider!.GetRequiredService<MainWindow>();
+            (dialog.DataContext as DownloadEnsureViewModel)!.DownloadEnsure = dialog;
+            var result = dialog.ShowDialog();
+
+            if (result != null && result.Value)
             {
-                await DownloadAsync(file, "d:\\ThreeL_blob_download");
+                if (string.IsNullOrEmpty(_iniSettings.DownloadLocation) || !Directory.Exists(_iniSettings.DownloadLocation))
+                {
+                    _growlHelper.Warning("下载目录不存在");
+                    return;
+                }
+
+                foreach (var file in files)
+                {
+                    await DownloadAsync(file, _iniSettings.DownloadLocation!);
+                }
             }
         }
 

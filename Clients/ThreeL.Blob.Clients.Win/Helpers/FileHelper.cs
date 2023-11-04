@@ -6,7 +6,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
 {
     public class FileHelper
     {
-        public (int, BitmapImage) GetIconByFileExtension(string fileName,bool onlyType = false)
+        public (int, BitmapImage) GetIconByFileExtension(string fileName, bool onlyType = false)
         {
             var extensionName = Path.GetExtension(fileName)?.ToLower();
             var icon = string.Empty;
@@ -69,12 +69,23 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                     key = 9;
                     icon = "html.png";
                     break;
+                case ".txt":
+                    key = 10;
+                    icon = "txt.png";
+                    break;
+                case ".ppt":
+                case ".pptx":
+                case ".potx":
+                case ".pot":
+                    key = 11;
+                    icon = "ppt.png";
+                    break;
                 default:
                     icon = "unknown.png";
                     break;
             }
 
-            if (onlyType) 
+            if (onlyType)
             {
                 return (key, null);
             }
@@ -97,6 +108,37 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             {
                 source.Freeze();
             }
+        }
+        public long GetHardDiskSpace(string str_HardDiskName)
+        {
+            long totalSize = new long();
+            str_HardDiskName = str_HardDiskName + ":\\";
+            DriveInfo[] drives = DriveInfo.GetDrives();
+            foreach (DriveInfo drive in drives)
+            {
+                if (drive.Name == str_HardDiskName)
+                {
+                    totalSize = drive.TotalSize;
+                }
+            }
+
+            return totalSize;
+        }
+
+        public long GetHardDiskFreeSpace(string str_HardDiskName)
+        {
+            long freeSpace = new long();
+            str_HardDiskName = str_HardDiskName + ":\\";
+            DriveInfo[] drives = DriveInfo.GetDrives();
+            foreach (DriveInfo drive in drives)
+            {
+                if (drive.Name == str_HardDiskName)
+                {
+                    freeSpace = drive.AvailableFreeSpace;
+                }
+            }
+
+            return freeSpace;
         }
     }
 }

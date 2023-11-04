@@ -44,8 +44,16 @@
                     Grid.Column="0" Grid.ColumnSpan="2"
                     Background="#ddd" BorderThickness="0">
                 <Grid>
-                    <TextBlock Text="头盘" FontSize="15" VerticalAlignment="Center" Margin="5 0 0 0" 
-                               Foreground="#888"></TextBlock>
+                    <Label Width="30" Height="30" Margin="5 0 0 0" Padding="0" Background="Transparent" HorizontalAlignment="Left"
+                           ToolTip="头盘">
+                        <Path Data="{StaticResource icon}"
+                              Width="25" Height="20"
+                              Stretch="Fill"
+                              Fill="{StaticResource PrimaryBrush}"
+                              ></Path>
+                    </Label>
+                    <TextBlock Text="头盘" FontSize="16" VerticalAlignment="Center" Margin="40 0 0 0" 
+                               Foreground="#555" FontWeight="Bold"></TextBlock>
                     <Label BorderThickness="0"
                            Cursor="Hand"
                            ToolTip="最小化"

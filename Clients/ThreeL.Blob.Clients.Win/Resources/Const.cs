@@ -27,5 +27,7 @@
         public const string NotifyUploadingCount = nameof(NotifyUploadingCount);
         public const string NotifyDownloadingCount = nameof(NotifyDownloadingCount);
         public const string AddTransferRecord = nameof(AddTransferRecord);
+        public const string ConfirmDownload = nameof(ConfirmDownload);
+        public const string CancelDownload = nameof(CancelDownload);
     }
 }

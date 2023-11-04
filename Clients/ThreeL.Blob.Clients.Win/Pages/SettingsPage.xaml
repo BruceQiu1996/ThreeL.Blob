@@ -4,11 +4,38 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win.Pages"
+      xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+      xmlns:hc="https://handyorg.github.io/handycontrol"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="SettingsPage">
+      Title="UploadingPage">
+    <behaviors:Interaction.Triggers>
+        <behaviors:EventTrigger EventName="Loaded">
+            <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
+        </behaviors:EventTrigger>
+    </behaviors:Interaction.Triggers>
 
-    <Grid>
-        <TextBlock Text="设置"></TextBlock>
-    </Grid>
+    <hc:Card Margin="0 5 5 5">
+        <ScrollViewer VerticalScrollBarVisibility="Visible" Margin="2" HorizontalScrollBarVisibility="Visible">
+            <StackPanel Orientation="Vertical">
+                <GroupBox Margin="2" Header="应用设置" 
+                          HorizontalContentAlignment="Left"
+                          Padding="5" FontSize="16" Style="{StaticResource GroupBoxTab}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBox Style="{StaticResource TextBoxExtend}"
+                                 hc:TitleElement.Title="下载地址"
+                                 FontSize="14"
+                                 Width="400"
+                                 IsReadOnly="True"
+                                 Text="{Binding DownloadLocation}"
+                                 HorizontalAlignment="Left"
+                                 hc:TitleElement.TitlePlacement="Left"></TextBox>
+                        <Button Content="选择目录" Margin="5 0 0 0" 
+                                Command="{Binding ChooseDownloadFolderCommandAsync}"
+                                Cursor="Hand"></Button>
+                    </StackPanel>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+    </hc:Card>
 </Page>

@@ -20,6 +20,8 @@
                       Command="{Binding DeleteCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="创建文件夹" 
                       Command="{Binding NewFolderCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="刷新" 
+                      Command="{Binding RefreshCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
     </Page.Resources>
     <behaviors:Interaction.Triggers>
@@ -144,7 +146,7 @@
                          PreviewMouseWheel="ListView_PreviewMouseWheel"
                          Background="Transparent"
                          SelectionMode="Multiple"
-                         ItemsSource="{Binding FileObjDtos,UpdateSourceTrigger=PropertyChanged}"
+                         ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
                          BorderThickness="0" BorderBrush="Transparent">
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="Drop">
@@ -172,7 +174,7 @@
                                         <Border Cursor="Hand"
                                                 Padding="0"
                                                 CornerRadius="2"
-                                                BorderThickness="1.5"
+                                                BorderThickness="1.2"
                                                 BorderBrush="{TemplateBinding BorderBrush}"
                                                 Height="{TemplateBinding Height}"
                                                 Width="{TemplateBinding Width}"
@@ -220,6 +222,7 @@
                                                 <TextBlock Text="{Binding NameDesc}"
                                                            Grid.Row="2"
                                                            Cursor="Hand"
+                                                           ToolTip="{Binding Name}"
                                                            Foreground="Black"
                                                            HorizontalAlignment="Center"
                                                            VerticalAlignment="Center"
@@ -227,6 +230,7 @@
                                                            Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                 </TextBlock>
                                                 <TextBox Text="{Binding Name}"
+                                                         ToolTip="{Binding Name}"
                                                          Name="txtUserName"
                                                          Grid.Row="2"
                                                          Cursor="Hand"
@@ -290,7 +294,7 @@
                                 <DataTrigger Binding="{Binding IsHighlight}" Value="False">
                                     <Setter Property="Foreground" Value="White"></Setter>
                                     <Setter Property="Background" Value="Transparent"></Setter>
-                                    <Setter Property="BorderBrush" Value="#888"></Setter>
+                                    <Setter Property="BorderBrush" Value="#aaa"></Setter>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>

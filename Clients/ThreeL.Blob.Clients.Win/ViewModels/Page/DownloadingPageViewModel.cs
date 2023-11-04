@@ -81,7 +81,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 HadTask = DownloadItemViewModels.Count != 0;
             });
 
-            WeakReferenceMessenger.Default.Send<ObservableCollection<DownloadItemViewModel>, string>(DownloadItemViewModels, Const.NotifyDownloadingCount);
+            WeakReferenceMessenger.Default.Send(DownloadItemViewModels, Const.NotifyDownloadingCount);
         }
 
         /// <summary>

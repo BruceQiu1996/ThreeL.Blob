@@ -14,9 +14,12 @@ using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Pages;
 using ThreeL.Blob.Clients.Win.Profiles;
 using ThreeL.Blob.Clients.Win.Request;
+using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
+using ThreeL.Blob.Clients.Win.ViewModels.Window;
+using ThreeL.Blob.Clients.Win.Windows;
 
 namespace ThreeL.Blob.Clients.Win
 {
@@ -41,6 +44,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<MainWindowViewModel>();
                 service.AddSingleton<LoginWindow>();
                 service.AddSingleton<LoginWindowViewModel>();
+                service.AddTransient<DownloadEnsure>();
+                service.AddTransient<DownloadEnsureViewModel>();
 
                 service.AddSingleton<MainPage>();
                 service.AddSingleton<MainPageViewModel>();
@@ -62,6 +67,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<GrpcService>();
                 service.AddSingleton<GrowlHelper>();
                 service.AddSingleton<FileHelper>();
+                service.AddSingleton<IniHelper>();
+                service.AddSingleton<IniSettings>();
 
                 var connString = $"Data Source = {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db.db")}";
                 service.AddDbContextFactory<MyDbContext>(option =>
@@ -78,6 +85,7 @@ namespace ThreeL.Blob.Clients.Win
             host = builder.Build();
             ServiceProvider = host.Services;
             await host.StartAsync();
+            await ServiceProvider.GetRequiredService<IniSettings>().InitializeAsync();
             DispatcherUnhandledException += App_DispatcherUnhandledException;
             //非UI线程未捕获异常处理事件(例如自己创建的一个子线程)
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;

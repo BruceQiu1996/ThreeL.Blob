@@ -63,37 +63,40 @@ namespace ThreeL.Blob.Application.Channels
             {
                 while (await _readChannel.WaitToReadAsync(cancellationToken))
                 {
-                    var data = await _readChannel.ReadAsync();
-                    try
+                    while (_readChannel.TryRead(out var data))
                     {
-                        var file = await _fileBasicRepository.GetAsync(data.Item2);
-                        if (file == null && !File.Exists(file.Location)) continue;
-
-                        var result = ImageValidateByStream(file.Location);
-                        if (result.Item1)
+                        try
                         {
-                            var thumbLocation =  _configuration.GetSection("FileStorage:ThumbnailImagesLocation").Value;
-                            if (!Directory.Exists(thumbLocation))
-                            {
-                                Directory.CreateDirectory(thumbLocation);
-                            }
+                            var file = await _fileBasicRepository.GetAsync(data.Item2);
+                            if (file == null && !File.Exists(file.Location)) continue;
 
-                            var newPath = Path.Combine(thumbLocation, data.Item1.ToString(),
-                               $"{Path.GetFileNameWithoutExtension(file.Location)}_thumbnail{Path.GetExtension(file.Location)}");
-
-                            var flag = CreateThumbnail(file.Location, newPath, 100, 120);
-                            if (flag)
+                            var result = ImageValidateByStream(file.Location);
+                            if (result.Item1)
                             {
-                                file.ThumbnailImageLocation = newPath;
-                                await _fileBasicRepository.UpdateAsync(file);
+                                var thumbLocation = _configuration.GetSection("FileStorage:ThumbnailImagesLocation").Value;
+                                if (!Directory.Exists(thumbLocation))
+                                {
+                                    Directory.CreateDirectory(thumbLocation);
+                                }
+
+                                var newPath = Path.Combine(thumbLocation, data.Item1.ToString(),
+                                   $"{Path.GetFileNameWithoutExtension(file.Location)}_thumbnail{Path.GetExtension(file.Location)}");
+
+                                var flag = CreateThumbnail(file.Location, newPath, 100, 120);
+                                if (flag)
+                                {
+                                    file.ThumbnailImageLocation = newPath;
+                                    await _fileBasicRepository.UpdateAsync(file);
+                                }
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.StackTrace);
+                            continue;
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex.StackTrace);
-                        continue;
-                    }
+
                     if (cancellationToken.IsCancellationRequested) break;
                 }
             }
