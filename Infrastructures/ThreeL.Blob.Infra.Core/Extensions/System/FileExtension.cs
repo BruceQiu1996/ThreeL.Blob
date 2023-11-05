@@ -30,5 +30,18 @@ namespace ThreeL.Blob.Infra.Core.Extensions.System
 
             return newName;
         }
+
+        public static string GetAvailableDirLocation(this string dirName, string parentFolderName)
+        {
+            var newName = Path.Combine(parentFolderName, dirName);
+            int count = 1;
+            while (Directory.Exists(newName))
+            {
+                newName = Path.Combine(parentFolderName, $"{dirName}({count})");
+                count++;
+            }
+
+            return newName;
+        }
     }
 }

@@ -37,6 +37,23 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpGet("preDownloadFolder/{folderId}")]
+        [Authorize]
+        public async Task<ActionResult> PreDownloadFolderAsync(long folderId)
+        {
+            try
+            {
+                var result = await _fileService.PreDownloadFolderAsync(folderId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpPost("download/{fileId}")]
         [Authorize]
         public async Task<ActionResult> DownloadFileAsync(long fileId)

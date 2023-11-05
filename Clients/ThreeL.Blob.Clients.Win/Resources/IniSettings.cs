@@ -10,10 +10,14 @@ namespace ThreeL.Blob.Clients.Win.Resources
         #region 配置keys
         public const string ApplicationSectionKey = "ApplicationSection";
         public const string DownloadLocationKey = "DownloadLocation";
+        public const string MaxUploadThreadsKey = "MaxUploadThreads";
+        public const string MaxDownloadThreadsKey = "MaxDownloadThreads";
         #endregion
 
         #region 配置项
         public string? DownloadLocation { get; private set; }
+        public int MaxUploadThreads { get; private set; }
+        public int MaxDownloadThreads { get; private set; }
         #endregion
 
         private readonly IniHelper _iniHelper;
@@ -33,6 +37,9 @@ namespace ThreeL.Blob.Clients.Win.Resources
                 await WriteDownloadLocation(downloadDir);
                 DownloadLocation = downloadDir;
             }
+
+            MaxUploadThreads = int.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, MaxUploadThreadsKey),out var tempMaxUploadThreads)? tempMaxUploadThreads : 5;
+            MaxDownloadThreads = int.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, MaxDownloadThreadsKey), out var tempMaxDownloadThreads) ? tempMaxDownloadThreads : 5;
         }
 
         /// <summary>
@@ -44,6 +51,18 @@ namespace ThreeL.Blob.Clients.Win.Resources
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, DownloadLocationKey, value);
             DownloadLocation = value;
+        }
+
+        public async Task WriteMaxUploadThreads(int value)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, MaxUploadThreadsKey, value.ToString());
+            MaxUploadThreads = value;
+        }
+
+        public async Task WriteMaxDownloadThreads(int value)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, MaxDownloadThreadsKey, value.ToString());
+            MaxDownloadThreads = value;
         }
     }
 }

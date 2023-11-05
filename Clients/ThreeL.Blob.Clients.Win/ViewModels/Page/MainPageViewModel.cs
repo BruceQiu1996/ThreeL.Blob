@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
@@ -49,8 +50,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand DownloadCommandAsync { get; set; }
         public RelayCommand SearchFileByKeywordCommand { get; set; }
         public AsyncRelayCommand DeleteCommandAsync { get; set; }
+        public AsyncRelayCommand<KeyEventArgs> KeyDownCommandAsync { get; set; }
         public RelayCommand<DragEventArgs> DropCommand { get; set; }
         public RelayCommand GridGotFocusCommand { get; set; }
+        public RelayCommand SelectAllCommand { get; set; }
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
@@ -407,10 +410,74 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     return;
                 }
 
-                foreach (var file in files)
+                //存在文件夹则判断
+                long size = 0;
+                List<IEnumerable<PreDownloadFolderFileItemResponseDto>> items = new List<IEnumerable<PreDownloadFolderFileItemResponseDto>>();
+                var folders = files.Where(x => x.IsFolder);
+                foreach (var folder in folders)
                 {
-                    await DownloadAsync(file, _iniSettings.DownloadLocation!);
+                    var resp = await _httpRequest.GetAsync(string.Format(Const.PRE_DOWNLOAD_FOLDER, folder.Id));
+                    if (resp != null)
+                    {
+                        var dto = JsonSerializer.Deserialize<PreDownloadFolderResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                        if (dto != null)
+                        {
+                            size += dto.Size;
+                        }
+
+                        items.Add(dto!.Items);
+                    }
                 }
+
+                var appDir = _iniSettings.DownloadLocation;
+                var disk = appDir!.Substring(0, appDir.IndexOf(':'));
+                var freeSize = _fileHelper.GetHardDiskFreeSpace(disk);
+                if (freeSize < size)
+                {
+                    _growlHelper.Warning("磁盘空间不够");
+                    return;
+                }
+
+                //创建文件夹
+                foreach (var item in items)
+                {
+                    var folderDtos = item.Where(x => x.IsFolder);
+                    CreateFolders(folderDtos.FirstOrDefault(x => item.FirstOrDefault(y => y.Id == x.ParentFolder) == null), null, item);
+                }
+
+                List<(long id, string downloadLocation)> downloads = new List<(long, string)>();
+                downloads.AddRange(files.Where(x => !x.IsFolder).Select(x => (x.Id, _iniSettings.DownloadLocation)));
+                foreach (var item in items)
+                {
+                    downloads.AddRange(item.Where(x => !x.IsFolder).Select(x => (x.Id, x.LocalLocation)));
+                }
+
+                foreach (var download in downloads) 
+                {
+                    await DownloadFileAsync(download.id,download.downloadLocation);
+                }
+            }
+        }
+
+        private void CreateFolders(PreDownloadFolderFileItemResponseDto? current, PreDownloadFolderFileItemResponseDto? parent, IEnumerable<PreDownloadFolderFileItemResponseDto> folders)
+        {
+            if (current == null)
+                return;
+
+            var dir = current.Name.GetAvailableDirLocation(parent == null ? _iniSettings.DownloadLocation : parent.LocalLocation);
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+
+            current.LocalLocation = dir;
+            var children = folders.Where(x => x.ParentFolder == current.Id);
+            foreach (var child in children)
+            {
+                if(child.IsFolder)
+                    CreateFolders(child, current, folders);
+                else
+                    child.LocalLocation = dir;
             }
         }
 
@@ -445,61 +512,68 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 {
                     var result = JsonSerializer.
                         Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
-                    using (var context = await _dbContextFactory.CreateDbContextAsync())
+                    var record = new UploadFileRecord()
                     {
-                        var record = new UploadFileRecord()
-                        {
-                            FileId = result.FileId,
-                            FileName = fileInfo.Name,
-                            Size = fileInfo.Length,
-                            FileLocation = fileInfo.FullName,
-                            TransferBytes = 0,
-                            Status = FileUploadingStatus.Wait,
-                            Code = code
-                        };
-                        await context.UploadFileRecords.AddAsync(record);
-                        await context.SaveChangesAsync();
-                        WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
+                        FileId = result.FileId,
+                        FileName = fileInfo.Name,
+                        Size = fileInfo.Length,
+                        FileLocation = fileInfo.FullName,
+                        TransferBytes = 0,
+                        Status = FileUploadingStatus.Wait,
+                        Code = code
                     };
+                    lock (Const.WriteDbLock)
+                    {
+                        using (var context = _dbContextFactory.CreateDbContext())
+                        {
+                            context.UploadFileRecords.Add(record);
+                            context.SaveChanges();
+                        };
+                    }
+
+                    WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
                 }
             }
         }
 
-        private async Task DownloadAsync(FileObjItemViewModel itemViewModel, string location)
+        /// <summary>
+        /// 下载文件
+        /// </summary>
+        /// <param name="fileId">文件id</param>
+        /// <param name="location">下载位置</param>
+        /// <returns></returns>
+        private async Task DownloadFileAsync(long fileId, string location)
         {
-            if (itemViewModel.IsFolder)
+            var resp = await _httpRequest.PostAsync(string.Format(Const.DOWNLOAD_FILE, fileId), null);
+            if (resp != null)
             {
-                //TODO 文件夹下载待定
-            }
-            else
-            {
-                var resp = await _httpRequest.PostAsync(string.Format(Const.DOWNLOAD_FILE, itemViewModel.Id), null);
-                if (resp != null)
-                {
-                    var result = JsonSerializer.
-                               Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                var result = JsonSerializer.
+                           Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
 
-                    var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
-                    File.Create(tempFileName).Close();
-                    using (var context = await _dbContextFactory.CreateDbContextAsync())
+                var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
+                File.Create(tempFileName).Close();
+                var record = new DownloadFileRecord()
+                {
+                    FileId = result.FileId,
+                    TaskId = result.TaskId,
+                    TempFileLocation = tempFileName,
+                    FileName = result.FileName,
+                    TransferBytes = 0,
+                    Status = FileDownloadingStatus.Wait,
+                    Size = result.Size,
+                    Code = result.Code
+                };
+                lock (Const.WriteDbLock)
+                {
+                    using (var context = _dbContextFactory.CreateDbContext())
                     {
-                        var record = new DownloadFileRecord()
-                        {
-                            FileId = result.FileId,
-                            TaskId = result.TaskId,
-                            TempFileLocation = tempFileName,
-                            FileName = result.FileName,
-                            TransferBytes = 0,
-                            Status = FileDownloadingStatus.Wait,
-                            Size = result.Size,
-                            Code = result.Code
-                        };
-                        await context.DownloadFileRecords.AddAsync(record);
-                        await context.SaveChangesAsync();
-                        //发送添加下载任务事件
-                        WeakReferenceMessenger.Default.Send<DownloadFileRecord, string>(record, Const.AddDownloadRecord);
+                        context.DownloadFileRecords.Add(record);
+                        context.SaveChanges();
                     };
                 }
+
+                //发送添加下载任务事件
+                WeakReferenceMessenger.Default.Send(record, Const.AddDownloadRecord);
             }
         }
     }

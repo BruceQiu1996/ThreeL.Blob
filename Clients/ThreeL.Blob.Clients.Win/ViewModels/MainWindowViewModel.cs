@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ThreeL.Blob.Clients.Win.Pages;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
+using ThreeL.Blob.Clients.Win.ViewModels.Page;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels
 {
@@ -91,11 +92,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             set => SetProperty(ref _currentPage, value);
         }
 
-        private Task LoadAsync()
+        private async Task LoadAsync()
         {
             CurrentPage = _mainPage;
-
-            return Task.CompletedTask;
+            await (_transferPage.DataContext as TransferPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
         }
 
         private Task ExitAsync()

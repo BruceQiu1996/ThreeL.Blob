@@ -41,6 +41,27 @@ namespace ThreeL.Blob.Application.Services
             _deleteFilesChannel = deleteFilesChannel;
         }
 
+        public async Task<ServiceResult<PreDownloadFolderResponseDto>> PreDownloadFolderAsync(long folderId)
+        {
+            List<FileObject> fileObjects = new List<FileObject>();
+            var root = await _fileBasicRepository.GetAsync(folderId);
+            if (root == null)
+            {
+                return new ServiceResult<PreDownloadFolderResponseDto>(HttpStatusCode.BadRequest,"文件数据异常");
+            }
+
+            var files = await _fileBasicRepository
+                   .QuerySqlAsync($"WITH RECURSIVE file_teee As(SELECT * FROM fileobject WHERE fileobject.Id = {root.Id} UNION SELECT f1.* FROM fileobject f1 JOIN file_teee ON f1.ParentFolder = file_teee.id) SELECT * FROM file_teee WHERE file_teee.Status = 4");
+
+            var resp = new PreDownloadFolderResponseDto()
+            {
+                Size = files.Sum(x => x.Size ?? 0),
+                Items = files.Select(_mapper.Map<PreDownloadFolderFileItemResponseDto>)
+            };
+
+            return new ServiceResult<PreDownloadFolderResponseDto>(resp);
+        }
+
         public async Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId)
         {
             var task = await _downloadTaskBasicRepository.GetAsync(taskId);
@@ -126,7 +147,6 @@ namespace ThreeL.Blob.Application.Services
             return new ServiceResult<FileObjDto>(_mapper.Map<FileObjDto>(fileObject));
         }
 
-        //TODO删除逻辑完善
         public async Task<ServiceResult> DeleteItemsAsync(long[] fileIds, long userId)
         {
             List<FileObject> fileObjects = new List<FileObject>();

@@ -14,6 +14,7 @@
         public const string CANCEL_UPLOADING = "file/cancel/{0}";
         public const string CANCEL_DOWNLOADING = "file/cancel-download/{0}";
         public const string GET_THUMBNAIL_IMAGE = "thumbnailImages/{0}/{1}";
+        public const string PRE_DOWNLOAD_FOLDER = "file/preDownloadFolder/{0}";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);
@@ -29,5 +30,8 @@
         public const string AddTransferRecord = nameof(AddTransferRecord);
         public const string ConfirmDownload = nameof(ConfirmDownload);
         public const string CancelDownload = nameof(CancelDownload);
+        public const string StartNewUploadTask = nameof(StartNewUploadTask);
+        public static object UploadRunTaskLock = new object();
+        public static object WriteDbLock = new object();
     }
 }

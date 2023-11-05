@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using ThreeL.Blob.Clients.Win.Pages;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
@@ -52,10 +53,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             _uploadingPage = uploadingPage;
             _downloadingPage = downloadingPage;
             _transferComplete = transferComplete;
+            LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ShiftUploadingPageCommand = new RelayCommand(OpenUploadingPage);
             ShifDownloadingPageCommand = new RelayCommand(OpenDownloadingPage);
             ShiftCompletePageCommand = new RelayCommand(OpenCompletePage);
-            CurrentPage = _uploadingPage;
 
             //通知上传文件的数量
             WeakReferenceMessenger.Default.Register<TransferPageViewModel, ObservableCollection<UploadItemViewModel>, string>(this, Const.NotifyUploadingCount, async (x, y) =>
@@ -84,6 +85,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     DownloadingTasksCountText = DownloadingTasksCount > 99 ? "99+" : $"{DownloadingTasksCount}";
                 }
             });
+        }
+
+        private async Task LoadAsync()
+        {
+            CurrentPage = _uploadingPage;
+            await (_uploadingPage.DataContext as UploadingPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
+            await (_downloadingPage.DataContext as DownloadingPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
         }
 
         private System.Windows.Controls.Page _currentPage;

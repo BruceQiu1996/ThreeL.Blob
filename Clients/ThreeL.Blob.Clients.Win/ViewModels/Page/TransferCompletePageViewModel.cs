@@ -60,21 +60,26 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             });
         }
 
-        private async Task ClearRecordAsync() 
+        private Task ClearRecordAsync() 
         {
             var result = HandyControl.Controls
                 .MessageBox.Show("确定清空所有的传输完成记录?", "提示", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes)
             {
-                using (var context = _dbContextFactory.CreateDbContext())
+                lock (Const.WriteDbLock)
                 {
-                    await context.TransferCompleteRecords.DeleteAsync();
-                    await context.SaveChangesAsync();
+                    using (var context = _dbContextFactory.CreateDbContext())
+                    {
+                        context.TransferCompleteRecords.Delete();
+                        context.SaveChanges();
 
-                    TransferCompleteItemViewModels.Clear();
-                    HadTask = false;
+                        TransferCompleteItemViewModels.Clear();
+                        HadTask = false;
+                    }
                 }
             }
+
+            return Task.CompletedTask;
         }
 
         private async Task LoadAsync()

@@ -73,8 +73,13 @@ namespace ThreeL.Blob.Clients.Win
                 var connString = $"Data Source = {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db.db")}";
                 service.AddDbContextFactory<MyDbContext>(option =>
                 {
-                    option.UseSqlite(connString);
-                });
+                    option.UseSqlite(connString, options => 
+                    {
+                        options.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        options.MaxBatchSize(100);
+                        options.CommandTimeout(10000);
+                    });
+                },ServiceLifetime.Singleton);
             }).UseSerilog();
 
             builder.ConfigureHostConfiguration(options =>

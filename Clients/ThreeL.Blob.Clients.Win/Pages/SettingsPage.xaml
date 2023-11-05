@@ -21,8 +21,9 @@
                 <GroupBox Margin="2" Header="应用设置" 
                           HorizontalContentAlignment="Left"
                           Padding="5" FontSize="16" Style="{StaticResource GroupBoxTab}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBox Style="{StaticResource TextBoxExtend}"
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBox Style="{StaticResource TextBoxExtend}"
                                  hc:TitleElement.Title="下载地址"
                                  FontSize="14"
                                  Width="400"
@@ -30,9 +31,42 @@
                                  Text="{Binding DownloadLocation}"
                                  HorizontalAlignment="Left"
                                  hc:TitleElement.TitlePlacement="Left"></TextBox>
-                        <Button Content="选择目录" Margin="5 0 0 0" 
+                            <Button Content="选择目录" Margin="5 0 0 0" 
                                 Command="{Binding ChooseDownloadFolderCommandAsync}"
                                 Cursor="Hand"></Button>
+                        </StackPanel>
+
+                        <hc:NumericUpDown Maximum="10" 
+                                          HorizontalAlignment="Left"
+                                          FontSize="14"
+                                          Value="{Binding MaxUploadThreads}"
+                                          Margin="0 5"
+                                          Style="{StaticResource NumericUpDownExtend}"
+                                          hc:TitleElement.Title="上传最大并发数"
+                                          hc:TitleElement.TitlePlacement="Left"
+                                          Minimum="1" Width="250">
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="ValueChanged">
+                                    <behaviors:InvokeCommandAction Command="{Binding ModifyMaxUploadThreadsCommandAsync}"></behaviors:InvokeCommandAction>
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                        </hc:NumericUpDown>
+                        
+                        <hc:NumericUpDown Maximum="10" 
+                                          HorizontalAlignment="Left"
+                                          FontSize="14"
+                                          Margin="0 5"
+                                          Value="{Binding MaxDownloadThreads}"
+                                          Style="{StaticResource NumericUpDownExtend}"
+                                          hc:TitleElement.Title="下载最大并发数"
+                                          hc:TitleElement.TitlePlacement="Left"
+                                          Minimum="1" Width="250">
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="ValueChanged">
+                                    <behaviors:InvokeCommandAction Command="{Binding ModifyMaxDownloadThreadsCommandAsync}"></behaviors:InvokeCommandAction>
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                        </hc:NumericUpDown>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

@@ -6,10 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Documents;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
@@ -35,10 +37,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private readonly IMapper _mapper;
         private readonly ILogger<UploadingPageViewModel> _logger;
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
+        private readonly IniSettings _iniSettings;
         public UploadingPageViewModel(IMapper mapper,
                                       IDbContextFactory<MyDbContext> dbContextFactory,
-                                      ILogger<UploadingPageViewModel> logger)
+                                      ILogger<UploadingPageViewModel> logger,
+                                      IniSettings iniSettings)
         {
+            _iniSettings = iniSettings;
             _mapper = mapper;
             _logger = logger;
             _dbContextFactory = dbContextFactory;
@@ -46,7 +51,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             //new upload task
             WeakReferenceMessenger.Default.Register<UploadingPageViewModel, UploadFileRecord, string>(this, Const.AddUploadRecord, async (x, y) =>
              {
-                 await AddNewUploadTaskAsync(y, true, true);
+                 await AddNewUploadTaskAsync(y, true);
              });
 
             //exit
@@ -57,7 +62,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     item.PauseCommand.Execute(null);
                 }
 
-                WeakReferenceMessenger.Default.Send<string, string>("uploading", Const.CanExit);
+                WeakReferenceMessenger.Default.Send("uploading", Const.CanExit);
             });
 
             //finish
@@ -70,7 +75,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     var record = await context
                         .TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
                     var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
-                    WeakReferenceMessenger.Default.Send<TransferCompleteItemViewModel, string>(vm, Const.AddTransferRecord);
+                    WeakReferenceMessenger.Default.Send(vm, Const.AddTransferRecord);
+                }
+            });
+
+            WeakReferenceMessenger.Default.Register<UploadingPageViewModel, string, string>(this, Const.StartNewUploadTask,  (x, y) =>
+            {
+                lock (Const.UploadRunTaskLock)
+                {
+                    var count = UploadItemViewModels.Count(x => x.Status == FileUploadingStatus.Uploading);
+                    if (count < _iniSettings.MaxUploadThreads)
+                    {
+                        UploadItemViewModels.Where(x => x.Status == FileUploadingStatus.Wait).Take(_iniSettings.MaxUploadThreads - count)
+                        .ToList().ForEach(async x => await x.StartAsync());
+                    }
                 }
             });
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
@@ -86,7 +104,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         /// <param name="start">是否添加后就启动上传</param>
         /// <param name="desc">是否加到队列最开始</param>
         /// <returns></returns>
-        private async Task AddNewUploadTaskAsync(UploadFileRecord uploadFileRecord, bool start = true, bool desc = false)
+        private async Task AddNewUploadTaskAsync(UploadFileRecord uploadFileRecord, bool desc = false)
         {
             var viewModel = App.ServiceProvider!.GetRequiredService<UploadItemViewModel>();
             _mapper.Map(uploadFileRecord, viewModel);
@@ -95,8 +113,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             else
                 UploadItemViewModels.Add(viewModel);
             HadTask = true;
-            WeakReferenceMessenger.Default.Send<ObservableCollection<UploadItemViewModel>, string>(UploadItemViewModels, Const.NotifyUploadingCount);
-            if (start)
+            WeakReferenceMessenger.Default.Send(UploadItemViewModels, Const.NotifyUploadingCount);
+            if (uploadFileRecord.Status == FileUploadingStatus.Wait)
                 await viewModel.StartAsync();
         }
 
@@ -138,7 +156,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 HadTask = UploadItemViewModels.Count != 0;
             });
 
-            WeakReferenceMessenger.Default.Send<ObservableCollection<UploadItemViewModel>, string>(UploadItemViewModels, Const.NotifyUploadingCount);
+            WeakReferenceMessenger.Default.Send(UploadItemViewModels, Const.NotifyUploadingCount);
         }
 
         private async Task LoadAsync()
@@ -148,15 +166,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 if (_isLoaded)
                     return;
 
-                using (var context = _dbContextFactory.CreateDbContext())
+                var records = new List<UploadFileRecord>();
+                lock (Const.WriteDbLock)
                 {
-                    var uploadFileRecords = await context.UploadFileRecords.Where(x => x.Status == FileUploadingStatus.UploadingSuspend
-                    || x.Status == FileUploadingStatus.Uploading || x.Status == FileUploadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToListAsync();
-
-                    foreach (var item in uploadFileRecords)
+                    using (var context = _dbContextFactory.CreateDbContext())
                     {
-                        await AddNewUploadTaskAsync(item, false);
+                        records = context.UploadFileRecords.Where(x => x.Status == FileUploadingStatus.UploadingSuspend
+                        || x.Status == FileUploadingStatus.Uploading || x.Status == FileUploadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToList();
+
+                        records.ForEach(x => x.Status = FileUploadingStatus.UploadingSuspend);
+                        context.Set<UploadFileRecord>().UpdateRange(records);
+                        context.SaveChanges();
                     }
+                }
+
+                foreach (var item in records)
+                {
+                    await AddNewUploadTaskAsync(item, false);
                 }
 
                 _isLoaded = true;

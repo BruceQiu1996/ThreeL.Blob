@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Profiles;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Clients.Win.ViewModels.Page;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
@@ -77,12 +79,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
         private readonly HttpRequest _httpRequest;
         private readonly IMapper _mapper;
-        public UploadItemViewModel(GrpcService grpcService, IDbContextFactory<MyDbContext> dbContextFactory, HttpRequest httpRequest,
-                                   IMapper mapper)
+        private readonly IniSettings _iniSettings;
+        public UploadItemViewModel(GrpcService grpcService, 
+                                   IDbContextFactory<MyDbContext> dbContextFactory, 
+                                   HttpRequest httpRequest,
+                                   IMapper mapper, IniSettings iniSettings)
         {
             _mapper = mapper;
             _grpcService = grpcService;
             _httpRequest = httpRequest;
+            _iniSettings = iniSettings;
             _dbContextFactory = dbContextFactory;
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
             PauseCommand = new RelayCommand(Pause);
@@ -91,6 +97,14 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public async Task StartAsync()
         {
+            lock (Const.UploadRunTaskLock)
+            {
+                if (_iniSettings.MaxUploadThreads <= App.ServiceProvider!
+                    .GetRequiredService<UploadingPageViewModel>().UploadItemViewModels.Count(x => x.Status == FileUploadingStatus.Uploading))
+                {
+                    return;
+                }
+            }
             _pauseTokenSource = new CancellationTokenSource();
             _cancelTokenSource = new CancellationTokenSource();
             _uploadTask = Task.Run(async () =>
@@ -103,7 +117,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     await UpdateStatusAsync(FileUploadingStatus.UploadingComplete);
                     Message = "上传成功";
-                    WeakReferenceMessenger.Default.Send<UploadItemViewModel, string>(this, Const.UploadFinish);
+                    WeakReferenceMessenger.Default.Send(this, Const.UploadFinish);
                 }
                 else if (resp.Status == UploadFileResponseStatus.PauseStatus) //暂停(主动暂停，网络问题等)
                 {
@@ -115,7 +129,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
                     Message = resp.Message;
-                    WeakReferenceMessenger.Default.Send<UploadItemViewModel, string>(this, Const.UploadFinish);
+                    WeakReferenceMessenger.Default.Send(this, Const.UploadFinish);
                 }
                 //else if (resp.Status == UploadFileResponseStatus.CancelStatus) //不可知的异常
                 //{
@@ -135,7 +149,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         private async Task ResumeAsync()
         {
             if (!File.Exists(FileLocation))
+            {
+                await CancelUploadingAsync("本地文件不存在");
+
                 return;
+            }
             //请求远端,本地是否启动任务
             var resp = await _httpRequest.GetAsync(string.Format(Const.UPLOADING_STATUS, FileId));
             if (resp != null && resp.IsSuccessStatusCode)
@@ -145,7 +163,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
                 using (var fs = new FileStream(FileLocation, FileMode.Open, FileAccess.Read))
                 {
-                    if (status.Code != fs.ToSHA256())
+                    if (status!.Code != fs.ToSHA256())
                     {
                         await CancelUploadingAsync("文件已被修改");
                         return;
@@ -186,7 +204,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                     Message = reason;
                     await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
 
-                    WeakReferenceMessenger.Default.Send<UploadItemViewModel, string>(this, Const.UploadFinish);
+                    WeakReferenceMessenger.Default.Send(this, Const.UploadFinish);
                 }
             }
         }
@@ -204,38 +222,43 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             Message = "网络传输异常";
         }
 
-        private async Task UpdateStatusAsync(FileUploadingStatus fileStatus)
+        private Task UpdateStatusAsync(FileUploadingStatus fileStatus)
         {
-            using (var context = _dbContextFactory.CreateDbContext())
+            Status = fileStatus;
+            WeakReferenceMessenger.Default.Send(string.Empty, Const.StartNewUploadTask);
+            lock (Const.WriteDbLock)
             {
-                var record = await context.UploadFileRecords.FirstOrDefaultAsync(x => x.Id == Id);
-                if (record != null)
+                using (var context = _dbContextFactory.CreateDbContext())
                 {
-                    record.Status = fileStatus;
-                    if (fileStatus == FileUploadingStatus.UploadingComplete || fileStatus == FileUploadingStatus.UploadingFaild) 
+                    var record = context.UploadFileRecords.FirstOrDefault(x => x.Id == Id);
+                    if (record != null)
                     {
-                        record.UploadFinishTime = DateTime.UtcNow;
-                        UploadFinishTime = record.UploadFinishTime;
+                        record.Status = fileStatus;
+                        if (fileStatus == FileUploadingStatus.UploadingComplete || fileStatus == FileUploadingStatus.UploadingFaild)
+                        {
+                            record.UploadFinishTime = DateTime.UtcNow;
+                            UploadFinishTime = record.UploadFinishTime;
 
-                        var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
-                        transferRecord.TaskId = record.Id;
-                        transferRecord.Description = TransferProfile.GetDescriptionByUploadStatus(fileStatus);
-                        transferRecord.Success = fileStatus == FileUploadingStatus.UploadingComplete;
-                        transferRecord.Reason = Message;
+                            var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
+                            transferRecord.TaskId = record.Id;
+                            transferRecord.Description = TransferProfile.GetDescriptionByUploadStatus(fileStatus);
+                            transferRecord.Success = fileStatus == FileUploadingStatus.UploadingComplete;
+                            transferRecord.Reason = Message;
 
-                        await context.TransferCompleteRecords.AddAsync(transferRecord);
+                            context.TransferCompleteRecords.Add(transferRecord);
+                        }
+
+                        if (fileStatus == FileUploadingStatus.UploadingSuspend)
+                        {
+                            record.TransferBytes = TransferBytes;
+                        }
+
+                        context.SaveChanges();
                     }
-
-                    if (fileStatus == FileUploadingStatus.UploadingSuspend) 
-                    {
-                        record.TransferBytes = TransferBytes;
-                    }
-
-                    await context.SaveChangesAsync();
                 }
             }
 
-            Status = fileStatus;
+            return Task.CompletedTask;
         }
     }
 }

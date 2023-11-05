@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
@@ -143,39 +144,44 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
         }
 
-        private async Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
+        private Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
         {
-            using (var context = _dbContextFactory.CreateDbContext())
+            lock (Const.WriteDbLock)
             {
-                var record = await context.DownloadFileRecords.FirstOrDefaultAsync(x => x.Id == Id);
-                if (record != null)
+                using (var context = _dbContextFactory.CreateDbContext())
                 {
-                    record.Status = fileStatus;
-                    if (fileStatus == FileDownloadingStatus.DownloadingComplete || fileStatus == FileDownloadingStatus.DownloadingFaild)
+                    var record = context.DownloadFileRecords.FirstOrDefault(x => x.Id == Id);
+                    if (record != null)
                     {
-                        record.DownloadFinishTime = DateTime.UtcNow;
-                        DownloadFinishTime = record.DownloadFinishTime;
+                        record.Status = fileStatus;
+                        if (fileStatus == FileDownloadingStatus.DownloadingComplete || fileStatus == FileDownloadingStatus.DownloadingFaild)
+                        {
+                            record.DownloadFinishTime = DateTime.UtcNow;
+                            DownloadFinishTime = record.DownloadFinishTime;
 
-                        var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
-                        transferRecord.TaskId = record.Id;
-                        transferRecord.Description = TransferProfile.GetDescriptionByDownloadStatus(fileStatus);
-                        transferRecord.Success = fileStatus == FileDownloadingStatus.DownloadingComplete;
-                        transferRecord.Reason = Message;
-                        transferRecord.FileLocation = fileLocation;
+                            var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
+                            transferRecord.TaskId = record.Id;
+                            transferRecord.Description = TransferProfile.GetDescriptionByDownloadStatus(fileStatus);
+                            transferRecord.Success = fileStatus == FileDownloadingStatus.DownloadingComplete;
+                            transferRecord.Reason = Message;
+                            transferRecord.FileLocation = fileLocation;
 
-                        await context.TransferCompleteRecords.AddAsync(transferRecord);
+                            context.TransferCompleteRecords.Add(transferRecord);
+                        }
+
+                        if (fileStatus == FileDownloadingStatus.DownloadingSuspend)
+                        {
+                            record.TransferBytes = TransferBytes;
+                        }
+
+                        context.SaveChanges();
                     }
-
-                    if (fileStatus == FileDownloadingStatus.DownloadingSuspend)
-                    {
-                        record.TransferBytes = TransferBytes;
-                    }
-
-                    await context.SaveChangesAsync();
                 }
+
+                Status = fileStatus;
             }
 
-            Status = fileStatus;
+            return Task.CompletedTask;
         }
 
         public void SetTransferBytes(long bytes)

@@ -10,6 +10,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
     {
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand ChooseDownloadFolderCommandAsync { get; set; }
+        public AsyncRelayCommand ModifyMaxUploadThreadsCommandAsync { get; set; }
+        public AsyncRelayCommand ModifyMaxDownloadThreadsCommandAsync { get; set; }
 
         private string? _downloadLocation;
         public string? DownloadLocation
@@ -21,28 +23,64 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
+        private int _maxUploadThreads;
+        public int MaxUploadThreads
+        {
+            get => _maxUploadThreads;
+            set
+            {
+                SetProperty(ref _maxUploadThreads, value);
+            }
+        }
+
+        private int _maxDownloadThreads;
+        public int MaxDownloadThreads
+        {
+            get => _maxDownloadThreads;
+            set
+            {
+                SetProperty(ref _maxDownloadThreads, value);
+            }
+        }
+
         private readonly IniSettings _iniSettings;
         public SettingsPageViewModel(IniSettings iniSettings)
         {
             _iniSettings = iniSettings;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ChooseDownloadFolderCommandAsync = new AsyncRelayCommand(ChooseDownloadFolderAsync);
+            ModifyMaxUploadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxUploadThreadsAsync);
+            ModifyMaxDownloadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxDownloadThreadsAsync);
         }
 
-        private async Task LoadAsync() 
+        private Task LoadAsync()
         {
             DownloadLocation = _iniSettings.DownloadLocation;
+            MaxUploadThreads = _iniSettings.MaxUploadThreads;
+            MaxDownloadThreads = _iniSettings.MaxDownloadThreads;
+
+            return Task.CompletedTask;
         }
 
-        private async Task ChooseDownloadFolderAsync() 
+        private async Task ChooseDownloadFolderAsync()
         {
             FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
             var dialog = folderBrowserDialog.ShowDialog();
-            if (dialog == DialogResult.OK) 
+            if (dialog == DialogResult.OK)
             {
                 await _iniSettings.WriteDownloadLocation(folderBrowserDialog.SelectedPath);
                 DownloadLocation = _iniSettings.DownloadLocation;
             }
+        }
+
+        private async Task ModifyMaxUploadThreadsAsync() 
+        {
+            await _iniSettings.WriteMaxUploadThreads(MaxUploadThreads);
+        }
+
+        private async Task ModifyMaxDownloadThreadsAsync()
+        {
+            await _iniSettings.WriteMaxDownloadThreads(MaxDownloadThreads);
         }
     }
 }

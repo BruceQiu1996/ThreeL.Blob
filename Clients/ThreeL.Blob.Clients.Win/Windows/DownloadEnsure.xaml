@@ -59,12 +59,12 @@
             </Border>
 
             <hc:Card Grid.Row="1" Margin="1">
-                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
                         <TextBox Text="{Binding DownloadLocation}"
                                  Width="350"
                                  Style="{StaticResource TextBoxExtend}"
-                                 Margin="50 5"
+                                 Margin="50 30 0 10"
                                  FontSize="14"
                                  hc:TitleElement.TitlePlacement="Left"
                                  IsReadOnly="True" hc:TitleElement.Title="下载路径">
@@ -75,10 +75,10 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="确认下载" 
                                 Command="{Binding ConfirmDownloadCommand}"
-                                Cursor="Hand" Margin="0 5 5 5" Width="150" Style="{StaticResource ButtonPrimary}"></Button>
+                                Cursor="Hand" Margin="0 50 5 5" Width="150" Style="{StaticResource ButtonPrimary}"></Button>
                         <Button Content="取消" 
                                 Command="{Binding CancelDownloadCommand}"
-                                Margin="5 5 40 5" Width="50"></Button>
+                                Margin="5 50 40 5" Width="80"></Button>
                     </StackPanel>
                 </StackPanel>
 

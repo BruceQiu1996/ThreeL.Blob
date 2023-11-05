@@ -113,7 +113,7 @@
                     IsDefault="True"
                     Command="{Binding LoginCommandAsync}"
                     CommandParameter="{Binding ElementName=pwd}"
-                    FontSize="15" Height="35"
+                    FontSize="15" Height="40"
                     Style="{StaticResource ButtonPrimary}" Width="300" Margin="20 40 20 0"></Button>
             </StackPanel>
 
