@@ -67,6 +67,7 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<GrpcService>();
                 service.AddSingleton<GrowlHelper>();
                 service.AddSingleton<FileHelper>();
+                service.AddSingleton<DatabaseHelper>();
                 service.AddSingleton<IniHelper>();
                 service.AddSingleton<IniSettings>();
 
@@ -116,13 +117,14 @@ namespace ThreeL.Blob.Clients.Win
 
         private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
         {
-            //ServiceProvider.GetRequiredService<GrowlHelper>().Warning("未知错误");
+            ServiceProvider?.GetRequiredService<GrowlHelper>().Warning(e.ToString());
             //ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(Module.CLIENT_WIN_TASK_EXCEPTION))
             //     .LogError(e.ToString());
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
+            ServiceProvider?.GetRequiredService<GrowlHelper>().Warning(e.ToString());
             //ServiceProvider.GetRequiredService<GrowlHelper>().Warning("未知错误");
             //ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(Module.CLIENT_WIN_THREAD_EXCEPTION))
             //    .LogError(e.ToString());
@@ -130,6 +132,7 @@ namespace ThreeL.Blob.Clients.Win
 
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
+            ServiceProvider?.GetRequiredService<GrowlHelper>().Warning(e.ToString());
             //ServiceProvider.GetRequiredService<GrowlHelper>().Warning("未知错误");
             //ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(Module.CLIENT_WIN_UI_EXCEPTION))
             //    .LogError(e.ToString());

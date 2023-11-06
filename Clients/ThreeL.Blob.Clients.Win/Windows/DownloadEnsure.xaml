@@ -12,7 +12,7 @@
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Height="270" Width="450">
+        Height="220" Width="380">
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
             <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
@@ -62,23 +62,23 @@
                 <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
                         <TextBox Text="{Binding DownloadLocation}"
-                                 Width="350"
+                                 Width="330"
                                  Style="{StaticResource TextBoxExtend}"
-                                 Margin="50 30 0 10"
+                                 Margin="20 20 0 10"
                                  FontSize="14"
                                  hc:TitleElement.TitlePlacement="Left"
                                  IsReadOnly="True" hc:TitleElement.Title="下载路径">
                         </TextBox>
                     </StackPanel>
-                    <ProgressBar Value="{Binding Progress}" Margin="50 5 40 0" Width="350" Height="25"></ProgressBar>
-                    <TextBlock Text="{Binding FreeDesc}" Margin="50 5" Foreground="#aaa"></TextBlock>
+                    <ProgressBar Value="{Binding Progress}" Margin="0 5 0 0" Width="330" Height="25"></ProgressBar>
+                    <TextBlock Text="{Binding FreeDesc}" Margin="20 5" Foreground="#aaa"></TextBlock>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Content="确认下载" 
                                 Command="{Binding ConfirmDownloadCommand}"
-                                Cursor="Hand" Margin="0 50 5 5" Width="150" Style="{StaticResource ButtonPrimary}"></Button>
+                                Cursor="Hand" Margin="0 15 5 5" Width="150" Style="{StaticResource ButtonPrimary}"></Button>
                         <Button Content="取消" 
                                 Command="{Binding CancelDownloadCommand}"
-                                Margin="5 50 40 5" Width="80"></Button>
+                                Margin="5 15 20 5" Width="100"></Button>
                     </StackPanel>
                 </StackPanel>
 

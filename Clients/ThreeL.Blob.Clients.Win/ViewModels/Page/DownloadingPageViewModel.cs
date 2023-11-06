@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using DnsClient.Protocol;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -11,6 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using ThreeL.Blob.Clients.Win.Entities;
+using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
@@ -34,14 +36,14 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         }
         private readonly IMapper _mapper;
         private readonly ILogger<DownloadingPageViewModel> _logger;
-        private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
+        private readonly DatabaseHelper _databaseHelper;
         public DownloadingPageViewModel(IMapper mapper,
-                                        IDbContextFactory<MyDbContext> dbContextFactory,
+                                        DatabaseHelper databaseHelper,
                                         ILogger<DownloadingPageViewModel> logger)
         {
             _mapper = mapper;
             _logger = logger;
-            _dbContextFactory = dbContextFactory;
+            _databaseHelper = databaseHelper;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             DownloadItemViewModels = new ObservableCollection<DownloadItemViewModel>();
             //new download task
@@ -55,13 +57,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 RemoveTask(y);
                 //增加到传输界面
-                using (var context = dbContextFactory.CreateDbContext())
-                {
-                    var record = await context
-                        .TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
-                    var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
-                    WeakReferenceMessenger.Default.Send<TransferCompleteItemViewModel, string>(vm, Const.AddTransferRecord);
-                }
+                //var record = await context.TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
+                var record = await _databaseHelper.QueryFirstOrDefaultAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE TaskId = @Id", y);
+                var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
+                WeakReferenceMessenger.Default.Send(vm, Const.AddTransferRecord);
             });
 
             PauseAllCommandAsync = new AsyncRelayCommand(PauseAllAsync);
@@ -138,15 +137,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 if (_isLoaded)
                     return;
 
-                using (var context = _dbContextFactory.CreateDbContext())
-                {
-                    var downloadFileRecords = await context.DownloadFileRecords.Where(x => x.Status == FileDownloadingStatus.DownloadingSuspend
-                    || x.Status == FileDownloadingStatus.DownloadingSuspend || x.Status == FileDownloadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToListAsync();
+                //var downloadFileRecords = await context.DownloadFileRecords.Where(x => x.Status == FileDownloadingStatus.DownloadingSuspend
+                    //|| x.Status == FileDownloadingStatus.DownloadingSuspend || x.Status == FileDownloadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToListAsync();
 
-                    foreach (var item in downloadFileRecords)
-                    {
-                        await AddNewDownloadTaskAsync(item, false);
-                    }
+                var downloadFileRecords = await _databaseHelper
+                    .QueryListAsync<DownloadFileRecord>("SELECT * FROM DownloadFileRecords WHERE Status <=3 ORDER BY CreateTime DESC",null);
+
+                _databaseHelper.Excute("UPDATE DownloadFileRecords SET Status = 3 WHERE Id in @Ids", new { Ids = downloadFileRecords.Select(x => x.Id) });
+                foreach (var item in downloadFileRecords)
+                {
+                    item.Status = FileDownloadingStatus.DownloadingSuspend;
+                    await AddNewDownloadTaskAsync(item, false);
                 }
 
                 _isLoaded = true;

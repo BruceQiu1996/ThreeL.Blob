@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using ThreeL.Blob.Clients.Win.Entities;
+using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
@@ -36,17 +37,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         }
         private readonly IMapper _mapper;
         private readonly ILogger<UploadingPageViewModel> _logger;
-        private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
+        private readonly DatabaseHelper _databaseHelper;
         private readonly IniSettings _iniSettings;
         public UploadingPageViewModel(IMapper mapper,
-                                      IDbContextFactory<MyDbContext> dbContextFactory,
+                                      DatabaseHelper databaseHelper,
                                       ILogger<UploadingPageViewModel> logger,
                                       IniSettings iniSettings)
         {
             _iniSettings = iniSettings;
             _mapper = mapper;
             _logger = logger;
-            _dbContextFactory = dbContextFactory;
+            _databaseHelper = databaseHelper;
             UploadItemViewModels = new ObservableCollection<UploadItemViewModel>();
             //new upload task
             WeakReferenceMessenger.Default.Register<UploadingPageViewModel, UploadFileRecord, string>(this, Const.AddUploadRecord, async (x, y) =>
@@ -70,13 +71,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 RemoveTask(y);
                 //增加到传输界面
-                using (var context = dbContextFactory.CreateDbContext()) 
-                {
-                    var record = await context
-                        .TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
-                    var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
-                    WeakReferenceMessenger.Default.Send(vm, Const.AddTransferRecord);
-                }
+                //var record = await context.TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
+                var record = await _databaseHelper.QueryFirstOrDefaultAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE TaskId = @Id", y);
+                var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
+                WeakReferenceMessenger.Default.Send(vm, Const.AddTransferRecord);
             });
 
             WeakReferenceMessenger.Default.Register<UploadingPageViewModel, string, string>(this, Const.StartNewUploadTask,  (x, y) =>
@@ -166,22 +164,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 if (_isLoaded)
                     return;
 
-                var records = new List<UploadFileRecord>();
-                lock (Const.WriteDbLock)
-                {
-                    using (var context = _dbContextFactory.CreateDbContext())
-                    {
-                        records = context.UploadFileRecords.Where(x => x.Status == FileUploadingStatus.UploadingSuspend
-                        || x.Status == FileUploadingStatus.Uploading || x.Status == FileUploadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToList();
+                var records = await _databaseHelper
+                    .QueryListAsync<UploadFileRecord>("SELECT * FROM UploadFileRecords WHERE Status <=3 ORDER BY CreateTime DESC", null);
 
-                        records.ForEach(x => x.Status = FileUploadingStatus.UploadingSuspend);
-                        context.Set<UploadFileRecord>().UpdateRange(records);
-                        context.SaveChanges();
-                    }
-                }
-
+                _databaseHelper.Excute("UPDATE UploadFileRecords SET Status = 3 WHERE Id in @Ids", new { Ids = records.Select(x=>x.Id)});
                 foreach (var item in records)
                 {
+                    item.Status = FileUploadingStatus.UploadingSuspend;
                     await AddNewUploadTaskAsync(item, false);
                 }
 

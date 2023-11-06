@@ -3,12 +3,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
@@ -76,19 +79,21 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public AsyncRelayCommand CancelCommandAsync { get; set; }
 
         private readonly GrpcService _grpcService;
-        private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
         private readonly HttpRequest _httpRequest;
+        private readonly DatabaseHelper _databaseHelper;
         private readonly IMapper _mapper;
-        public DownloadItemViewModel(GrpcService grpcService, IDbContextFactory<MyDbContext> dbContextFactory, HttpRequest httpRequest,
-                                     IMapper mapper)
+        public DownloadItemViewModel(GrpcService grpcService, 
+                                     HttpRequest httpRequest,
+                                     IMapper mapper,
+                                     DatabaseHelper databaseHelper)
         {
             _mapper = mapper;
             _grpcService = grpcService;
             _httpRequest = httpRequest;
-            _dbContextFactory = dbContextFactory;
             PauseCommand = new RelayCommand(Pause);
             CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
+            _databaseHelper = databaseHelper;
         }
 
         public async Task StartAsync()
@@ -144,44 +149,44 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
         }
 
-        private Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
+        private async Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
         {
-            lock (Const.WriteDbLock)
+            var record = await _databaseHelper.QueryFirstOrDefaultAsync<DownloadFileRecord>("SELECT * FROM DownloadFileRecords WHERE ID = @Id", new
             {
-                using (var context = _dbContextFactory.CreateDbContext())
+                Id
+            });
+            if (record != null)
+            {
+                List<(string, object)> sqls = new List<(string, object)>();
+                record.Status = fileStatus;
+                if (fileStatus == FileDownloadingStatus.DownloadingComplete || fileStatus == FileDownloadingStatus.DownloadingFaild)
                 {
-                    var record = context.DownloadFileRecords.FirstOrDefault(x => x.Id == Id);
-                    if (record != null)
-                    {
-                        record.Status = fileStatus;
-                        if (fileStatus == FileDownloadingStatus.DownloadingComplete || fileStatus == FileDownloadingStatus.DownloadingFaild)
-                        {
-                            record.DownloadFinishTime = DateTime.UtcNow;
-                            DownloadFinishTime = record.DownloadFinishTime;
+                    record.DownloadFinishTime = DateTime.UtcNow;
+                    DownloadFinishTime = record.DownloadFinishTime;
 
-                            var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
-                            transferRecord.TaskId = record.Id;
-                            transferRecord.Description = TransferProfile.GetDescriptionByDownloadStatus(fileStatus);
-                            transferRecord.Success = fileStatus == FileDownloadingStatus.DownloadingComplete;
-                            transferRecord.Reason = Message;
-                            transferRecord.FileLocation = fileLocation;
+                    var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
+                    transferRecord.TaskId = record.Id;
+                    transferRecord.Description = TransferProfile.GetDescriptionByDownloadStatus(fileStatus);
+                    transferRecord.Success = fileStatus == FileDownloadingStatus.DownloadingComplete;
+                    transferRecord.Reason = Message;
+                    transferRecord.FileLocation = fileLocation;
 
-                            context.TransferCompleteRecords.Add(transferRecord);
-                        }
-
-                        if (fileStatus == FileDownloadingStatus.DownloadingSuspend)
-                        {
-                            record.TransferBytes = TransferBytes;
-                        }
-
-                        context.SaveChanges();
-                    }
+                    //context.TransferCompleteRecords.Add(transferRecord);
+                    sqls.Add(("INSERT INTO TransferCompleteRecords(Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason)" +
+                        " VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason)", transferRecord));
                 }
 
-                Status = fileStatus;
+                if (fileStatus == FileDownloadingStatus.DownloadingSuspend)
+                {
+                    record.TransferBytes = TransferBytes;
+                }
+
+                sqls.Add(("UPDATE DownloadFileRecords SET DownloadFinishTime = @DownloadFinishTime,Status=@Status,TransferBytes=@TransferBytes WHERE ID = @Id", record));
+                
+                _databaseHelper.ExcuteMulti(sqls);
             }
 
-            return Task.CompletedTask;
+            Status = fileStatus;
         }
 
         public void SetTransferBytes(long bytes)

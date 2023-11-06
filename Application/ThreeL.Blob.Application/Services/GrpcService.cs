@@ -219,18 +219,24 @@ namespace ThreeL.Blob.Application.Services
             catch (IOException ex)
             {
                 _logger.LogError(ex.ToString());
-                var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
-                fileObject.Status = FileStatus.UploadingSuspend;
-                await _efBasicRepository.UpdateAsync(fileObject);
+                if (uploadFileRequest.Current != null)
+                {
+                    var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
+                    fileObject.Status = FileStatus.UploadingSuspend;
+                    await _efBasicRepository.UpdateAsync(fileObject);
+                }
 
                 return new UploadFileResponse() { Result = false, Message = "通讯流中断", Status = UploadFileResponseStatus.PauseStatus };
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
-                fileObject.Status = FileStatus.Faild;
-                await _efBasicRepository.UpdateAsync(fileObject);
+                if (uploadFileRequest.Current != null)
+                {
+                    var fileObject = await _efBasicRepository.GetAsync(uploadFileRequest.Current.FileId);
+                    fileObject.Status = FileStatus.Faild;
+                    await _efBasicRepository.UpdateAsync(fileObject);
+                }
 
                 return new UploadFileResponse() { Result = false, Message = "上传文件服务器出现异常", Status = UploadFileResponseStatus.ErrorStatus };
             }

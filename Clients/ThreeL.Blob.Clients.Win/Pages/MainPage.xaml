@@ -13,15 +13,19 @@
       Title="MainPage">
     <Page.Resources>
         <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
-        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="140" Padding="0" Cursor="Hand">
+        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
             <MenuItem Header="下载" 
                       Command="{Binding DownloadCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="删除" 
                       Command="{Binding DeleteCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
-            <MenuItem Header="创建文件夹" 
+            <MenuItem Header="新建文件夹" 
                       Command="{Binding NewFolderCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="刷新" 
                       Command="{Binding RefreshCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="全选" 
+                      Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="全不选" 
+                      Command="{Binding SelectNoCommand}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
     </Page.Resources>
     <behaviors:Interaction.Triggers>

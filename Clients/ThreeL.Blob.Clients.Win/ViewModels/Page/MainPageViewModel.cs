@@ -54,9 +54,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public RelayCommand<DragEventArgs> DropCommand { get; set; }
         public RelayCommand GridGotFocusCommand { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
+        public RelayCommand SelectNoCommand { get; set; }
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
-        private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
+        private readonly DatabaseHelper _databaseHelper;
         private readonly GrowlHelper _growlHelper;
         private readonly FileHelper _fileHelper;
         private readonly IniSettings _iniSettings;
@@ -116,7 +117,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         }
 
         public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest,
-                                 IDbContextFactory<MyDbContext> dbContextFactory,
+                                 DatabaseHelper databaseHelper,
                                  GrowlHelper growlHelper, IMapper mapper, FileHelper fileHelper, IniSettings iniSettings)
         {
             _mapper = mapper;
@@ -125,7 +126,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             _growlHelper = growlHelper;
             _iniSettings = iniSettings;
             _fileHelper = fileHelper;
-            _dbContextFactory = dbContextFactory;
+            _databaseHelper = databaseHelper;
             UploadCommandAsync = new AsyncRelayCommand(UploadAsync);
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
@@ -135,6 +136,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             SearchFileByKeywordCommand = new RelayCommand(SearchFileByKeyword);
             DeleteCommandAsync = new AsyncRelayCommand(DeleteAsync);
             DropCommand = new RelayCommand<DragEventArgs>(Drop);
+            SelectAllCommand = new RelayCommand(SelectAll);
+            SelectNoCommand = new RelayCommand(SelectNo);
             FileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
@@ -184,7 +187,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        #region
+        #region 操作文件集合
         public void AddFileObject(FileObjItemViewModel itemViewModel)
         {
             FileObjViewModels?.Add(itemViewModel);
@@ -200,6 +203,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         }
         #endregion
 
+        #region 全选/全不选
+        public void SelectAll() 
+        {
+            foreach (var item in FileObjViewModels) 
+            {
+                item.IsSelected = true;
+            }
+        }
+
+        public void SelectNo()
+        {
+            foreach (var item in FileObjViewModels)
+            {
+                item.IsSelected = false;
+            }
+        }
+        #endregion
         //拖拽上传文件
         private async void Drop(DragEventArgs e)
         {
@@ -452,9 +472,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     downloads.AddRange(item.Where(x => !x.IsFolder).Select(x => (x.Id, x.LocalLocation)));
                 }
 
-                foreach (var download in downloads) 
+                foreach (var download in downloads)
                 {
-                    await DownloadFileAsync(download.id,download.downloadLocation);
+                    await DownloadFileAsync(download.id, download.downloadLocation);
                 }
             }
         }
@@ -474,7 +494,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             var children = folders.Where(x => x.ParentFolder == current.Id);
             foreach (var child in children)
             {
-                if(child.IsFolder)
+                if (child.IsFolder)
                     CreateFolders(child, current, folders);
                 else
                     child.LocalLocation = dir;
@@ -522,16 +542,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                         Status = FileUploadingStatus.Wait,
                         Code = code
                     };
-                    lock (Const.WriteDbLock)
-                    {
-                        using (var context = _dbContextFactory.CreateDbContext())
-                        {
-                            context.UploadFileRecords.Add(record);
-                            context.SaveChanges();
-                        };
-                    }
 
-                    WeakReferenceMessenger.Default.Send<UploadFileRecord, string>(record, Const.AddUploadRecord);
+                    _databaseHelper.Excute("INSERT INTO UploadFileRecords (Id,FileId,FileName,FileLocation,Size,TransferBytes,CreateTime,UploadFinishTime,Code,Status)" +
+                        "VALUES(@Id,@FileId,@FileName,@FileLocation,@Size,@TransferBytes,@CreateTime,@UploadFinishTime,@Code,@Status)", record);
+
+                    WeakReferenceMessenger.Default.Send(record, Const.AddUploadRecord);
                 }
             }
         }
@@ -563,14 +578,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     Size = result.Size,
                     Code = result.Code
                 };
-                lock (Const.WriteDbLock)
-                {
-                    using (var context = _dbContextFactory.CreateDbContext())
-                    {
-                        context.DownloadFileRecords.Add(record);
-                        context.SaveChanges();
-                    };
-                }
+
+                _databaseHelper.Excute("INSERT INTO DownloadFileRecords (Id,TaskId,FileId,FileName,TempFileLocation,Location,Size,TransferBytes,CreateTime,DownloadFinishTime,Code,Status)" +
+                    "VALUES(@Id,@TaskId,@FileId,@FileName,@TempFileLocation,@Location,@Size,@TransferBytes,@CreateTime,@DownloadFinishTime,@Code,@Status)", record);
 
                 //发送添加下载任务事件
                 WeakReferenceMessenger.Default.Send(record, Const.AddDownloadRecord);

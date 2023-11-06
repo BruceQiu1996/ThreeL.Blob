@@ -20,6 +20,7 @@
             <StackPanel Orientation="Vertical">
                 <GroupBox Margin="2" Header="应用设置" 
                           HorizontalContentAlignment="Left"
+                          Background="Transparent"
                           Padding="5" FontSize="16" Style="{StaticResource GroupBoxTab}">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
@@ -31,9 +32,23 @@
                                  Text="{Binding DownloadLocation}"
                                  HorizontalAlignment="Left"
                                  hc:TitleElement.TitlePlacement="Left"></TextBox>
-                            <Button Content="选择目录" Margin="5 0 0 0" 
+                            <Button Content="选择目录" Margin="5 0 0 0"  FontSize="14"
                                 Command="{Binding ChooseDownloadFolderCommandAsync}"
                                 Cursor="Hand"></Button>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
+                            <TextBox Style="{StaticResource TextBoxExtend}"
+                                     hc:TitleElement.Title="缓存地址"
+                                     FontSize="14"
+                                     Width="400"
+                                     IsReadOnly="True"
+                                     Text="{Binding DownloadLocation}"
+                                     HorizontalAlignment="Left"
+                                     hc:TitleElement.TitlePlacement="Left"></TextBox>
+                            <Button Content="选择目录" Margin="5 0 0 0"  FontSize="14"
+                                    Command="{Binding ChooseDownloadFolderCommandAsync}"
+                                    Cursor="Hand"></Button>
                         </StackPanel>
 
                         <hc:NumericUpDown Maximum="10" 
@@ -67,6 +82,15 @@
                                 </behaviors:EventTrigger>
                             </behaviors:Interaction.Triggers>
                         </hc:NumericUpDown>
+
+                        <CheckBox Content="开机自启" FontSize="14" Margin="0 20 0 5"></CheckBox>
+                        <CheckBox Content="关闭后直接退出" FontSize="14" Margin="0 5 0 5"></CheckBox>
+                        <Button HorizontalAlignment="Left" 
+                                Margin="0 5"
+                                Content="清理缓存"
+                                Cursor="Hand"
+                                FontSize="14"
+                                Style="{StaticResource ButtonDanger}"></Button>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

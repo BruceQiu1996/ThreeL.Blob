@@ -8,6 +8,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using ThreeL.Blob.Clients.Win.Entities;
+using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using Z.EntityFramework.Plus;
@@ -28,12 +30,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand ClearRecordCommandAsync { get; set; }
         public ObservableCollection<TransferCompleteItemViewModel> TransferCompleteItemViewModels { get; set; }
 
-        private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
+        private readonly DatabaseHelper _databaseHelper;
         private readonly IMapper _mapper;
-        public TransferCompletePageViewModel(IDbContextFactory<MyDbContext> dbContextFactory, IMapper mapper)
+        public TransferCompletePageViewModel(DatabaseHelper databaseHelper, IMapper mapper)
         {
             _mapper = mapper;
-            _dbContextFactory = dbContextFactory;
+            _databaseHelper = databaseHelper;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ClearRecordCommandAsync = new AsyncRelayCommand(ClearRecordAsync);
             TransferCompleteItemViewModels = new ObservableCollection<TransferCompleteItemViewModel>();
@@ -66,17 +68,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 .MessageBox.Show("确定清空所有的传输完成记录?", "提示", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
             if (result == MessageBoxResult.Yes)
             {
-                lock (Const.WriteDbLock)
-                {
-                    using (var context = _dbContextFactory.CreateDbContext())
-                    {
-                        context.TransferCompleteRecords.Delete();
-                        context.SaveChanges();
-
-                        TransferCompleteItemViewModels.Clear();
-                        HadTask = false;
-                    }
-                }
+                _databaseHelper.Excute("DELETE FROM TransferCompleteRecords",null);
+                TransferCompleteItemViewModels.Clear();
+                HadTask = false;
             }
 
             return Task.CompletedTask;
@@ -87,13 +81,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             try
             {
                 if (_loaded) return;
-                using (var context = _dbContextFactory.CreateDbContext())
+                var records = await _databaseHelper.QueryListAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords ORDER BY BeginTime DESC",null);
+                foreach (var record in records)
                 {
-                    var records = await context.TransferCompleteRecords.OrderByDescending(x => x.BeginTime).ToListAsync();
-                    foreach (var record in records)
-                    {
-                        AddRecord(_mapper.Map<TransferCompleteItemViewModel>(record));
-                    }
+                    AddRecord(_mapper.Map<TransferCompleteItemViewModel>(record));
                 }
 
                 _loaded = true;

@@ -52,7 +52,7 @@
                               Fill="{StaticResource PrimaryBrush}"
                               ></Path>
                     </Label>
-                    <TextBlock Text="头盘" FontSize="16" VerticalAlignment="Center" Margin="40 0 0 0" 
+                    <TextBlock Text="头盘" FontFamily="Tahoma" FontSize="16" VerticalAlignment="Center" Margin="40 0 0 0" 
                                Foreground="#555" FontWeight="Bold"></TextBlock>
                     <Label BorderThickness="0"
                            Cursor="Hand"

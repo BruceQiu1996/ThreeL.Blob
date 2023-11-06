@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -76,23 +77,22 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public AsyncRelayCommand CancelCommandAsync { get; set; }
 
         private readonly GrpcService _grpcService;
-        private readonly IDbContextFactory<MyDbContext> _dbContextFactory;
         private readonly HttpRequest _httpRequest;
         private readonly IMapper _mapper;
         private readonly IniSettings _iniSettings;
+        private readonly DatabaseHelper _databaseHelper;
         public UploadItemViewModel(GrpcService grpcService, 
-                                   IDbContextFactory<MyDbContext> dbContextFactory, 
                                    HttpRequest httpRequest,
-                                   IMapper mapper, IniSettings iniSettings)
+                                   IMapper mapper, IniSettings iniSettings, DatabaseHelper databaseHelper)
         {
             _mapper = mapper;
             _grpcService = grpcService;
             _httpRequest = httpRequest;
             _iniSettings = iniSettings;
-            _dbContextFactory = dbContextFactory;
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
             PauseCommand = new RelayCommand(Pause);
             CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
+            _databaseHelper = databaseHelper;
         }
 
         public async Task StartAsync()
@@ -222,43 +222,44 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             Message = "网络传输异常";
         }
 
-        private Task UpdateStatusAsync(FileUploadingStatus fileStatus)
+        private async Task UpdateStatusAsync(FileUploadingStatus fileStatus)
         {
             Status = fileStatus;
             WeakReferenceMessenger.Default.Send(string.Empty, Const.StartNewUploadTask);
-            lock (Const.WriteDbLock)
+            //var record = context.UploadFileRecords.FirstOrDefault(x => x.Id == Id);
+            var record = await _databaseHelper.QueryFirstOrDefaultAsync<UploadFileRecord>("SELECT * FROM UploadFileRecords WHERE ID = @Id", new
             {
-                using (var context = _dbContextFactory.CreateDbContext())
+                Id
+            });
+            if (record != null)
+            {
+                List<(string, object)> sqls = new List<(string, object)>();
+                record.Status = fileStatus;
+                if (fileStatus == FileUploadingStatus.UploadingComplete || fileStatus == FileUploadingStatus.UploadingFaild)
                 {
-                    var record = context.UploadFileRecords.FirstOrDefault(x => x.Id == Id);
-                    if (record != null)
-                    {
-                        record.Status = fileStatus;
-                        if (fileStatus == FileUploadingStatus.UploadingComplete || fileStatus == FileUploadingStatus.UploadingFaild)
-                        {
-                            record.UploadFinishTime = DateTime.UtcNow;
-                            UploadFinishTime = record.UploadFinishTime;
+                    record.UploadFinishTime = DateTime.UtcNow;
+                    UploadFinishTime = record.UploadFinishTime;
 
-                            var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
-                            transferRecord.TaskId = record.Id;
-                            transferRecord.Description = TransferProfile.GetDescriptionByUploadStatus(fileStatus);
-                            transferRecord.Success = fileStatus == FileUploadingStatus.UploadingComplete;
-                            transferRecord.Reason = Message;
+                    var transferRecord = _mapper.Map<TransferCompleteRecord>(record);
+                    transferRecord.TaskId = record.Id;
+                    transferRecord.Description = TransferProfile.GetDescriptionByUploadStatus(fileStatus);
+                    transferRecord.Success = fileStatus == FileUploadingStatus.UploadingComplete;
+                    transferRecord.Reason = Message;
 
-                            context.TransferCompleteRecords.Add(transferRecord);
-                        }
-
-                        if (fileStatus == FileUploadingStatus.UploadingSuspend)
-                        {
-                            record.TransferBytes = TransferBytes;
-                        }
-
-                        context.SaveChanges();
-                    }
+                    //context.TransferCompleteRecords.Add(transferRecord);
+                    sqls.Add(("INSERT INTO TransferCompleteRecords (Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason)" +
+                        "VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason)", transferRecord));
                 }
-            }
 
-            return Task.CompletedTask;
+                if (fileStatus == FileUploadingStatus.UploadingSuspend)
+                {
+                    record.TransferBytes = TransferBytes;
+                }
+
+                sqls.Add(("UPDATE UploadFileRecords SET UploadFinishTime = @UploadFinishTime,Status=@Status,TransferBytes=@TransferBytes WHERE ID = @Id", record));
+
+                _databaseHelper.ExcuteMulti(sqls);
+            }
         }
     }
 }
