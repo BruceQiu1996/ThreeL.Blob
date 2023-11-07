@@ -31,7 +31,8 @@
         public const string ConfirmDownload = nameof(ConfirmDownload);
         public const string CancelDownload = nameof(CancelDownload);
         public const string StartNewUploadTask = nameof(StartNewUploadTask);
+        public const string StartNewDownloadTask = nameof(StartNewDownloadTask);
         public static object UploadRunTaskLock = new object();
-        public static object WriteDbLock = new object();
+        public static object DownloadRunTaskLock = new object();
     }
 }

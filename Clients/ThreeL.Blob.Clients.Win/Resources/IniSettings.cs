@@ -10,12 +10,14 @@ namespace ThreeL.Blob.Clients.Win.Resources
         #region 配置keys
         public const string ApplicationSectionKey = "ApplicationSection";
         public const string DownloadLocationKey = "DownloadLocation";
+        public const string TempLocationKey = "TempLocation";
         public const string MaxUploadThreadsKey = "MaxUploadThreads";
         public const string MaxDownloadThreadsKey = "MaxDownloadThreads";
         #endregion
 
         #region 配置项
         public string? DownloadLocation { get; private set; }
+        public string? TempLocation { get; private set; }
         public int MaxUploadThreads { get; private set; }
         public int MaxDownloadThreads { get; private set; }
         #endregion
@@ -35,7 +37,18 @@ namespace ThreeL.Blob.Clients.Win.Resources
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 var downloadDir = Path.Combine(appDir.Substring(0, appDir.IndexOf('\\')), "ThreeLDownloads");
                 await WriteDownloadLocation(downloadDir);
-                DownloadLocation = downloadDir;
+            }
+
+            TempLocation = await _iniHelper.ReadAsync(ApplicationSectionKey, TempLocationKey);
+            if (string.IsNullOrEmpty(TempLocation))
+            {
+                var dir = Path.Combine(Path.GetTempPath(), "ThreeLDownloads");
+                if (!Directory.Exists(dir)) 
+                {
+                    Directory.CreateDirectory(dir);
+                }
+
+                await WriteTempLocation(dir);
             }
 
             MaxUploadThreads = int.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, MaxUploadThreadsKey),out var tempMaxUploadThreads)? tempMaxUploadThreads : 5;
@@ -51,6 +64,17 @@ namespace ThreeL.Blob.Clients.Win.Resources
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, DownloadLocationKey, value);
             DownloadLocation = value;
+        }
+
+        /// <summary>
+        /// 修改临时文件目录地址
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public async Task WriteTempLocation(string value)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, TempLocationKey, value);
+            TempLocation = value;
         }
 
         public async Task WriteMaxUploadThreads(int value)

@@ -136,17 +136,24 @@ namespace ThreeL.Blob.Clients.Win.Request
         /// <param name="exceptionCallback"></param>
         /// <param name="receiveBytesCallBack">下载字节回调</param>
         /// <returns></returns>
-        public async Task DownloadFileAsync(CancellationToken pauseToken, CancellationToken cancelToken, string tempFileLocation, string taskId, long statIndex = 0,
+        public async Task DownloadFileAsync(CancellationToken pauseToken, CancellationToken cancelToken, string tempFileLocation, string taskId,
                                             Action completeCallback = null,
                                             Action pauseCallback = null,
                                             Action<string> downloadErrorCallback = null,
                                             Action<string> exceptionCallback = null,
                                             Action<long> receiveBytesCallBack = null)
         {
+            if (!File.Exists(tempFileLocation)) 
+            {
+                downloadErrorCallback?.Invoke("下载临时文件不存在");
+
+                return;
+            }
+            FileInfo fileInfo = new FileInfo(tempFileLocation);
             var resp = _fileGrpcServiceClient.DownloadFile(new DownloadFileRequest()
             {
                 TaskId = taskId,
-                Start = statIndex,
+                Start = fileInfo.Length,
             }, new Metadata()
             {
                  { "Authorization", $"Bearer {_token}" }
@@ -155,7 +162,7 @@ namespace ThreeL.Blob.Clients.Win.Request
             {
                 using (var fileStream = File.OpenWrite(tempFileLocation))
                 {
-                    var received = statIndex;
+                    var received = fileInfo.Length;
                     while (await resp.ResponseStream.MoveNext())
                     {
                         var current = resp.ResponseStream.Current;

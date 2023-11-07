@@ -116,6 +116,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set => SetProperty(ref _selectedCount, value);
         }
 
+        private bool _isListView;
+        public bool IsListView
+        {
+            get => _isListView;
+            set => SetProperty(ref _isListView, value);
+        }
         public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest,
                                  DatabaseHelper databaseHelper,
                                  GrowlHelper growlHelper, IMapper mapper, FileHelper fileHelper, IniSettings iniSettings)
@@ -188,9 +194,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         }
 
         #region 操作文件集合
-        public void AddFileObject(FileObjItemViewModel itemViewModel)
+        public void AddFileObject(FileObjItemViewModel itemViewModel,bool first = false)
         {
-            FileObjViewModels?.Add(itemViewModel);
+            if(!first)
+                FileObjViewModels?.Add(itemViewModel);
+            else
+                FileObjViewModels?.Insert(0, itemViewModel);
             AllCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count;
             SelectedCount = FileObjViewModels == null ? 0 : FileObjViewModels.Count(x => x.IsSelected);
         }
@@ -279,8 +288,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             };
 
             model.Icon = _fileHelper.GetBitmapImageByFileExtension("folder.png");
-            AllFileObjViewModels.Add(model);
-            AddFileObject(model);
+            AllFileObjViewModels.Insert(0, model);
+            AddFileObject(model, true);
             await Task.Delay(100);
             model.IsFocus = true;
         }
@@ -305,6 +314,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
                 fileObjItemViewModel.IsUrlSelected = true;
                 _currentParent = fileObjItemViewModel.Id;
+            }
+            else 
+            {
+                if (!Directory.Exists(_iniSettings.TempLocation)) 
+                {
+                    _growlHelper.Warning("临时文件下载目录不存在");
+                    return;
+                }
+                //下载后打开文件
+                await DownloadFileAsync(fileObjItemViewModel.Id, _iniSettings.TempLocation, true);
             }
         }
 
@@ -424,10 +443,15 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
             if (result != null && result.Value)
             {
-                if (string.IsNullOrEmpty(_iniSettings.DownloadLocation) || !Directory.Exists(_iniSettings.DownloadLocation))
+                if (string.IsNullOrEmpty(_iniSettings.DownloadLocation))
                 {
-                    _growlHelper.Warning("下载目录不存在");
+                    _growlHelper.Warning("下载目录异常");
                     return;
+                }
+
+                if (!Directory.Exists(_iniSettings.DownloadLocation))
+                {
+                    Directory.CreateDirectory(_iniSettings.DownloadLocation);
                 }
 
                 //存在文件夹则判断
@@ -557,7 +581,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         /// <param name="fileId">文件id</param>
         /// <param name="location">下载位置</param>
         /// <returns></returns>
-        private async Task DownloadFileAsync(long fileId, string location)
+        private async Task DownloadFileAsync(long fileId, string location, bool openWhenFinished = false)
         {
             var resp = await _httpRequest.PostAsync(string.Format(Const.DOWNLOAD_FILE, fileId), null);
             if (resp != null)
@@ -583,7 +607,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     "VALUES(@Id,@TaskId,@FileId,@FileName,@TempFileLocation,@Location,@Size,@TransferBytes,@CreateTime,@DownloadFinishTime,@Code,@Status)", record);
 
                 //发送添加下载任务事件
-                WeakReferenceMessenger.Default.Send(record, Const.AddDownloadRecord);
+                WeakReferenceMessenger.Default.Send(new Tuple<DownloadFileRecord, bool>(record, openWhenFinished), Const.AddDownloadRecord);
             }
         }
     }

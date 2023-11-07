@@ -2,9 +2,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using SharpCompress.Common;
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,7 +15,6 @@ using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
-using Z.EntityFramework.Plus;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -28,21 +30,33 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private bool _loaded = false;
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand ClearRecordCommandAsync { get; set; }
+        public AsyncRelayCommand OpenFolderCommandAsync { get; set; }
+        public AsyncRelayCommand OpenFileCommandAsync { get; set; }
+        public RelayCommand DeleteRecordCommand { get; set; }
         public ObservableCollection<TransferCompleteItemViewModel> TransferCompleteItemViewModels { get; set; }
+
+        public TransferCompleteItemViewModel TransferCompleteItemViewModel { get; set; }
 
         private readonly DatabaseHelper _databaseHelper;
         private readonly IMapper _mapper;
-        public TransferCompletePageViewModel(DatabaseHelper databaseHelper, IMapper mapper)
+        private readonly GrowlHelper _gridHelper;
+        private readonly ILogger<TransferCompletePageViewModel> _logger;
+        public TransferCompletePageViewModel(DatabaseHelper databaseHelper, IMapper mapper, GrowlHelper gridHelper, ILogger<TransferCompletePageViewModel> logger)
         {
             _mapper = mapper;
+            _logger = logger;
             _databaseHelper = databaseHelper;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ClearRecordCommandAsync = new AsyncRelayCommand(ClearRecordAsync);
+            OpenFolderCommandAsync = new AsyncRelayCommand(OpenFolderAsync);
+            OpenFileCommandAsync = new AsyncRelayCommand(OpenFileAsync);
+            DeleteRecordCommand = new RelayCommand(DeleteRecord);
             TransferCompleteItemViewModels = new ObservableCollection<TransferCompleteItemViewModel>();
             WeakReferenceMessenger.Default.Register<TransferCompletePageViewModel, TransferCompleteItemViewModel, string>(this, Const.AddTransferRecord, async (x, y) =>
             {
                 AddRecord(y, true);
             });
+            _gridHelper = gridHelper;
         }
 
         public void AddRecord(TransferCompleteItemViewModel transferCompleteItemViewModel, bool desc = false)
@@ -92,7 +106,41 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             catch (Exception ex)
             {
                 _loaded = false;
+                _gridHelper.Warning("加载历史记录异常");
+                _logger.LogError(ex.ToString());
             }
+        }
+
+        private async Task OpenFolderAsync() 
+        {
+            var record = await _databaseHelper
+                .QueryFirstOrDefaultAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE Id = @Id", TransferCompleteItemViewModel);
+
+            if (File.Exists(record.FileLocation))
+            {
+                Process.Start("explorer", "/select,\"" + record.FileLocation + "\"");
+            }
+        }
+
+        private async Task OpenFileAsync()
+        {
+            var record = await _databaseHelper
+                .QueryFirstOrDefaultAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE Id = @Id", TransferCompleteItemViewModel);
+
+            if (File.Exists(record.FileLocation))
+            {
+                Process process = new Process();
+                ProcessStartInfo processStartInfo = new ProcessStartInfo(record.FileLocation);
+                processStartInfo.UseShellExecute = true;
+                process.StartInfo = processStartInfo;
+                process.Start();
+            }
+        }
+
+        private void DeleteRecord()
+        {
+             _databaseHelper.Excute("DELETE FROM TransferCompleteRecords WHERE Id = @Id", TransferCompleteItemViewModel);
+            TransferCompleteItemViewModels.Remove(TransferCompleteItemViewModel);
         }
     }
 }

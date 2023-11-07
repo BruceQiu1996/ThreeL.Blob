@@ -25,13 +25,14 @@
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0 5 0 0">
                             <TextBox Style="{StaticResource TextBoxExtend}"
-                                 hc:TitleElement.Title="下载地址"
-                                 FontSize="14"
-                                 Width="400"
-                                 IsReadOnly="True"
-                                 Text="{Binding DownloadLocation}"
-                                 HorizontalAlignment="Left"
-                                 hc:TitleElement.TitlePlacement="Left"></TextBox>
+                                     hc:TitleElement.Title="下载地址"
+                                     FontSize="14"
+                                     Width="400"
+                                     IsReadOnly="True"
+                                     Text="{Binding DownloadLocation}"
+                                     ToolTip="{Binding DownloadLocation}"
+                                     HorizontalAlignment="Left"
+                                     hc:TitleElement.TitlePlacement="Left"></TextBox>
                             <Button Content="选择目录" Margin="5 0 0 0"  FontSize="14"
                                 Command="{Binding ChooseDownloadFolderCommandAsync}"
                                 Cursor="Hand"></Button>
@@ -42,13 +43,16 @@
                                      hc:TitleElement.Title="缓存地址"
                                      FontSize="14"
                                      Width="400"
+                                     ToolTip="{Binding TempLocation}"
                                      IsReadOnly="True"
-                                     Text="{Binding DownloadLocation}"
+                                     Text="{Binding TempLocation}"
                                      HorizontalAlignment="Left"
                                      hc:TitleElement.TitlePlacement="Left"></TextBox>
                             <Button Content="选择目录" Margin="5 0 0 0"  FontSize="14"
-                                    Command="{Binding ChooseDownloadFolderCommandAsync}"
+                                    Command="{Binding ChooseTempFolderCommandAsync}"
                                     Cursor="Hand"></Button>
+                            <TextBlock Text="(不要和下载地址一致，以免被清空)" VerticalAlignment="Center" Margin="10 0 0 0"
+                                       FontSize="12" Foreground="#888"></TextBlock>
                         </StackPanel>
 
                         <hc:NumericUpDown Maximum="10" 
@@ -83,8 +87,8 @@
                             </behaviors:Interaction.Triggers>
                         </hc:NumericUpDown>
 
-                        <CheckBox Content="开机自启" FontSize="14" Margin="0 20 0 5"></CheckBox>
-                        <CheckBox Content="关闭后直接退出" FontSize="14" Margin="0 5 0 5"></CheckBox>
+                        <CheckBox Content="开机自启" Width="200" HorizontalAlignment="Left" FontSize="14" Margin="0 20 0 5"></CheckBox>
+                        <CheckBox Content="关闭后直接退出" Width="200" HorizontalAlignment="Left" FontSize="14" Margin="0 5 0 5"></CheckBox>
                         <Button HorizontalAlignment="Left" 
                                 Margin="0 5"
                                 Content="清理缓存"

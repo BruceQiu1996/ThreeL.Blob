@@ -43,7 +43,7 @@ namespace ThreeL.Blob.Application.Services
                 var task = await _downloadFileTaskEfBasicRepository.GetAsync(request.TaskId);
                 var cacheTask = await _redisProvider.HGetAsync($"{Const.REDIS_DOWNLOADTASK_CACHE_KEY}{userid}", request.TaskId);
 
-                if (task == null || cacheTask == null || request.Start != cacheTask)
+                if (task == null || cacheTask == null || request.Start > cacheTask)
                 {
                     _logger.LogError($"下载异常,任务id:{request.TaskId}");
                     await responseStream.WriteAsync(new DownloadFileResponse()
@@ -56,9 +56,9 @@ namespace ThreeL.Blob.Application.Services
                     return;
                 }
 
-                if (task.Status != DownloadTaskStatus.Wait && task.Status != DownloadTaskStatus.DownloadingSuspend)
+                if (task.Status != DownloadTaskStatus.Wait && task.Status != DownloadTaskStatus.DownloadingSuspend && task.Status != DownloadTaskStatus.Finished)
                 {
-                    _logger.LogError($"下载异常,任务id:{request.TaskId}");
+                    _logger.LogError($"下载状态异常,任务id:{request.TaskId}");
                     await responseStream.WriteAsync(new DownloadFileResponse()
                     {
                         Type = DownloadFileResponseStatus.DownloadErrorStatus,
@@ -67,6 +67,15 @@ namespace ThreeL.Blob.Application.Services
                     });
 
                     return;
+                }
+
+                if (task.Status == DownloadTaskStatus.Finished) 
+                {
+                    await responseStream.WriteAsync(new DownloadFileResponse()
+                    {
+                        TaskId = request.TaskId,
+                        Type = DownloadFileResponseStatus.DownloadFinishStatus
+                    });
                 }
 
                 var fileObject = await _efBasicRepository.GetAsync(task.FileId);

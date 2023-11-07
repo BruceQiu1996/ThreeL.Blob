@@ -125,7 +125,7 @@ namespace ThreeL.Blob.Application.Services
             var folderName = Guid.NewGuid().ToString();
             var folderLocation = Path.Combine(parentFolderLocation, folderName);
             Directory.CreateDirectory(folderLocation);
-            var exist = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName);
+            var exist = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName && x.ParentFolder == folderCreationDto.ParentId);
             if (exist != null)
             {
                 folderCreationDto.FolderName = $"{folderCreationDto.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";

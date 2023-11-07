@@ -37,9 +37,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private readonly IMapper _mapper;
         private readonly ILogger<DownloadingPageViewModel> _logger;
         private readonly DatabaseHelper _databaseHelper;
+        private readonly IniSettings _iniSettings;
         public DownloadingPageViewModel(IMapper mapper,
                                         DatabaseHelper databaseHelper,
-                                        ILogger<DownloadingPageViewModel> logger)
+                                        ILogger<DownloadingPageViewModel> logger,
+                                        IniSettings iniSettings)
         {
             _mapper = mapper;
             _logger = logger;
@@ -47,25 +49,36 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             DownloadItemViewModels = new ObservableCollection<DownloadItemViewModel>();
             //new download task
-            WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, DownloadFileRecord, string>(this, Const.AddDownloadRecord, async (x, y) =>
+            WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, Tuple<DownloadFileRecord, bool>, string>(this, Const.AddDownloadRecord, async (x, y) =>
             {
-                await AddNewDownloadTaskAsync(y, true, true);
+                await AddNewDownloadTaskAsync(y.Item1, true, true, y.Item2);
             });
 
             //task complete
-            WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, DownloadItemViewModel, string>(this, Const.DownloadFinish, async (x, y) =>
+            WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, Tuple<DownloadItemViewModel, TransferCompleteRecord>, string>(this, Const.DownloadFinish, async (x, y) =>
             {
-                RemoveTask(y);
-                //增加到传输界面
-                //var record = await context.TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
-                var record = await _databaseHelper.QueryFirstOrDefaultAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE TaskId = @Id", y);
-                var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
+                RemoveTask(y.Item1);
+                var vm = _mapper.Map<TransferCompleteItemViewModel>(y.Item2);
                 WeakReferenceMessenger.Default.Send(vm, Const.AddTransferRecord);
+            });
+
+            WeakReferenceMessenger.Default.Register<DownloadingPageViewModel, string, string>(this, Const.StartNewDownloadTask, (x, y) =>
+            {
+                lock (Const.DownloadRunTaskLock)
+                {
+                    var count = DownloadItemViewModels.Count(x => x.Status == FileDownloadingStatus.Downloading);
+                    if (count < _iniSettings.MaxDownloadThreads)
+                    {
+                        DownloadItemViewModels.Where(x => x.Status == FileDownloadingStatus.Wait).Take(_iniSettings.MaxDownloadThreads - count)
+                        .ToList().ForEach(async x => await x.StartAsync());
+                    }
+                }
             });
 
             PauseAllCommandAsync = new AsyncRelayCommand(PauseAllAsync);
             ResumeAllCommandAsync = new AsyncRelayCommand(ResumeAllAsync);
             CancelAllCommandAsync = new AsyncRelayCommand(CancelAllAsync);
+            _iniSettings = iniSettings;
         }
 
         /// <summary>
@@ -89,17 +102,19 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         /// <param name="uploadFileRecord"></param>
         /// <param name="start">是否添加后就启动上传</param>
         /// <param name="desc">是否加到队列最开始</param>
+        /// <param name="openWhenComplete">下载后是否打开</param>
         /// <returns></returns>
-        private async Task AddNewDownloadTaskAsync(DownloadFileRecord downloadFileRecord, bool start = true, bool desc = false)
+        private async Task AddNewDownloadTaskAsync(DownloadFileRecord downloadFileRecord, bool start = true, bool desc = false, bool openWhenComplete = false)
         {
             var viewModel = App.ServiceProvider!.GetRequiredService<DownloadItemViewModel>();
             _mapper.Map(downloadFileRecord, viewModel);
+            viewModel.OpenWhenComplete = openWhenComplete; //是否下载后就打开文件
             if (desc)
                 DownloadItemViewModels.Insert(0, viewModel);
             else
                 DownloadItemViewModels.Add(viewModel);
             HadTask = true;
-            WeakReferenceMessenger.Default.Send<ObservableCollection<DownloadItemViewModel>, string>(DownloadItemViewModels, Const.NotifyDownloadingCount);
+            WeakReferenceMessenger.Default.Send(DownloadItemViewModels, Const.NotifyDownloadingCount);
             if (start)
                 await viewModel.StartAsync();
         }

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -18,6 +19,7 @@ using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Profiles;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Clients.Win.ViewModels.Page;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Utils;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
@@ -26,7 +28,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 {
     public class DownloadItemViewModel : ObservableObject
     {
-        private CancellationTokenSource _pauseTokenSource; //取消
+        private CancellationTokenSource _pauseTokenSource; //暂停
         private CancellationTokenSource _cancelTokenSource; //取消
         private Task _downloadTask;
         public string Id { get; set; }
@@ -74,6 +76,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public FileDownloadingStatus Status { get; set; }
 
         public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName).Item2;
+        public bool OpenWhenComplete { get; set; }
         public AsyncRelayCommand ResumeCommandAsync { get; set; }
         public RelayCommand PauseCommand { get; set; }
         public AsyncRelayCommand CancelCommandAsync { get; set; }
@@ -82,10 +85,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         private readonly HttpRequest _httpRequest;
         private readonly DatabaseHelper _databaseHelper;
         private readonly IMapper _mapper;
+        private readonly IniSettings _iniSettings;
         public DownloadItemViewModel(GrpcService grpcService, 
                                      HttpRequest httpRequest,
                                      IMapper mapper,
-                                     DatabaseHelper databaseHelper)
+                                     DatabaseHelper databaseHelper,
+                                     IniSettings iniSettings)
         {
             _mapper = mapper;
             _grpcService = grpcService;
@@ -94,10 +99,19 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
             _databaseHelper = databaseHelper;
+            _iniSettings = iniSettings;
         }
 
         public async Task StartAsync()
         {
+            lock (Const.UploadRunTaskLock)
+            {
+                if (_iniSettings.MaxDownloadThreads <= App.ServiceProvider!
+                    .GetRequiredService<DownloadingPageViewModel>().DownloadItemViewModels.Count(x => x.Status == FileDownloadingStatus.Downloading))
+                {
+                    return;
+                }
+            }
             _pauseTokenSource = new CancellationTokenSource();
             _cancelTokenSource = new CancellationTokenSource();
             _downloadTask = Task.Run(async () =>
@@ -106,7 +120,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 Message = null;
                 await _grpcService
                     .DownloadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token, 
-                    TempFileLocation, TaskId, TransferBytes, OnComplete, OnPause, OnError, OccurException, SetTransferBytes);
+                    TempFileLocation, TaskId, OnComplete, OnPause, OnError, OccurException, SetTransferBytes);
             });
 
             CanSuspend = true;
@@ -116,7 +130,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         private async Task ResumeAsync()
         {
             if (!File.Exists(TempFileLocation))
-                return;
+            {
+                File.Create(TempFileLocation);
+            }
 
             await StartAsync();
         }
@@ -139,7 +155,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             _cancelTokenSource?.Cancel();
             Message = "取消下载";
             await UpdateStatusAsync(FileDownloadingStatus.DownloadingComplete);
-            WeakReferenceMessenger.Default.Send<DownloadItemViewModel, string>(this, Const.DownloadFinish);
             if (await ExpressionWaiter.WaitInTime(() => _downloadTask == null || _downloadTask.IsCompleted))
             {
                 if (File.Exists(TempFileLocation))
@@ -151,6 +166,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         private async Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
         {
+            Status = fileStatus;
+            WeakReferenceMessenger.Default.Send(string.Empty, Const.StartNewDownloadTask);
             var record = await _databaseHelper.QueryFirstOrDefaultAsync<DownloadFileRecord>("SELECT * FROM DownloadFileRecords WHERE ID = @Id", new
             {
                 Id
@@ -174,6 +191,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                     //context.TransferCompleteRecords.Add(transferRecord);
                     sqls.Add(("INSERT INTO TransferCompleteRecords(Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason)" +
                         " VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason)", transferRecord));
+
+                    WeakReferenceMessenger.Default.Send(new Tuple<DownloadItemViewModel, TransferCompleteRecord>(this, transferRecord), Const.DownloadFinish);
                 }
 
                 if (fileStatus == FileDownloadingStatus.DownloadingSuspend)
@@ -185,8 +204,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 
                 _databaseHelper.ExcuteMulti(sqls);
             }
-
-            Status = fileStatus;
         }
 
         public void SetTransferBytes(long bytes)
@@ -216,7 +233,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     Message = "文件损坏";
                     await UpdateStatusAsync(FileDownloadingStatus.DownloadingFaild);
-                    WeakReferenceMessenger.Default.Send<DownloadItemViewModel, string>(this, Const.DownloadFinish);
 
                     return;
                 }
@@ -227,7 +243,14 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             File.Move(TempFileLocation, fileLocation);
 
             await UpdateStatusAsync(FileDownloadingStatus.DownloadingComplete, fileLocation);
-            WeakReferenceMessenger.Default.Send<DownloadItemViewModel, string>(this, Const.DownloadFinish);
+            if (OpenWhenComplete)
+            {
+                Process process = new Process();
+                ProcessStartInfo processStartInfo = new ProcessStartInfo(fileLocation);
+                processStartInfo.UseShellExecute = true;
+                process.StartInfo = processStartInfo;
+                process.Start();
+            }
         }
     }
 }

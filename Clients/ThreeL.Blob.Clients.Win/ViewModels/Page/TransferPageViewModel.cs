@@ -87,11 +87,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             });
         }
 
+        private bool _loaded;
         private async Task LoadAsync()
         {
-            CurrentPage = _uploadingPage;
-            await (_uploadingPage.DataContext as UploadingPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
-            await (_downloadingPage.DataContext as DownloadingPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
+            if (!_loaded)
+            {
+                CurrentPage = _uploadingPage;
+                await (_uploadingPage.DataContext as UploadingPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
+                await (_downloadingPage.DataContext as DownloadingPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
+                _loaded = true;
+            }
         }
 
         private System.Windows.Controls.Page _currentPage;

@@ -12,7 +12,7 @@
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Title="主界面" Height="600" Width="900">
+        Title="主界面" Height="600" MinWidth="900">
     <Window.Resources>
         <convert:String2BooleanConverter x:Key="String2BooleanConverter"></convert:String2BooleanConverter>
     </Window.Resources>
@@ -91,7 +91,7 @@
             <hc:Card Grid.Row="1" 
                      Grid.Column="0" 
                      Background="White" 
-                     Margin="5 5 2 5"
+                     Margin="3 5 2 5"
                      Effect="{DynamicResource EffectShadow2}"
                      BorderThickness="0">
                 <ListBox Background="White" BorderThickness="0">

@@ -20,6 +20,15 @@
     <Page.Resources>
         <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
         <convert:UtcDateTimeToShortStringConverter x:Key="UtcDateTimeToShortStringConverter"></convert:UtcDateTimeToShortStringConverter>
+
+        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
+            <MenuItem Header="打开文件夹" 
+              Command="{Binding OpenFolderCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="打开文件" 
+              Command="{Binding OpenFileCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="删除记录" 
+              Command="{Binding DeleteRecordCommand}" Padding="5 5" FontSize="15"></MenuItem>
+        </ContextMenu>
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -27,21 +36,38 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <Button Content="清空记录" 
-                Command="{Binding ClearRecordCommandAsync}"
+        <Button Command="{Binding ClearRecordCommandAsync}"
                 Margin="0 0 5 0" Cursor="Hand"
-                HorizontalAlignment="Right"></Button>
+                HorizontalAlignment="Right">
+            <Button.Content>
+                <StackPanel Orientation="Horizontal">
+                    <Label BorderThickness="0" VerticalAlignment="Center" 
+                           VerticalContentAlignment="Center"
+                           Background="Transparent" Padding="0">
+                        <Path Data="{StaticResource DeleteFillCircleGeometry}" Stretch="Fill"
+                              Height="15" Width="15"
+                              Stroke="#555"
+                              ></Path>
+                    </Label>
+
+                    <TextBlock Text="清空记录" Margin="10 0 0 0" FontSize="14"></TextBlock>
+                </StackPanel>
+            </Button.Content>
+        </Button>
 
         <Border CornerRadius="5" Grid.Row="1">
             <ScrollViewer Margin="2 0 0 5" RequestBringIntoView="ScrollViewer_RequestBringIntoView">
                 <Grid>
                     <ListBox ScrollViewer.CanContentScroll="False"
                              Padding="0"
+                             SelectionMode="Single"
+                             ContextMenu="{StaticResource filemenu}"
                              PreviewMouseWheel="ListView_PreviewMouseWheel"
                              hc:BorderElement.CornerRadius="0"
                              ScrollViewer.IsDeferredScrollingEnabled="True"
                              ScrollViewer.VerticalScrollBarVisibility="Visible"
                              ItemsSource="{Binding TransferCompleteItemViewModels,UpdateSourceTrigger=PropertyChanged}"
+                             SelectedItem="{Binding TransferCompleteItemViewModel}"
                              BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="SelectionChanged">
@@ -59,19 +85,18 @@
                                 <Setter Property="OverridesDefaultStyle" Value="True" />
                                 <Setter Property="SnapsToDevicePixels" Value="True" />
                                 <Setter Property="Foreground" Value="Black" />
-                                <Setter Property="Height" Value="55" />
+                                <Setter Property="Height" Value="45" />
                                 <Setter Property="Padding" Value="0" />
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                            <Border Margin="0 0 4 1" CornerRadius="2" BorderThickness="0 0 0 1"
-                                        Background="White"
+                                            <Border Margin="0 0 4 1" CornerRadius="2" BorderThickness="0 0 0 1" Background="{TemplateBinding Background}"
                                         BorderBrush="#ddd">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"></ColumnDefinition>
                                                         <ColumnDefinition Width="150"></ColumnDefinition>
-                                                        <ColumnDefinition Width="150"></ColumnDefinition>
+                                                        <ColumnDefinition Width="100"></ColumnDefinition>
                                                         <ColumnDefinition Width="150"></ColumnDefinition>
                                                     </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
@@ -82,26 +107,36 @@
                                                         <StackPanel Orientation="Horizontal">
                                                             <Image Source="{Binding Icon}" Height="35"></Image>
                                                             <TextBlock Text="{Binding FileName}" 
-                                                                   FontSize="13" Foreground="#555"
-                                                                   Margin="10 0 0 0" VerticalAlignment="Center"></TextBlock>
+                                                                       ToolTip="{Binding FileName}"
+                                                                       FontSize="13" Foreground="#555"
+                                                                       Margin="10 0 0 0" VerticalAlignment="Center"></TextBlock>
                                                         </StackPanel>
                                                     </Grid>
 
-                                                    <TextBlock Text="{Binding Description}" Foreground="#888" Grid.Column="1" VerticalAlignment="Center"></TextBlock>
+                                                    <TextBlock Text="{Binding Description}" Foreground="#555" Grid.Column="1" VerticalAlignment="Center"></TextBlock>
                                                     <StackPanel Orientation="Horizontal" Grid.Column="2">
                                                         <TextBlock Grid.Column="2" Margin="0 2" 
                                                                VerticalAlignment="Center"
-                                                               Text="{Binding Reason}" FontSize="13" Foreground="#888"></TextBlock>
+                                                               Text="{Binding Reason}" FontSize="13" Foreground="#555"></TextBlock>
                                                     </StackPanel>
 
                                                     <TextBlock Grid.Column="3" Margin="0 2" 
                                                            VerticalAlignment="Center"
-                                                           Text="{Binding FinishTime,Converter={StaticResource UtcDateTimeToShortStringConverter}}" FontSize="13" Foreground="#888"></TextBlock>
+                                                           Text="{Binding FinishTime,Converter={StaticResource UtcDateTimeToShortStringConverter}}" FontSize="13" Foreground="#555"></TextBlock>
                                                 </Grid>
                                             </Border>
                                         </ControlTemplate>
                                     </Setter.Value>
                                 </Setter>
+
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#ddd"></Setter>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="False">
+                                        <Setter Property="Background" Value="White"></Setter>
+                                    </Trigger>
+                                </Style.Triggers>
                             </Style>
                         </ListBox.ItemContainerStyle>
                     </ListBox>

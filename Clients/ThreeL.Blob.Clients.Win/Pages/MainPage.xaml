@@ -49,11 +49,11 @@
         </TextBox>
         <Border Grid.Row="0" BorderThickness="0 0 0 1" BorderBrush="#ccc">
             <StackPanel Orientation="Horizontal" Margin="2 0 0 0">
-                <Button Content="立即上传" Command="{Binding UploadCommandAsync}" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
-                <Button Content="新建文件夹" Command="{Binding NewFolderCommand}" Margin="5 0 0 0" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
+                <Button Content="立即上传" FontSize="14" Command="{Binding UploadCommandAsync}" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
+                <Button Content="新建文件夹" FontSize="14" Command="{Binding NewFolderCommand}" Margin="5 0 0 0" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
 
                 <hc:SearchBar Style="{StaticResource SearchBarExtend}" hc:InfoElement.Placeholder="搜索文件"
-                              Height="30" Width="250"
+                              Height="30" Width="240"
                               Margin="10 0  0 0"
                               Text="{Binding Keyword,UpdateSourceTrigger=PropertyChanged}"
                               Command="{Binding SearchFileByKeywordCommand}"
@@ -68,8 +68,10 @@
                           SelectedItem="{Binding SortOption}">
                 </ComboBox>
                 <Button Content="刷新" Margin="5 0 0 0" 
+                        FontSize="14"
                         Command="{Binding RefreshCommandAsync}"
                         Width="120" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
+                <CheckBox Content="列表" Margin="20 0  0 0" ToolTip="切换为列表视图" FontSize="14" IsChecked="{Binding IsListView}" Cursor="Hand"></CheckBox>
             </StackPanel>
         </Border>
 
@@ -136,46 +138,47 @@
         <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0">
             <ScrollViewer Grid.Column="0" Grid.Row="2"
                           ContextMenu="{StaticResource filemenu}"
-                          Margin="10 5"
                           Grid.ColumnSpan="2"
                           RequestBringIntoView="ScrollViewer_RequestBringIntoView"
                           Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
-                <ListBox ScrollViewer.CanContentScroll="False"
-                         Padding="0"
-                         DragEnter="ListBox_DragEnter"
-                         AllowDrop="True"
-                         hc:BorderElement.CornerRadius="0"
-                         ScrollViewer.IsDeferredScrollingEnabled="True"
-                         ScrollViewer.VerticalScrollBarVisibility="Visible"
-                         PreviewMouseWheel="ListView_PreviewMouseWheel"
-                         Background="Transparent"
-                         SelectionMode="Multiple"
-                         ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
-                         BorderThickness="0" BorderBrush="Transparent">
-                    <behaviors:Interaction.Triggers>
-                        <behaviors:EventTrigger EventName="Drop">
-                            <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
-                        </behaviors:EventTrigger>
-                    </behaviors:Interaction.Triggers>
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel Orientation="Horizontal"></WrapPanel>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
+                <Grid>
+                    <ListBox ScrollViewer.CanContentScroll="False"
+                             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                             Padding="0"
+                             DragEnter="ListBox_DragEnter"
+                             AllowDrop="True"
+                             hc:BorderElement.CornerRadius="0"
+                             ScrollViewer.IsDeferredScrollingEnabled="True"
+                             ScrollViewer.VerticalScrollBarVisibility="Visible"
+                             PreviewMouseWheel="ListView_PreviewMouseWheel"
+                             Background="Transparent"
+                             SelectionMode="Multiple"
+                             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
+                             BorderThickness="0" BorderBrush="Transparent">
+                        <behaviors:Interaction.Triggers>
+                            <behaviors:EventTrigger EventName="Drop">
+                                <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                            </behaviors:EventTrigger>
+                        </behaviors:Interaction.Triggers>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"></WrapPanel>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
 
-                    <ListBox.ItemContainerStyle>
-                        <Style TargetType="{x:Type ListBoxItem}">
-                            <Setter Property="OverridesDefaultStyle" Value="True" />
-                            <Setter Property="SnapsToDevicePixels" Value="True" />
-                            <Setter Property="Foreground" Value="Black" />
-                            <Setter Property="Padding" Value="0" />
-                            <Setter Property="Width" Value="108" />
-                            <Setter Property="Height" Value="130" />
-                            <Setter Property="Margin" Value="10 5"></Setter>
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="{x:Type ListBoxItem}">
-                                        <Border Cursor="Hand"
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="OverridesDefaultStyle" Value="True" />
+                                <Setter Property="SnapsToDevicePixels" Value="True" />
+                                <Setter Property="Foreground" Value="Black" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Width" Value="108" />
+                                <Setter Property="Height" Value="130" />
+                                <Setter Property="Margin" Value="10 5"></Setter>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                            <Border Cursor="Hand"
                                                 Padding="0"
                                                 CornerRadius="2"
                                                 BorderThickness="1.2"
@@ -184,27 +187,27 @@
                                                 Width="{TemplateBinding Width}"
                                                 Name="fileObjectDetail"
                                                 Background="{TemplateBinding Background}">
-                                            <behaviors:Interaction.Triggers>
-                                                <behaviors:EventTrigger EventName="MouseLeftButtonDown">
-                                                    <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
-                                                </behaviors:EventTrigger>
-                                                <behaviors:EventTrigger EventName="MouseRightButtonDown">
-                                                    <behaviors:InvokeCommandAction Command="{Binding RightClickFileObjectCommand}"></behaviors:InvokeCommandAction>
-                                                </behaviors:EventTrigger>
-                                                <behaviors:EventTrigger EventName="DragEnter">
-                                                    <behaviors:InvokeCommandAction Command="{Binding DragEnterFileObjectCommand}"></behaviors:InvokeCommandAction>
-                                                </behaviors:EventTrigger>
-                                                <behaviors:EventTrigger EventName="DragLeave">
-                                                    <behaviors:InvokeCommandAction Command="{Binding DragLeaveFileObjectCommand}"></behaviors:InvokeCommandAction>
-                                                </behaviors:EventTrigger>
-                                            </behaviors:Interaction.Triggers>
-                                            <Grid>
-                                                <Grid.RowDefinitions>
-                                                    <RowDefinition Height="15"></RowDefinition>
-                                                    <RowDefinition Height="80"></RowDefinition>
-                                                    <RowDefinition Height="*"></RowDefinition>
-                                                </Grid.RowDefinitions>
-                                                <CheckBox Height="20"
+                                                <behaviors:Interaction.Triggers>
+                                                    <behaviors:EventTrigger EventName="MouseLeftButtonDown">
+                                                        <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                    <behaviors:EventTrigger EventName="MouseRightButtonDown">
+                                                        <behaviors:InvokeCommandAction Command="{Binding RightClickFileObjectCommand}"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                    <behaviors:EventTrigger EventName="DragEnter">
+                                                        <behaviors:InvokeCommandAction Command="{Binding DragEnterFileObjectCommand}"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                    <behaviors:EventTrigger EventName="DragLeave">
+                                                        <behaviors:InvokeCommandAction Command="{Binding DragLeaveFileObjectCommand}"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                </behaviors:Interaction.Triggers>
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="15"></RowDefinition>
+                                                        <RowDefinition Height="80"></RowDefinition>
+                                                        <RowDefinition Height="*"></RowDefinition>
+                                                    </Grid.RowDefinitions>
+                                                    <CheckBox Height="20"
                                                           Width="20"
                                                           Grid.Row="0"
                                                           IsEnabled="True"
@@ -214,16 +217,16 @@
                                                           Margin="1 1 0 0"
                                                           Style="{x:Null}"
                                                           >
-                                                    
-                                                </CheckBox>
-                                                <hc:Gravatar Height="80" Width="70"
+
+                                                    </CheckBox>
+                                                    <hc:Gravatar Height="80" Width="70"
                                                              Grid.Row="1"
                                                              Name="icon"
                                                              HorizontalAlignment="Center"
                                                              VerticalAlignment="Center"
                                                              Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
-                                                </hc:Gravatar>
-                                                <TextBlock Text="{Binding NameDesc}"
+                                                    </hc:Gravatar>
+                                                    <TextBlock Text="{Binding NameDesc}"
                                                            Grid.Row="2"
                                                            Cursor="Hand"
                                                            ToolTip="{Binding Name}"
@@ -232,8 +235,8 @@
                                                            VerticalAlignment="Center"
                                                            FontSize="13" 
                                                            Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                                                </TextBlock>
-                                                <TextBox Text="{Binding Name}"
+                                                    </TextBlock>
+                                                    <TextBox Text="{Binding Name}"
                                                          ToolTip="{Binding Name}"
                                                          Name="txtUserName"
                                                          Grid.Row="2"
@@ -247,63 +250,226 @@
                                                          Margin="0 0 0 3"
                                                          BorderThickness="1"
                                                          Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
-                                                    <TextBox.Style>
-                                                        <Style TargetType="TextBox">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsFocus}" Value="True">
-                                                                    <Setter Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtUserName}"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBox.Style>
-                                                    <behaviors:Interaction.Triggers>
-                                                        <behaviors:EventTrigger EventName="LostFocus">
-                                                            <behaviors:InvokeCommandAction Command="{Binding RenameTextSubmitCommandAsync}"></behaviors:InvokeCommandAction>
-                                                        </behaviors:EventTrigger>
-                                                    </behaviors:Interaction.Triggers>
-                                                </TextBox>
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsFocus}" Value="True">
+                                                                        <Setter Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtUserName}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                        <behaviors:Interaction.Triggers>
+                                                            <behaviors:EventTrigger EventName="LostFocus">
+                                                                <behaviors:InvokeCommandAction Command="{Binding RenameTextSubmitCommandAsync}"></behaviors:InvokeCommandAction>
+                                                            </behaviors:EventTrigger>
+                                                        </behaviors:Interaction.Triggers>
+                                                    </TextBox>
 
-                                                <Popup PopupAnimation="Fade"
+                                                    <Popup PopupAnimation="Fade"
                                                        Placement="Mouse"
                                                        Focusable="False"
                                                        HorizontalOffset="50"
                                                        Effect="{StaticResource EffectShadow5}"
                                                        AllowsTransparency="True"
                                                        IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
-                                                    <Border Background="{StaticResource PrimaryBrush}"
+                                                        <Border Background="{StaticResource PrimaryBrush}"
                                                             CornerRadius="5"
                                                             Padding="5"
                                                             Effect="{StaticResource EffectShadow5}">
-                                                        <StackPanel Orientation="Vertical">
-                                                            <TextBlock Text="{Binding Name}" Margin="0 2" TextDecorations="Underline"  FontSize="16" Foreground="White"></TextBlock>
-                                                            <TextBlock Margin="0 2" Text="{Binding CreateTime,StringFormat=创建时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
-                                                            <TextBlock Margin="0 2" Text="{Binding LastUpdateTime,StringFormat=修改时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
-                                                            <TextBlock Margin="0 2" 
+                                                            <StackPanel Orientation="Vertical">
+                                                                <TextBlock Text="{Binding Name}" Margin="0 2" TextDecorations="Underline"  FontSize="16" Foreground="White"></TextBlock>
+                                                                <TextBlock Margin="0 2" Text="{Binding CreateTime,StringFormat=创建时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
+                                                                <TextBlock Margin="0 2" Text="{Binding LastUpdateTime,StringFormat=修改时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
+                                                                <TextBlock Margin="0 2" 
                                                                        Visibility="{Binding IsFolder,Converter={StaticResource Boolean2VisibilityReConverter}}"
                                                                        Text="{Binding SizeText,StringFormat=文件大小 : {0}}" FontSize="14" Foreground="White"></TextBlock>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </Popup>
-                                            </Grid>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsHighlight}" Value="True">
-                                    <Setter Property="Foreground" Value="White"></Setter>
-                                    <Setter Property="Background" Value="#ddd"></Setter>
-                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"></Setter>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsHighlight}" Value="False">
-                                    <Setter Property="Foreground" Value="White"></Setter>
-                                    <Setter Property="Background" Value="Transparent"></Setter>
-                                    <Setter Property="BorderBrush" Value="#aaa"></Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ListBox.ItemContainerStyle>
-                </ListBox>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Popup>
+                                                </Grid>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsHighlight}" Value="True">
+                                        <Setter Property="Foreground" Value="White"></Setter>
+                                        <Setter Property="Background" Value="#ddd"></Setter>
+                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsHighlight}" Value="False">
+                                        <Setter Property="Foreground" Value="White"></Setter>
+                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                        <Setter Property="BorderBrush" Value="#aaa"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                    <!--列表视图-->
+                    <ListBox ScrollViewer.CanContentScroll="False"
+                             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityConverter}}"
+                             Padding="0"
+                             Margin="0 0 80 0"
+                             DragEnter="ListBox_DragEnter"
+                             AllowDrop="True"
+                             hc:BorderElement.CornerRadius="0"
+                             ScrollViewer.IsDeferredScrollingEnabled="True"
+                             ScrollViewer.VerticalScrollBarVisibility="Visible"
+                             PreviewMouseWheel="ListView_PreviewMouseWheel"
+                             Background="Transparent"
+                             SelectionMode="Multiple"
+                             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
+                             BorderThickness="0" BorderBrush="Transparent">
+                        <behaviors:Interaction.Triggers>
+                            <behaviors:EventTrigger EventName="Drop">
+                                <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                            </behaviors:EventTrigger>
+                        </behaviors:Interaction.Triggers>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical"></StackPanel>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListBoxItem}">
+                                <Setter Property="OverridesDefaultStyle" Value="True" />
+                                <Setter Property="SnapsToDevicePixels" Value="True" />
+                                <Setter Property="Foreground" Value="Black" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Height" Value="35" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                            <Border Cursor="Hand"
+                                                    Padding="0"
+                                                    CornerRadius="0"
+                                                    BorderThickness="0 0 0 0.4"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    Height="{TemplateBinding Height}"
+                                                    Width="{TemplateBinding Width}"
+                                                    Name="fileObjectDetail"
+                                                    Background="{TemplateBinding Background}">
+                                                <behaviors:Interaction.Triggers>
+                                                    <behaviors:EventTrigger EventName="MouseLeftButtonDown">
+                                                        <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                    <behaviors:EventTrigger EventName="MouseRightButtonDown">
+                                                        <behaviors:InvokeCommandAction Command="{Binding RightClickFileObjectCommand}"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                    <behaviors:EventTrigger EventName="DragEnter">
+                                                        <behaviors:InvokeCommandAction Command="{Binding DragEnterFileObjectCommand}"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                    <behaviors:EventTrigger EventName="DragLeave">
+                                                        <behaviors:InvokeCommandAction Command="{Binding DragLeaveFileObjectCommand}"></behaviors:InvokeCommandAction>
+                                                    </behaviors:EventTrigger>
+                                                </behaviors:Interaction.Triggers>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="20"></ColumnDefinition>
+                                                        <ColumnDefinition Width="30"></ColumnDefinition>
+                                                        <ColumnDefinition Width="*"></ColumnDefinition>
+                                                        <ColumnDefinition Width="150"></ColumnDefinition>
+                                                        <ColumnDefinition Width="100"></ColumnDefinition>
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox Width="15"
+                                                              Grid.Column="0"
+                                                              IsEnabled="True"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              IsChecked="{Binding IsSelected}"
+                                                              Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                                              Style="{x:Null}">
+
+                                                    </CheckBox>
+                                                    <hc:Gravatar Height="25" Width="25"
+                                                                 Grid.Column="1"
+                                                                 Name="icon"
+                                                                 HorizontalAlignment="Center"
+                                                                 VerticalAlignment="Center"
+                                                                 Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
+                                                    </hc:Gravatar>
+                                                    <TextBlock Text="{Binding Name}"
+                                                               Grid.Column="2"
+                                                               Margin="10 0 0 0"
+                                                               Cursor="Hand"
+                                                               ToolTip="{Binding Name}"
+                                                               Foreground="Black"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="13" 
+                                                               Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                                    </TextBlock>
+                                                    <TextBox Text="{Binding Name}"
+                                                             ToolTip="{Binding Name}"
+                                                             Name="txtUserName"
+                                                             Margin="10 0 0 0"
+                                                             Grid.Column="2"
+                                                             Cursor="Hand"
+                                                             Foreground="Black"
+                                                             HorizontalAlignment="Left"
+                                                             VerticalAlignment="Center"
+                                                             GotFocus="txtUserName_GotFocus"
+                                                             FontSize="13"
+                                                             Focusable="True"
+                                                             BorderThickness="1"
+                                                             Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                        <TextBox.Style>
+                                                            <Style TargetType="TextBox">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsFocus}" Value="True">
+                                                                        <Setter Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtUserName}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBox.Style>
+                                                        <behaviors:Interaction.Triggers>
+                                                            <behaviors:EventTrigger EventName="LostFocus">
+                                                                <behaviors:InvokeCommandAction Command="{Binding RenameTextSubmitCommandAsync}"></behaviors:InvokeCommandAction>
+                                                            </behaviors:EventTrigger>
+                                                        </behaviors:Interaction.Triggers>
+                                                    </TextBox>
+
+                                                    <TextBlock Text="{Binding LastUpdateTime,Converter={StaticResource UtcDateTimeToStringConverter}}"
+                                                               Grid.Column="3"
+                                                               Foreground="#555"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="13" >
+                                                    </TextBlock>
+
+                                                    <TextBlock Text="{Binding SizeText}"
+                                                               Grid.Column="4"
+                                                               Margin="20 0 0 0"
+                                                               Foreground="#555"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="13" >
+                                                    </TextBlock>
+                                                    
+                                                </Grid>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsHighlight}" Value="True">
+                                        <Setter Property="Foreground" Value="White"></Setter>
+                                        <Setter Property="Background" Value="#ddd"></Setter>
+                                        <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsHighlight}" Value="False">
+                                        <Setter Property="Foreground" Value="White"></Setter>
+                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                        <Setter Property="BorderBrush" Value="#aaa"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                    </ListBox>
+                </Grid>
             </ScrollViewer>
         </hc:Card>
 

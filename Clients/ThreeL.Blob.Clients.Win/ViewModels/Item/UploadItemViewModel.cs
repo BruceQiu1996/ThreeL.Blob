@@ -117,7 +117,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     await UpdateStatusAsync(FileUploadingStatus.UploadingComplete);
                     Message = "上传成功";
-                    WeakReferenceMessenger.Default.Send(this, Const.UploadFinish);
                 }
                 else if (resp.Status == UploadFileResponseStatus.PauseStatus) //暂停(主动暂停，网络问题等)
                 {
@@ -129,7 +128,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
                     Message = resp.Message;
-                    WeakReferenceMessenger.Default.Send(this, Const.UploadFinish);
                 }
                 //else if (resp.Status == UploadFileResponseStatus.CancelStatus) //不可知的异常
                 //{
@@ -203,8 +201,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     Message = reason;
                     await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
-
-                    WeakReferenceMessenger.Default.Send(this, Const.UploadFinish);
                 }
             }
         }
@@ -249,6 +245,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                     //context.TransferCompleteRecords.Add(transferRecord);
                     sqls.Add(("INSERT INTO TransferCompleteRecords (Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason)" +
                         "VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason)", transferRecord));
+
+                    WeakReferenceMessenger.Default.Send(new Tuple<UploadItemViewModel, TransferCompleteRecord>(this, transferRecord), Const.UploadFinish);
                 }
 
                 if (fileStatus == FileUploadingStatus.UploadingSuspend)

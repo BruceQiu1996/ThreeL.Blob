@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -31,7 +32,14 @@ namespace ThreeL.Blob.Clients.Win.Helpers
 
         public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object parameters)
         {
-            return await _queryConnection.QueryFirstOrDefaultAsync<T>(sql, parameters);
+            try
+            {
+                return await _queryConnection.QueryFirstOrDefaultAsync<T>(sql, parameters);
+            }
+            catch (Exception ex) 
+            {
+                return default;
+            }
         }
 
         public void Excute(string sql, object parameters)

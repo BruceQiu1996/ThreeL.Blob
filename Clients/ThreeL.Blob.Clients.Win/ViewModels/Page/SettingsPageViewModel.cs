@@ -10,6 +10,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
     {
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand ChooseDownloadFolderCommandAsync { get; set; }
+        public AsyncRelayCommand ChooseTempFolderCommandAsync { get; set; }
         public AsyncRelayCommand ModifyMaxUploadThreadsCommandAsync { get; set; }
         public AsyncRelayCommand ModifyMaxDownloadThreadsCommandAsync { get; set; }
 
@@ -20,6 +21,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set
             {
                 SetProperty(ref _downloadLocation, value);
+            }
+        }
+
+        private string? _tempLocation;
+        public string? TempLocation
+        {
+            get => _tempLocation;
+            set
+            {
+                SetProperty(ref _tempLocation, value);
             }
         }
 
@@ -49,6 +60,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             _iniSettings = iniSettings;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ChooseDownloadFolderCommandAsync = new AsyncRelayCommand(ChooseDownloadFolderAsync);
+            ChooseTempFolderCommandAsync = new AsyncRelayCommand(ChooseTempFolderAsync);
             ModifyMaxUploadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxUploadThreadsAsync);
             ModifyMaxDownloadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxDownloadThreadsAsync);
         }
@@ -58,6 +70,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             DownloadLocation = _iniSettings.DownloadLocation;
             MaxUploadThreads = _iniSettings.MaxUploadThreads;
             MaxDownloadThreads = _iniSettings.MaxDownloadThreads;
+            TempLocation = _iniSettings.TempLocation;
 
             return Task.CompletedTask;
         }
@@ -70,6 +83,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 await _iniSettings.WriteDownloadLocation(folderBrowserDialog.SelectedPath);
                 DownloadLocation = _iniSettings.DownloadLocation;
+            }
+        }
+
+        private async Task ChooseTempFolderAsync()
+        {
+            FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+            var dialog = folderBrowserDialog.ShowDialog();
+            if (dialog == DialogResult.OK)
+            {
+                await _iniSettings.WriteTempLocation(folderBrowserDialog.SelectedPath);
+                TempLocation = _iniSettings.TempLocation;
             }
         }
 

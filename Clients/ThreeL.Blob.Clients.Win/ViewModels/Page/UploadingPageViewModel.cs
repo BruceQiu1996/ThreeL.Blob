@@ -2,16 +2,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Documents;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Resources;
@@ -67,13 +64,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             });
 
             //finish
-            WeakReferenceMessenger.Default.Register<UploadingPageViewModel, UploadItemViewModel, string>(this, Const.UploadFinish, async (x, y) =>
+            WeakReferenceMessenger.Default.Register<UploadingPageViewModel, Tuple<UploadItemViewModel, TransferCompleteRecord>, string>(this, Const.UploadFinish, async (x, y) =>
             {
-                RemoveTask(y);
-                //增加到传输界面
-                //var record = await context.TransferCompleteRecords.FirstOrDefaultAsync(x => x.TaskId == y.Id);
-                var record = await _databaseHelper.QueryFirstOrDefaultAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE TaskId = @Id", y);
-                var vm = _mapper.Map<TransferCompleteItemViewModel>(record);
+                RemoveTask(y.Item1);
+                var vm = _mapper.Map<TransferCompleteItemViewModel>(y.Item2);
                 WeakReferenceMessenger.Default.Send(vm, Const.AddTransferRecord);
             });
 
