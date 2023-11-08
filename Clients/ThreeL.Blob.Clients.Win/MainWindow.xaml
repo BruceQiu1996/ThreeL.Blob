@@ -12,7 +12,7 @@
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Title="主界面" Height="600" MinWidth="900">
+        Title="主界面" Height="600" MinWidth="900" Width="900">
     <Window.Resources>
         <convert:String2BooleanConverter x:Key="String2BooleanConverter"></convert:String2BooleanConverter>
     </Window.Resources>

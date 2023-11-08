@@ -7,19 +7,29 @@
       xmlns:convert="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
       xmlns:hc="https://handyorg.github.io/handycontrol"
       mc:Ignorable="d" 
-      MouseDown="window_MouseDown"
+      MouseLeftButtonDown="window_MouseDown"
       FontFamily="微软雅黑"
       d:DesignHeight="450" d:DesignWidth="800"
       Title="MainPage">
     <Page.Resources>
         <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
-        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
+        <ContextMenu x:Key="fileitemmenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
             <MenuItem Header="下载" 
-                      Command="{Binding DownloadCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
+                      Command="{Binding DownloadCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="全选" 
+                      Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="全不选" 
+                      Command="{Binding SelectNoCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="删除" 
-                      Command="{Binding DeleteCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
+                      Command="{Binding DeleteCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="重命名" 
+                      Command="{Binding RenameCommand}" Padding="5 5" FontSize="15"></MenuItem>
+        </ContextMenu>
+        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
             <MenuItem Header="新建文件夹" 
-                      Command="{Binding NewFolderCommand}" Padding="5 5" FontSize="15"></MenuItem>
+                      Command="{Binding NewFolderCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="上传文件" 
+                      Command="{Binding UploadCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="刷新" 
                       Command="{Binding RefreshCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="全选" 
@@ -137,26 +147,26 @@
 
         <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0" Name="container">
             <ScrollViewer Grid.Column="0" Grid.Row="2"
-          ContextMenu="{StaticResource filemenu}"
-          Grid.ColumnSpan="2"
-          RequestBringIntoView="ScrollViewer_RequestBringIntoView"
-          Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
+                          Grid.ColumnSpan="2"
+                          ContextMenu="{StaticResource filemenu}"
+                          RequestBringIntoView="ScrollViewer_RequestBringIntoView"
+                          Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
 
                 <Grid>
                     <ListBox ScrollViewer.CanContentScroll="False"
-             Name="gridListbox"
-             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityReConverter}}"
-             Padding="0"
-             DragEnter="ListBox_DragEnter"
-             AllowDrop="True"
-             hc:BorderElement.CornerRadius="0"
-             ScrollViewer.IsDeferredScrollingEnabled="True"
-             ScrollViewer.VerticalScrollBarVisibility="Visible"
-             PreviewMouseWheel="ListView_PreviewMouseWheel"
-             Background="Transparent"
-             SelectionMode="Multiple"
-             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
-             BorderThickness="0" BorderBrush="Transparent">
+                             Name="gridListbox"
+                             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                             Padding="0"
+                             DragEnter="ListBox_DragEnter"
+                             AllowDrop="True"
+                             hc:BorderElement.CornerRadius="0"
+                             ScrollViewer.IsDeferredScrollingEnabled="True"
+                             ScrollViewer.VerticalScrollBarVisibility="Visible"
+                             PreviewMouseWheel="ListView_PreviewMouseWheel"
+                             Background="Transparent"
+                             SelectionMode="Multiple"
+                             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
+                             BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="Drop">
                                 <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -181,14 +191,15 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
                                             <Border Cursor="Hand"
-                                Padding="0"
-                                CornerRadius="2"
-                                BorderThickness="1.2"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                Height="{TemplateBinding Height}"
-                                Width="{TemplateBinding Width}"
-                                Name="fileObjectDetail"
-                                Background="{TemplateBinding Background}">
+                                                    ContextMenu="{StaticResource fileitemmenu}"
+                                                    Padding="0"
+                                                    CornerRadius="2"
+                                                    BorderThickness="1.2"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    Height="{TemplateBinding Height}"
+                                                    Width="{TemplateBinding Width}"
+                                                    Name="fileObjectDetail"
+                                                    Background="{TemplateBinding Background}">
                                                 <behaviors:Interaction.Triggers>
                                                     <behaviors:EventTrigger EventName="MouseLeftButtonDown">
                                                         <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -311,19 +322,19 @@
                     </ListBox>
 
                     <ListBox ScrollViewer.CanContentScroll="False"
-             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityConverter}}"
-             Padding="0"
-             Margin="0 0 80 0"
-             DragEnter="ListBox_DragEnter"
-             AllowDrop="True"
-             hc:BorderElement.CornerRadius="0"
-             ScrollViewer.IsDeferredScrollingEnabled="True"
-             ScrollViewer.VerticalScrollBarVisibility="Visible"
-             PreviewMouseWheel="ListView_PreviewMouseWheel"
-             Background="Transparent"
-             SelectionMode="Multiple"
-             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
-             BorderThickness="0" BorderBrush="Transparent">
+                             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityConverter}}"
+                             Padding="0"
+                             Margin="0 0 80 0"
+                             DragEnter="ListBox_DragEnter"
+                             AllowDrop="True"
+                             hc:BorderElement.CornerRadius="0"
+                             ScrollViewer.IsDeferredScrollingEnabled="True"
+                             ScrollViewer.VerticalScrollBarVisibility="Visible"
+                             PreviewMouseWheel="ListView_PreviewMouseWheel"
+                             Background="Transparent"
+                             SelectionMode="Multiple"
+                             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
+                             BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="Drop">
                                 <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -346,14 +357,15 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
                                             <Border Cursor="Hand"
-                                    Padding="0"
-                                    CornerRadius="0"
-                                    BorderThickness="0 0 0 0.4"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    Height="{TemplateBinding Height}"
-                                    Width="{TemplateBinding Width}"
-                                    Name="fileObjectDetail"
-                                    Background="{TemplateBinding Background}">
+                                                    Padding="0"
+                                                    ContextMenu="{StaticResource fileitemmenu}"
+                                                    CornerRadius="0"
+                                                    BorderThickness="0 0 0 0.4"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    Height="{TemplateBinding Height}"
+                                                    Width="{TemplateBinding Width}"
+                                                    Name="fileObjectDetail"
+                                                    Background="{TemplateBinding Background}">
                                                 <behaviors:Interaction.Triggers>
                                                     <behaviors:EventTrigger EventName="MouseLeftButtonDown">
                                                         <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>

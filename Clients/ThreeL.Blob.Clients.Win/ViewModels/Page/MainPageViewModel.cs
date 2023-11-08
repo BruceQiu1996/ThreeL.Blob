@@ -44,17 +44,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
         public AsyncRelayCommand UploadCommandAsync { get; set; }
-        public AsyncRelayCommand NewFolderCommand { get; set; }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
-        public AsyncRelayCommand RefreshCommandAsync { get; set; }
-        public AsyncRelayCommand DownloadCommandAsync { get; set; }
         public RelayCommand SearchFileByKeywordCommand { get; set; }
-        public AsyncRelayCommand DeleteCommandAsync { get; set; }
         public AsyncRelayCommand<KeyEventArgs> KeyDownCommandAsync { get; set; }
         public RelayCommand<DragEventArgs> DropCommand { get; set; }
         public RelayCommand GridGotFocusCommand { get; set; }
+        public AsyncRelayCommand RefreshCommandAsync { get; set; }
+        public AsyncRelayCommand NewFolderCommandAsync { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
         public RelayCommand SelectNoCommand { get; set; }
+
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
         private readonly DatabaseHelper _databaseHelper;
@@ -135,15 +134,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             _databaseHelper = databaseHelper;
             UploadCommandAsync = new AsyncRelayCommand(UploadAsync);
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
-            RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
-            NewFolderCommand = new AsyncRelayCommand(NewFolder);
             GridGotFocusCommand = new RelayCommand(GridGotFocus);
-            DownloadCommandAsync = new AsyncRelayCommand(DownloadAsync);
             SearchFileByKeywordCommand = new RelayCommand(SearchFileByKeyword);
-            DeleteCommandAsync = new AsyncRelayCommand(DeleteAsync);
             DropCommand = new RelayCommand<DragEventArgs>(Drop);
-            SelectAllCommand = new RelayCommand(SelectAll);
-            SelectNoCommand = new RelayCommand(SelectNo);
             FileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
@@ -173,6 +166,39 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 await DoubleClickAsync(y);
             });
+
+            #region 菜单
+            RefreshCommandAsync = new AsyncRelayCommand(RefreshAsync);
+            NewFolderCommandAsync = new AsyncRelayCommand(NewFolderAsync);
+            SelectAllCommand = new RelayCommand(SelectAll);
+            SelectNoCommand = new RelayCommand(SelectNo);
+
+            //下载
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuDownload, async (x, y) =>
+            {
+                await DownloadAsync();
+            });
+            //删除
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuDelete, async (x, y) =>
+            {
+                await DeleteAsync();
+            });
+            //全选
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuSelectAll, (x, y) =>
+            {
+                SelectAll();
+            });
+            //全不选
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuSelectNo, (x, y) =>
+            {
+                SelectNo();
+            });
+            //重命名
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuRename, async (x, y) =>
+            {
+                await RenameAsync(y);
+            });
+            #endregion
         }
 
         private async Task LoadAsync()
@@ -194,9 +220,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         }
 
         #region 操作文件集合
-        public void AddFileObject(FileObjItemViewModel itemViewModel,bool first = false)
+        public void AddFileObject(FileObjItemViewModel itemViewModel, bool first = false)
         {
-            if(!first)
+            if (!first)
                 FileObjViewModels?.Add(itemViewModel);
             else
                 FileObjViewModels?.Insert(0, itemViewModel);
@@ -213,9 +239,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         #endregion
 
         #region 全选/全不选
-        public void SelectAll() 
+        public void SelectAll()
         {
-            foreach (var item in FileObjViewModels) 
+            foreach (var item in FileObjViewModels)
             {
                 item.IsSelected = true;
             }
@@ -263,8 +289,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        private T FindVisualParent<T>(DependencyObject child)
-            where T : DependencyObject
+        private T FindVisualParent<T>(DependencyObject child) where T : DependencyObject
         {
             var parentObject = VisualTreeHelper.GetParent(child);
             if (parentObject == null)
@@ -275,7 +300,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             return FindVisualParent<T>(parentObject);
         }
 
-        private async Task NewFolder()
+        private async Task NewFolderAsync()
         {
             var model = new FileObjItemViewModel()
             {
@@ -292,6 +317,30 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             AddFileObject(model, true);
             await Task.Delay(100);
             model.IsFocus = true;
+        }
+
+        public static T FindVisualParent<T>(UIElement element) where T : UIElement
+        {
+            UIElement parent = element;
+            while (parent != null)
+            {
+                var correctlyTyped = parent as T;
+                if (correctlyTyped != null)
+                {
+                    return correctlyTyped;
+                }
+
+                parent = VisualTreeHelper.GetParent(parent) as UIElement;
+            }
+
+            return null;
+        }
+
+        private async Task RenameAsync(FileObjItemViewModel fileObjItemViewModel)
+        {
+            fileObjItemViewModel.IsRename = true;
+            await Task.Delay(100);
+            fileObjItemViewModel.IsFocus = true;
         }
 
         private async Task DoubleClickAsync(FileObjItemViewModel fileObjItemViewModel)
@@ -315,9 +364,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 fileObjItemViewModel.IsUrlSelected = true;
                 _currentParent = fileObjItemViewModel.Id;
             }
-            else 
+            else
             {
-                if (!Directory.Exists(_iniSettings.TempLocation)) 
+                if (!Directory.Exists(_iniSettings.TempLocation))
                 {
                     _growlHelper.Warning("临时文件下载目录不存在");
                     return;
@@ -327,6 +376,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
+        /// <summary>
+        /// 获取当前目录下的元素
+        /// </summary>
+        /// <param name="parent">目录id</param>
+        /// <returns></returns>
         private async Task RefreshByParentAsync(long parent)
         {
             var resp = await _httpRequest.GetAsync($"{Const.UPLOAD_FILE}/{parent}");

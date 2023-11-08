@@ -34,5 +34,13 @@
         public const string StartNewDownloadTask = nameof(StartNewDownloadTask);
         public static object UploadRunTaskLock = new object();
         public static object DownloadRunTaskLock = new object();
+
+        public const string MenuRefresh = nameof(MenuRefresh);
+        public const string MenuNewFolder = nameof(MenuNewFolder);
+        public const string MenuDownload = nameof(MenuDownload);
+        public const string MenuDelete = nameof(MenuDelete);
+        public const string MenuSelectAll = nameof(MenuSelectAll);
+        public const string MenuSelectNo = nameof(MenuSelectNo);
+        public const string MenuRename = nameof(MenuRename);
     }
 }

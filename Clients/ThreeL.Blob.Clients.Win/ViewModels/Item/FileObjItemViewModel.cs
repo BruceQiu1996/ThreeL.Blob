@@ -49,7 +49,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public bool IsFolder { get; set; }
         public int Type { get; set; }
         private BitmapImage _icon;
-        public BitmapImage Icon 
+        public BitmapImage Icon
         {
             get => _icon;
             set => SetProperty(ref _icon, value);
@@ -138,6 +138,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand ClickUrlObjectCommand { get; set; }
         public RelayCommand DragEnterFileObjectCommand { get; set; }
         public RelayCommand DragLeaveFileObjectCommand { get; set; }
+        public RelayCommand DownloadCommand { get; set; }
+        public RelayCommand DeleteCommand { get; set; }
+        public RelayCommand SelectAllCommand { get; set; }
+        public RelayCommand SelectNoCommand { get; set; }
+        public RelayCommand RenameCommand { get; set; }
 
         public FileObjItemViewModel()
         {
@@ -147,6 +152,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             ClickUrlObjectCommand = new RelayCommand(ClickUrlObject);
             DragEnterFileObjectCommand = new RelayCommand(DragEnterFileObject);
             DragLeaveFileObjectCommand = new RelayCommand(DragLeaveFileObject);
+            DownloadCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDownload); });
+            DeleteCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDelete); });
+            SelectAllCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectAll); });
+            SelectNoCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectNo); });
+            RenameCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuRename); });
         }
 
         public void GetThumbnailImage(string thumbnailImage)
@@ -202,7 +212,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             WeakReferenceMessenger.Default.Send(this, Const.DoubleClickItem);
         }
 
-        private void DragEnterFileObject() 
+        private void DragEnterFileObject()
         {
             IsHighlight = true;
         }
