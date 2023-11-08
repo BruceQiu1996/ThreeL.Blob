@@ -135,26 +135,28 @@
             </ListBox.ItemContainerStyle>
         </ListBox>
 
-        <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0">
+        <hc:Card Grid.Row="2" BorderThickness="0" Margin="1" hc:BorderElement.CornerRadius="0" Name="container">
             <ScrollViewer Grid.Column="0" Grid.Row="2"
-                          ContextMenu="{StaticResource filemenu}"
-                          Grid.ColumnSpan="2"
-                          RequestBringIntoView="ScrollViewer_RequestBringIntoView"
-                          Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
+          ContextMenu="{StaticResource filemenu}"
+          Grid.ColumnSpan="2"
+          RequestBringIntoView="ScrollViewer_RequestBringIntoView"
+          Background="Transparent" Visibility="{Binding HadSearchResult,Converter={StaticResource Boolean2VisibilityConverter}}">
+
                 <Grid>
                     <ListBox ScrollViewer.CanContentScroll="False"
-                             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityReConverter}}"
-                             Padding="0"
-                             DragEnter="ListBox_DragEnter"
-                             AllowDrop="True"
-                             hc:BorderElement.CornerRadius="0"
-                             ScrollViewer.IsDeferredScrollingEnabled="True"
-                             ScrollViewer.VerticalScrollBarVisibility="Visible"
-                             PreviewMouseWheel="ListView_PreviewMouseWheel"
-                             Background="Transparent"
-                             SelectionMode="Multiple"
-                             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
-                             BorderThickness="0" BorderBrush="Transparent">
+             Name="gridListbox"
+             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityReConverter}}"
+             Padding="0"
+             DragEnter="ListBox_DragEnter"
+             AllowDrop="True"
+             hc:BorderElement.CornerRadius="0"
+             ScrollViewer.IsDeferredScrollingEnabled="True"
+             ScrollViewer.VerticalScrollBarVisibility="Visible"
+             PreviewMouseWheel="ListView_PreviewMouseWheel"
+             Background="Transparent"
+             SelectionMode="Multiple"
+             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
+             BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="Drop">
                                 <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -179,14 +181,14 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
                                             <Border Cursor="Hand"
-                                                Padding="0"
-                                                CornerRadius="2"
-                                                BorderThickness="1.2"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                Height="{TemplateBinding Height}"
-                                                Width="{TemplateBinding Width}"
-                                                Name="fileObjectDetail"
-                                                Background="{TemplateBinding Background}">
+                                Padding="0"
+                                CornerRadius="2"
+                                BorderThickness="1.2"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                Height="{TemplateBinding Height}"
+                                Width="{TemplateBinding Width}"
+                                Name="fileObjectDetail"
+                                Background="{TemplateBinding Background}">
                                                 <behaviors:Interaction.Triggers>
                                                     <behaviors:EventTrigger EventName="MouseLeftButtonDown">
                                                         <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -208,48 +210,48 @@
                                                         <RowDefinition Height="*"></RowDefinition>
                                                     </Grid.RowDefinitions>
                                                     <CheckBox Height="20"
-                                                          Width="20"
-                                                          Grid.Row="0"
-                                                          IsEnabled="True"
-                                                          HorizontalAlignment="Left"
-                                                          IsChecked="{Binding IsSelected}"
-                                                          Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
-                                                          Margin="1 1 0 0"
-                                                          Style="{x:Null}"
-                                                          >
+                                          Width="20"
+                                          Grid.Row="0"
+                                          IsEnabled="True"
+                                          HorizontalAlignment="Left"
+                                          IsChecked="{Binding IsSelected}"
+                                          Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                          Margin="1 1 0 0"
+                                          Style="{x:Null}"
+                                          >
 
                                                     </CheckBox>
                                                     <hc:Gravatar Height="80" Width="70"
-                                                             Grid.Row="1"
-                                                             Name="icon"
-                                                             HorizontalAlignment="Center"
-                                                             VerticalAlignment="Center"
-                                                             Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
+                                             Grid.Row="1"
+                                             Name="icon"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"
+                                             Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
                                                     </hc:Gravatar>
                                                     <TextBlock Text="{Binding NameDesc}"
-                                                           Grid.Row="2"
-                                                           Cursor="Hand"
-                                                           ToolTip="{Binding Name}"
-                                                           Foreground="Black"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="13" 
-                                                           Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                           Grid.Row="2"
+                                           Cursor="Hand"
+                                           ToolTip="{Binding Name}"
+                                           Foreground="Black"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontSize="13" 
+                                           Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                     </TextBlock>
                                                     <TextBox Text="{Binding Name}"
-                                                         ToolTip="{Binding Name}"
-                                                         Name="txtUserName"
-                                                         Grid.Row="2"
-                                                         Cursor="Hand"
-                                                         Foreground="Black"
-                                                         HorizontalAlignment="Center"
-                                                         VerticalAlignment="Center"
-                                                         GotFocus="txtUserName_GotFocus"
-                                                         FontSize="13"
-                                                         Focusable="True"
-                                                         Margin="0 0 0 3"
-                                                         BorderThickness="1"
-                                                         Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                         ToolTip="{Binding Name}"
+                                         Name="txtUserName"
+                                         Grid.Row="2"
+                                         Cursor="Hand"
+                                         Foreground="Black"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center"
+                                         GotFocus="txtUserName_GotFocus"
+                                         FontSize="13"
+                                         Focusable="True"
+                                         Margin="0 0 0 3"
+                                         BorderThickness="1"
+                                         Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox">
                                                                 <Style.Triggers>
@@ -267,23 +269,23 @@
                                                     </TextBox>
 
                                                     <Popup PopupAnimation="Fade"
-                                                       Placement="Mouse"
-                                                       Focusable="False"
-                                                       HorizontalOffset="50"
-                                                       Effect="{StaticResource EffectShadow5}"
-                                                       AllowsTransparency="True"
-                                                       IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                       Placement="Mouse"
+                                       Focusable="False"
+                                       HorizontalOffset="50"
+                                       Effect="{StaticResource EffectShadow5}"
+                                       AllowsTransparency="True"
+                                       IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
                                                         <Border Background="{StaticResource PrimaryBrush}"
-                                                            CornerRadius="5"
-                                                            Padding="5"
-                                                            Effect="{StaticResource EffectShadow5}">
+                                            CornerRadius="5"
+                                            Padding="5"
+                                            Effect="{StaticResource EffectShadow5}">
                                                             <StackPanel Orientation="Vertical">
                                                                 <TextBlock Text="{Binding Name}" Margin="0 2" TextDecorations="Underline"  FontSize="16" Foreground="White"></TextBlock>
                                                                 <TextBlock Margin="0 2" Text="{Binding CreateTime,StringFormat=创建时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
                                                                 <TextBlock Margin="0 2" Text="{Binding LastUpdateTime,StringFormat=修改时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
                                                                 <TextBlock Margin="0 2" 
-                                                                       Visibility="{Binding IsFolder,Converter={StaticResource Boolean2VisibilityReConverter}}"
-                                                                       Text="{Binding SizeText,StringFormat=文件大小 : {0}}" FontSize="14" Foreground="White"></TextBlock>
+                                                       Visibility="{Binding IsFolder,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                                                       Text="{Binding SizeText,StringFormat=文件大小 : {0}}" FontSize="14" Foreground="White"></TextBlock>
                                                             </StackPanel>
                                                         </Border>
                                                     </Popup>
@@ -307,21 +309,21 @@
                             </Style>
                         </ListBox.ItemContainerStyle>
                     </ListBox>
-                    <!--列表视图-->
+
                     <ListBox ScrollViewer.CanContentScroll="False"
-                             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityConverter}}"
-                             Padding="0"
-                             Margin="0 0 80 0"
-                             DragEnter="ListBox_DragEnter"
-                             AllowDrop="True"
-                             hc:BorderElement.CornerRadius="0"
-                             ScrollViewer.IsDeferredScrollingEnabled="True"
-                             ScrollViewer.VerticalScrollBarVisibility="Visible"
-                             PreviewMouseWheel="ListView_PreviewMouseWheel"
-                             Background="Transparent"
-                             SelectionMode="Multiple"
-                             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
-                             BorderThickness="0" BorderBrush="Transparent">
+             Visibility="{Binding IsListView,Converter={StaticResource Boolean2VisibilityConverter}}"
+             Padding="0"
+             Margin="0 0 80 0"
+             DragEnter="ListBox_DragEnter"
+             AllowDrop="True"
+             hc:BorderElement.CornerRadius="0"
+             ScrollViewer.IsDeferredScrollingEnabled="True"
+             ScrollViewer.VerticalScrollBarVisibility="Visible"
+             PreviewMouseWheel="ListView_PreviewMouseWheel"
+             Background="Transparent"
+             SelectionMode="Multiple"
+             ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
+             BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
                             <behaviors:EventTrigger EventName="Drop">
                                 <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -344,14 +346,14 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
                                             <Border Cursor="Hand"
-                                                    Padding="0"
-                                                    CornerRadius="0"
-                                                    BorderThickness="0 0 0 0.4"
-                                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                                    Height="{TemplateBinding Height}"
-                                                    Width="{TemplateBinding Width}"
-                                                    Name="fileObjectDetail"
-                                                    Background="{TemplateBinding Background}">
+                                    Padding="0"
+                                    CornerRadius="0"
+                                    BorderThickness="0 0 0 0.4"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    Height="{TemplateBinding Height}"
+                                    Width="{TemplateBinding Width}"
+                                    Name="fileObjectDetail"
+                                    Background="{TemplateBinding Background}">
                                                 <behaviors:Interaction.Triggers>
                                                     <behaviors:EventTrigger EventName="MouseLeftButtonDown">
                                                         <behaviors:InvokeCommandAction Command="{Binding ClickFileObjectCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
@@ -375,47 +377,47 @@
                                                         <ColumnDefinition Width="100"></ColumnDefinition>
                                                     </Grid.ColumnDefinitions>
                                                     <CheckBox Width="15"
-                                                              Grid.Column="0"
-                                                              IsEnabled="True"
-                                                              HorizontalAlignment="Center"
-                                                              VerticalAlignment="Center"
-                                                              IsChecked="{Binding IsSelected}"
-                                                              Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
-                                                              Style="{x:Null}">
+                                              Grid.Column="0"
+                                              IsEnabled="True"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding IsSelected}"
+                                              Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                              Style="{x:Null}">
 
                                                     </CheckBox>
                                                     <hc:Gravatar Height="25" Width="25"
-                                                                 Grid.Column="1"
-                                                                 Name="icon"
-                                                                 HorizontalAlignment="Center"
-                                                                 VerticalAlignment="Center"
-                                                                 Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
+                                                 Grid.Column="1"
+                                                 Name="icon"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center"
+                                                 Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
                                                     </hc:Gravatar>
                                                     <TextBlock Text="{Binding Name}"
-                                                               Grid.Column="2"
-                                                               Margin="10 0 0 0"
-                                                               Cursor="Hand"
-                                                               ToolTip="{Binding Name}"
-                                                               Foreground="Black"
-                                                               HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="13" 
-                                                               Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                               Grid.Column="2"
+                                               Margin="10 0 0 0"
+                                               Cursor="Hand"
+                                               ToolTip="{Binding Name}"
+                                               Foreground="Black"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontSize="13" 
+                                               Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                     </TextBlock>
                                                     <TextBox Text="{Binding Name}"
-                                                             ToolTip="{Binding Name}"
-                                                             Name="txtUserName"
-                                                             Margin="10 0 0 0"
-                                                             Grid.Column="2"
-                                                             Cursor="Hand"
-                                                             Foreground="Black"
-                                                             HorizontalAlignment="Left"
-                                                             VerticalAlignment="Center"
-                                                             GotFocus="txtUserName_GotFocus"
-                                                             FontSize="13"
-                                                             Focusable="True"
-                                                             BorderThickness="1"
-                                                             Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                             ToolTip="{Binding Name}"
+                                             Name="txtUserName"
+                                             Margin="10 0 0 0"
+                                             Grid.Column="2"
+                                             Cursor="Hand"
+                                             Foreground="Black"
+                                             HorizontalAlignment="Left"
+                                             VerticalAlignment="Center"
+                                             GotFocus="txtUserName_GotFocus"
+                                             FontSize="13"
+                                             Focusable="True"
+                                             BorderThickness="1"
+                                             Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox">
                                                                 <Style.Triggers>
@@ -433,22 +435,22 @@
                                                     </TextBox>
 
                                                     <TextBlock Text="{Binding LastUpdateTime,Converter={StaticResource UtcDateTimeToStringConverter}}"
-                                                               Grid.Column="3"
-                                                               Foreground="#555"
-                                                               HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="13" >
+                                               Grid.Column="3"
+                                               Foreground="#555"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontSize="13" >
                                                     </TextBlock>
 
                                                     <TextBlock Text="{Binding SizeText}"
-                                                               Grid.Column="4"
-                                                               Margin="20 0 0 0"
-                                                               Foreground="#555"
-                                                               HorizontalAlignment="Left"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="13" >
+                                               Grid.Column="4"
+                                               Margin="20 0 0 0"
+                                               Foreground="#555"
+                                               HorizontalAlignment="Left"
+                                               VerticalAlignment="Center"
+                                               FontSize="13" >
                                                     </TextBlock>
-                                                    
+
                                                 </Grid>
                                             </Border>
                                         </ControlTemplate>

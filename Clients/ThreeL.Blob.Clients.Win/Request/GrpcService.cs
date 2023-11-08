@@ -143,12 +143,6 @@ namespace ThreeL.Blob.Clients.Win.Request
                                             Action<string> exceptionCallback = null,
                                             Action<long> receiveBytesCallBack = null)
         {
-            if (!File.Exists(tempFileLocation)) 
-            {
-                downloadErrorCallback?.Invoke("下载临时文件不存在");
-
-                return;
-            }
             FileInfo fileInfo = new FileInfo(tempFileLocation);
             var resp = _fileGrpcServiceClient.DownloadFile(new DownloadFileRequest()
             {

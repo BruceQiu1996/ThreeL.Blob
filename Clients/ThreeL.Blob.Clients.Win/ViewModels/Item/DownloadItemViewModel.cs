@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Documents;
@@ -73,12 +74,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public DateTime CreateTime { get; set; } = DateTime.UtcNow;
         public DateTime DownloadFinishTime { get; set; }
-        public FileDownloadingStatus Status { get; set; }
+        private FileDownloadingStatus _status;
+        public FileDownloadingStatus Status 
+        {
+            get => _status;
+            set => SetProperty(ref _status, value);
+        }
 
         public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName).Item2;
         public bool OpenWhenComplete { get; set; }
         public AsyncRelayCommand ResumeCommandAsync { get; set; }
-        public RelayCommand PauseCommand { get; set; }
+        public AsyncRelayCommand PauseCommand { get; set; }
         public AsyncRelayCommand CancelCommandAsync { get; set; }
 
         private readonly GrpcService _grpcService;
@@ -95,7 +101,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             _mapper = mapper;
             _grpcService = grpcService;
             _httpRequest = httpRequest;
-            PauseCommand = new RelayCommand(Pause);
+            PauseCommand = new AsyncRelayCommand(PauseAsync);
             CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
             _databaseHelper = databaseHelper;
@@ -107,54 +113,59 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             lock (Const.UploadRunTaskLock)
             {
                 if (_iniSettings.MaxDownloadThreads <= App.ServiceProvider!
-                    .GetRequiredService<DownloadingPageViewModel>().DownloadItemViewModels.Count(x => x.Status == FileDownloadingStatus.Downloading))
+                    .GetRequiredService<DownloadingPageViewModel>().DownloadItemViewModels
+                    .Count(x => x.Status == FileDownloadingStatus.Downloading))
                 {
                     return;
                 }
-            }
-            _pauseTokenSource = new CancellationTokenSource();
-            _cancelTokenSource = new CancellationTokenSource();
-            _downloadTask = Task.Run(async () =>
-            {
-                await UpdateStatusAsync(FileDownloadingStatus.Downloading);
-                Message = null;
-                await _grpcService
-                    .DownloadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token, 
-                    TempFileLocation, TaskId, OnComplete, OnPause, OnError, OccurException, SetTransferBytes);
-            });
 
-            CanSuspend = true;
+                _pauseTokenSource = new CancellationTokenSource();
+                _cancelTokenSource = new CancellationTokenSource();
+                _downloadTask = Task.Run(async () =>
+                {
+                    //开始下载
+                    await UpdateStatusAsync(FileDownloadingStatus.Downloading);
+                    Message = null;
+                    await _grpcService
+                        .DownloadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token,
+                        TempFileLocation, TaskId, OnComplete, OnPause, OnError, OccurException, SetTransferBytes);
+                });
+
+                CanSuspend = true;
+            }
+
             await _downloadTask;
         }
 
         private async Task ResumeAsync()
         {
-            if (!File.Exists(TempFileLocation))
-            {
-                File.Create(TempFileLocation);
-            }
+            if (Status != FileDownloadingStatus.DownloadingSuspend)
+                return;
 
-            await StartAsync();
+            await UpdateStatusAsync(FileDownloadingStatus.Wait);
         }
 
-        private void Pause()
+        private async Task PauseAsync()
         {
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingSuspend);
             _pauseTokenSource?.Cancel();
         }
 
         private async void OnPause() 
         {
             Message = "下载暂停";
-            await UpdateStatusAsync(FileDownloadingStatus.DownloadingSuspend);
             CanSuspend = false;
         }
 
         private async Task CancelAsync()
         {
+            if (Status == FileDownloadingStatus.DownloadingComplete || Status == FileDownloadingStatus.DownloadingFaild)
+                return;
+
             await _httpRequest.PutAsync(string.Format(Const.CANCEL_DOWNLOADING, TaskId), null);
+            await UpdateStatusAsync(FileDownloadingStatus.DownloadingComplete);
             _cancelTokenSource?.Cancel();
             Message = "取消下载";
-            await UpdateStatusAsync(FileDownloadingStatus.DownloadingComplete);
             if (await ExpressionWaiter.WaitInTime(() => _downloadTask == null || _downloadTask.IsCompleted))
             {
                 if (File.Exists(TempFileLocation))
@@ -164,7 +175,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             }
         }
 
-        private async Task UpdateStatusAsync(FileDownloadingStatus fileStatus,string fileLocation = null)
+        internal async Task UpdateStatusAsync(FileDownloadingStatus fileStatus, string fileLocation = null)
         {
             Status = fileStatus;
             WeakReferenceMessenger.Default.Send(string.Empty, Const.StartNewDownloadTask);

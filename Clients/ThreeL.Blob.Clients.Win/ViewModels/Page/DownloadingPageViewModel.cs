@@ -2,8 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using DnsClient.Protocol;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -69,7 +67,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     var count = DownloadItemViewModels.Count(x => x.Status == FileDownloadingStatus.Downloading);
                     if (count < _iniSettings.MaxDownloadThreads)
                     {
-                        DownloadItemViewModels.Where(x => x.Status == FileDownloadingStatus.Wait).Take(_iniSettings.MaxDownloadThreads - count)
+                        DownloadItemViewModels
+                        .Where(x => x.Status == FileDownloadingStatus.Wait).Take(_iniSettings.MaxDownloadThreads - count)
                         .ToList().ForEach(async x => await x.StartAsync());
                     }
                 }
@@ -116,11 +115,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             HadTask = true;
             WeakReferenceMessenger.Default.Send(DownloadItemViewModels, Const.NotifyDownloadingCount);
             if (start)
+            {
                 await viewModel.StartAsync();
+            }
         }
 
         private Task PauseAllAsync()
         {
+            foreach (var item in DownloadItemViewModels)
+            {
+                item.Status = FileDownloadingStatus.DownloadingSuspend;
+            }
+            
             foreach (var item in DownloadItemViewModels)
             {
                 item.PauseCommand.Execute(null);
@@ -139,6 +145,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private async Task CancelAllAsync()
         {
+            foreach (var item in DownloadItemViewModels)
+            {
+                item.Status = FileDownloadingStatus.DownloadingSuspend;
+            }
+
             foreach (var item in DownloadItemViewModels)
             {
                 item.CancelCommandAsync.ExecuteAsync(null);

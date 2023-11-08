@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -69,11 +68,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public DateTime CreateTime { get; set; } = DateTime.UtcNow;
         public DateTime UploadFinishTime { get; set; }
-        public FileUploadingStatus Status { get; set; }
+
+        private FileUploadingStatus _status;
+        public FileUploadingStatus Status
+        {
+            get => _status;
+            set => SetProperty(ref _status, value);
+        }
 
         public BitmapImage Icon => App.ServiceProvider!.GetRequiredService<FileHelper>().GetIconByFileExtension(FileName).Item2;
         public AsyncRelayCommand ResumeCommandAsync { get; set; }
-        public RelayCommand PauseCommand { get; set; }
+        public AsyncRelayCommand PauseCommand { get; set; }
         public AsyncRelayCommand CancelCommandAsync { get; set; }
 
         private readonly GrpcService _grpcService;
@@ -90,7 +95,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             _httpRequest = httpRequest;
             _iniSettings = iniSettings;
             ResumeCommandAsync = new AsyncRelayCommand(ResumeAsync);
-            PauseCommand = new RelayCommand(Pause);
+            PauseCommand = new AsyncRelayCommand(Pause);
             CancelCommandAsync = new AsyncRelayCommand(CancelAsync);
             _databaseHelper = databaseHelper;
         }
@@ -104,39 +109,42 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 {
                     return;
                 }
-            }
-            _pauseTokenSource = new CancellationTokenSource();
-            _cancelTokenSource = new CancellationTokenSource();
-            _uploadTask = Task.Run(async () =>
-            {
-                await UpdateStatusAsync(FileUploadingStatus.Uploading);
-                Message = null;
-                var resp = await _grpcService
-                    .UploadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token, FileLocation, FileId, TransferBytes, 1024 * 1024, OccurException, SetTransferBytes);
-                if (resp.Result)
-                {
-                    await UpdateStatusAsync(FileUploadingStatus.UploadingComplete);
-                    Message = "上传成功";
-                }
-                else if (resp.Status == UploadFileResponseStatus.PauseStatus) //暂停(主动暂停，网络问题等)
-                {
-                    CanSuspend = false;
-                    await UpdateStatusAsync(FileUploadingStatus.UploadingSuspend);
-                    Message = resp.Message;
-                }
-                else if (resp.Status == UploadFileResponseStatus.ErrorStatus) //不可知的异常
-                {
-                    await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
-                    Message = resp.Message;
-                }
-                //else if (resp.Status == UploadFileResponseStatus.CancelStatus) //不可知的异常
-                //{
-                //    await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
-                //    Message = resp.Message;
-                //}
-            });
 
-            CanSuspend = true;
+                _pauseTokenSource = new CancellationTokenSource();
+                _cancelTokenSource = new CancellationTokenSource();
+                _uploadTask = Task.Run(async () =>
+                {
+                    //开始上传
+                    await UpdateStatusAsync(FileUploadingStatus.Uploading);
+                    Message = null;
+                    var resp = await _grpcService
+                        .UploadFileAsync(_pauseTokenSource.Token, _cancelTokenSource.Token, FileLocation, FileId, TransferBytes, 1024 * 1024, OccurException, SetTransferBytes);
+                    if (resp.Result)
+                    {
+                        await UpdateStatusAsync(FileUploadingStatus.UploadingComplete);
+                        Message = "上传成功";
+                    }
+                    else if (resp.Status == UploadFileResponseStatus.PauseStatus) //暂停(主动暂停，网络问题等)
+                    {
+                        CanSuspend = false;
+                        await UpdateStatusAsync(FileUploadingStatus.UploadingSuspend);
+                        Message = resp.Message;
+                    }
+                    else if (resp.Status == UploadFileResponseStatus.ErrorStatus) //不可知的异常
+                    {
+                        await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
+                        Message = resp.Message;
+                    }
+                    //else if (resp.Status == UploadFileResponseStatus.CancelStatus) //不可知的异常
+                    //{
+                    //    await UpdateStatusAsync(FileUploadingStatus.UploadingFaild);
+                    //    Message = resp.Message;
+                    //}
+                });
+
+                CanSuspend = true;
+            }
+
             await _uploadTask;
         }
 
@@ -146,6 +154,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         /// <returns></returns>
         private async Task ResumeAsync()
         {
+            if (Status != FileUploadingStatus.UploadingSuspend)
+                return;
+
             if (!File.Exists(FileLocation))
             {
                 await CancelUploadingAsync("本地文件不存在");
@@ -170,7 +181,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 if (status != null)
                 {
                     TransferBytes = status.UploadedBytes;
-                    await StartAsync();
+                    await UpdateStatusAsync(FileUploadingStatus.Wait);
                 }
             }
         }
@@ -179,9 +190,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         /// 暂停
         /// </summary>
         /// <returns></returns>
-        private void Pause()
+        private async Task Pause()
         {
-            //var resp = await _httpRequest.PutAsync(string.Format(Const.UPLOADING_PAUSE, FileId), null);
+            await UpdateStatusAsync(FileUploadingStatus.UploadingSuspend);
             _pauseTokenSource?.Cancel();
         }
 
@@ -192,6 +203,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         private async Task CancelUploadingAsync(string reason = "文件上传取消") 
         {
+            if (Status == FileUploadingStatus.UploadingComplete || Status == FileUploadingStatus.UploadingFaild)
+                return;
+
             _cancelTokenSource?.Cancel();
             var resp = await _httpRequest.PutAsync(string.Format(Const.CANCEL_UPLOADING, FileId), null);
             if (resp != null && resp.IsSuccessStatusCode)
@@ -213,7 +227,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public async void OccurException(string exception)
         {
-            Pause();
+            await Pause();
             await UpdateStatusAsync(FileUploadingStatus.UploadingSuspend);
             Message = "网络传输异常";
         }

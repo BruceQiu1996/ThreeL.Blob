@@ -114,6 +114,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         {
             foreach (var item in UploadItemViewModels)
             {
+                item.Status = FileUploadingStatus.UploadingSuspend;
+            }
+
+            foreach (var item in UploadItemViewModels)
+            {
                 item.PauseCommand.Execute(null);
             }
 
@@ -130,6 +135,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private async Task CancelAllAsync()
         {
+            foreach (var item in UploadItemViewModels)
+            {
+                item.Status = FileUploadingStatus.UploadingSuspend;
+            }
+
             foreach (var item in UploadItemViewModels)
             {
                 item.CancelCommandAsync.ExecuteAsync(null);

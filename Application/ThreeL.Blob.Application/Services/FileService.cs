@@ -65,9 +65,10 @@ namespace ThreeL.Blob.Application.Services
         public async Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId)
         {
             var task = await _downloadTaskBasicRepository.GetAsync(taskId);
-            if (task == null || task.Status != DownloadTaskStatus.Downloading || task.CreateBy != userId)
+            if (task == null || task.Status != DownloadTaskStatus.Downloading || task.Status != DownloadTaskStatus.DownloadingSuspend
+                || task.Status != DownloadTaskStatus.Wait)
             {
-                return new ServiceResult(HttpStatusCode.BadRequest, "取消下载任务异常");
+                return new ServiceResult();
             }
 
             task.Status = DownloadTaskStatus.Cancelled;
