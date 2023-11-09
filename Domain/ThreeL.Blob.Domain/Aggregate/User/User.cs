@@ -18,6 +18,6 @@ namespace ThreeL.Blob.Domain.Aggregate.User
         public long TodayUploadMaxSize { get; set; }
         public long? DownloadSpeedLimit { get; set; }
         public long? MaxSpaceSize { get; set; }
-        public string Location { get; set; } = "D://ThreeL_blob";//存储位置根目录
+        public string Location { get; set; }
     }
 }

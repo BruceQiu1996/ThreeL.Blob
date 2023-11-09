@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -22,6 +23,7 @@ namespace ThreeL.Blob.Application.Services
     public class UserService : IUserService, IAppService
     {
         private const string RefreshTokenIdClaimType = "refresh_token_id";
+        private readonly IConfiguration _configuration;
         private readonly JwtOptions _jwtOptions;
         private readonly JwtBearerOptions _jwtBearerOptions;
         private readonly SystemOptions _systemOptions;
@@ -146,6 +148,12 @@ namespace ThreeL.Blob.Application.Services
         {
             var user = creationDto.ToUser(creator);
             user.Password = _passwordHelper.HashPassword(creationDto.Password);
+            var userLocation = Path.Combine(_configuration.GetSection("FileStorage:RootLocation").Value,user.UserName);
+            if (!Directory.Exists(userLocation)) 
+            {
+                Directory.CreateDirectory(userLocation);
+            }
+            user.Location = userLocation;
             await _userBasicRepository.InsertAsync(user);
 
             return new ServiceResult();

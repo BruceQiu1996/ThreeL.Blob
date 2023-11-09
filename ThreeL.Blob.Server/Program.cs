@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -39,32 +40,35 @@ namespace ThreeL.Blob.Server
                 services.AddApplicationService();
                 services.AddControllers();
                 services.AddEndpointsApiExplorer();
-                services.AddSwaggerGen(options =>
+                if (hostContext.HostingEnvironment.IsDevelopment())
                 {
-                    options.SwaggerDoc("v1", new OpenApiInfo
+                    services.AddSwaggerGen(options =>
                     {
-                        Version = "v1",
-                        Title = "Three_Blob v1",
-                        Description = "Three_Blob v1版本接口"
-                    });
+                        options.SwaggerDoc("v1", new OpenApiInfo
+                        {
+                            Version = "v1",
+                            Title = "Three_Blob v1",
+                            Description = "Three_Blob v1版本接口"
+                        });
 
-                    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
-                    {
-                        Description = "在下框中输入请求头中需要添加Jwt授权Token：Bearer Token",
-                        Name = "Authorization",
-                        In = ParameterLocation.Header,
-                        Type = SecuritySchemeType.ApiKey,
-                        BearerFormat = "JWT",
-                        Scheme = "Bearer"
-                    });
+                        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                        {
+                            Description = "在下框中输入请求头中需要添加Jwt授权Token：Bearer Token",
+                            Name = "Authorization",
+                            In = ParameterLocation.Header,
+                            Type = SecuritySchemeType.ApiKey,
+                            BearerFormat = "JWT",
+                            Scheme = "Bearer"
+                        });
 
-                    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-                    {
+                        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                        {
                         {
                             new OpenApiSecurityScheme{Reference = new OpenApiReference {Type = ReferenceType.SecurityScheme,Id = "Bearer"}},new string[] { }
                         }
+                        });
                     });
-                });
+                }
                 //添加认证
                 builder.Services.AddAuthentication(options =>
                 {
@@ -134,11 +138,14 @@ namespace ThreeL.Blob.Server
                 }
             });
 
-            host.UseSwagger();
-            host.UseSwaggerUI(option =>
+            if (host.Environment.IsDevelopment())
             {
-                option.SwaggerEndpoint($"/swagger/v1/swagger.json", "v1");
-            });
+                host.UseSwagger();
+                host.UseSwaggerUI(option =>
+                {
+                    option.SwaggerEndpoint($"/swagger/v1/swagger.json", "v1");
+                });
+            }
             host.MapControllers();
             host.MapGrpcService<GrpcController>();
             await host.RunAsync();

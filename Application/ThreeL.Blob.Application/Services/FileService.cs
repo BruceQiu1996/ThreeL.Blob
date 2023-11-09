@@ -47,7 +47,7 @@ namespace ThreeL.Blob.Application.Services
             var root = await _fileBasicRepository.GetAsync(folderId);
             if (root == null)
             {
-                return new ServiceResult<PreDownloadFolderResponseDto>(HttpStatusCode.BadRequest,"文件数据异常");
+                return new ServiceResult<PreDownloadFolderResponseDto>(HttpStatusCode.BadRequest, "文件数据异常");
             }
 
             var files = await _fileBasicRepository
@@ -201,9 +201,9 @@ namespace ThreeL.Blob.Application.Services
 
         public async Task<ServiceResult<IEnumerable<FileObjDto>>> GetItemsAsync(long parentId, long userId)
         {
-            var items = await _fileBasicRepository
-                .Where(x => x.ParentFolder == parentId && x.CreateBy == userId && x.Status == FileStatus.Normal)
-                .OrderByDescending(x => x.CreateTime).ToListAsync();
+            List<FileObject> items = await _fileBasicRepository
+                    .Where(x => x.ParentFolder == parentId && x.CreateBy == userId && x.Status == FileStatus.Normal)
+                    .OrderByDescending(x => x.CreateTime).ToListAsync();
 
             return new ServiceResult<IEnumerable<FileObjDto>>(items.Select(x =>
             {
@@ -211,6 +211,19 @@ namespace ThreeL.Blob.Application.Services
                     Path.GetFileName(x.ThumbnailImageLocation);
 
                 return _mapper.Map<FileObjDto>(x);
+            }));
+        }
+
+        public async Task<ServiceResult<IEnumerable<FolderSimpleDto>>> GetAllFoldersAsync(long userId)
+        {
+            var files = await _fileBasicRepository
+                        .QuerySqlAsync($"WITH RECURSIVE file_teee As(SELECT * FROM fileobject WHERE fileobject.ParentFolder = 0 AND fileobject.CREATEBY = {userId} AND fileobject.IsFolder = 1 UNION SELECT f1.* FROM fileobject f1 JOIN file_teee ON f1.ParentFolder = file_teee.id AND f1.IsFolder = 1 AND f1.CREATEBY = {userId}) SELECT * FROM file_teee");
+
+            return new ServiceResult<IEnumerable<FolderSimpleDto>>(files.Select(x => new FolderSimpleDto()
+            {
+                Id = x.Id,
+                Name = x.Name,
+                ParentId = x.ParentFolder == null ? 0 : x.ParentFolder.Value
             }));
         }
 
@@ -239,9 +252,24 @@ namespace ThreeL.Blob.Application.Services
             );
         }
 
-        public async Task<ServiceResult<FileObjDto>> UpdateFileObjectNameAsync(UpdateFileObjectNameDto updateFileObjectNameDto, long userId)
+        public async Task<ServiceResult> UpdateFileObjectNameAsync(UpdateFileObjectNameDto updateFileObjectNameDto, long userId)
         {
-            throw new NotImplementedException();
+            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == updateFileObjectNameDto.FileId && x.CreateBy == userId);
+            if (file == null)
+                return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
+
+            if (file.Name == updateFileObjectNameDto.Name)
+                return new ServiceResult();
+
+            var exist = await _fileBasicRepository.FirstOrDefaultAsync(x => x.ParentFolder == file.ParentFolder && x.Name == updateFileObjectNameDto.Name);
+            if (exist != null)
+                return new ServiceResult(HttpStatusCode.BadRequest, "文件名已存在");
+
+            file.Name = updateFileObjectNameDto.Name;
+            file.LastUpdateTime = DateTime.UtcNow;
+            await _fileBasicRepository.UpdateAsync(file);
+
+            return new ServiceResult();
         }
 
         public async Task<ServiceResult<UploadFileResponseDto>> UploadAsync(UploadFileDto uploadFileDto, long userId)
@@ -282,6 +310,116 @@ namespace ThreeL.Blob.Application.Services
             {
                 FileId = fileObj.Id
             });
+        }
+
+        public async Task<ServiceResult> UpdateFileObjectsLocationAsync(UpdateFileObjectLocationDto updateFileObjectLocationDto, long userId)
+        {
+            List<FileObject> fileObjects = new List<FileObject>();
+            var roots = await _fileBasicRepository.Where(x => updateFileObjectLocationDto.FileIds.Contains(x.Id) && x.CreateBy == userId).ToListAsync();
+            if (roots == null || roots.Count <= 0)
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
+            }
+
+            long parentId = 0;
+            if (updateFileObjectLocationDto.ParentFolder != 0)
+            {
+                var parent = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == updateFileObjectLocationDto.ParentFolder && x.CreateBy == userId);
+                if (parent == null)
+                {
+                    return new ServiceResult(HttpStatusCode.BadRequest, "目标目录异常");
+                }
+
+                parentId = parent.Id;
+            }
+
+            //目标目录下存在同名文件
+            var oldfiles = await _fileBasicRepository
+            .Where(x => x.ParentFolder == parentId).ToListAsync();
+
+            if (oldfiles.Any(x => roots.FirstOrDefault(y => y.Name == x.Name) != null))
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, $"目标目录下存在同名文件");
+            }
+
+            if (roots.Any(x => x.IsFolder)) //移动的存在目录，需要考虑子目录
+            {
+                var folders = new List<FileObject>();
+                foreach (var root in roots.Where(x => x.IsFolder))
+                {
+                    var files = await _fileBasicRepository
+                        .QuerySqlAsync($"WITH RECURSIVE file_teee As(SELECT * FROM fileobject WHERE fileobject.Id = {root.Id} UNION SELECT f1.* FROM fileobject f1 JOIN file_teee ON f1.ParentFolder = file_teee.id AND f1.IsFolder = 1) SELECT * FROM file_teee");
+
+                    folders.AddRange(files);
+                }
+
+                if (folders.Any(x => x.Id == updateFileObjectLocationDto.ParentFolder))
+                {
+                    return new ServiceResult(HttpStatusCode.BadRequest, "目标目录不可以是子目录");
+                }
+            }
+
+            roots.ForEach(x =>
+            {
+                x.ParentFolder = parentId;
+                x.LastUpdateTime = DateTime.UtcNow;
+            });
+            await _fileBasicRepository.UpdateRangeAsync(roots);
+
+            return new ServiceResult();
+        }
+
+        public async Task<ServiceResult<FileObjDto>> CreateFoldersAsync(IEnumerable<FolderTreeCreationDto> folderTreeCreationDtos, long userId)
+        {
+            string parentFolderLocation = null;
+            if (folderTreeCreationDtos.First().ParentId != 0)
+            {
+                var parentFolder = await _fileBasicRepository.GetAsync(folderTreeCreationDtos.First().ParentId);
+                if (parentFolder == null || !parentFolder.IsFolder || !Directory.Exists(parentFolder.Location))
+                {
+                    return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
+                }
+                parentFolderLocation = parentFolder.Location;
+            }
+            else
+            {
+                var user = await _userBasicRepository.GetAsync(userId);
+                if (user == null || !Directory.Exists(user.Location))
+                {
+                    return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
+                }
+                parentFolderLocation = user.Location;
+            }
+
+            await aa(folderTreeCreationDto, parentFolderLocation);
+
+            return new ServiceResult<FileObjDto>(_mapper.Map<FileObjDto>(fileObject));
+        }
+
+        private async Task aa(FolderTreeCreationDto parent,string location) 
+        {
+            var folderName = Guid.NewGuid().ToString();
+            var folderLocation = Path.Combine(parentFolderLocation, folderName);
+            Directory.CreateDirectory(folderLocation);
+            var exist = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderTreeCreationDto.FolderName && x.ParentFolder == folderTreeCreationDto.ParentId);
+            if (exist != null)
+            {
+                folderTreeCreationDto.FolderName = $"{folderTreeCreationDto.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";
+            }
+
+            var fileObject = new FileObject()
+            {
+                CreateBy = userId,
+                CreateTime = DateTime.UtcNow,
+                LastUpdateTime = DateTime.UtcNow,
+                UploadFinishTime = DateTime.UtcNow,
+                IsFolder = true,
+                Name = folderCreationDto.FolderName,
+                ParentFolder = folderCreationDto.ParentId,
+                Location = folderLocation,
+                Status = FileStatus.Normal
+            };
+            await _fileBasicRepository.InsertAsync(fileObject);
         }
     }
 }

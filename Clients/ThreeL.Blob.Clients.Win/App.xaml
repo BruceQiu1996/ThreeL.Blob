@@ -8,7 +8,7 @@
                 <ResourceDictionary Source="./Resources/Icons.xaml"></ResourceDictionary>
                 <ResourceDictionary>
                     <ResourceDictionary.MergedDictionaries>
-                        <ResourceDictionary Source="pack://application:,,,/ThreeL.Blob.Clients.Win;component/Resources/ColorsLocal.xaml"/>
+                        <ResourceDictionary Source="pack://application:,,,/HeadDisk;component/Resources/ColorsLocal.xaml"/>
                         <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
                     </ResourceDictionary.MergedDictionaries>
                 </ResourceDictionary>

@@ -143,6 +143,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand SelectAllCommand { get; set; }
         public RelayCommand SelectNoCommand { get; set; }
         public RelayCommand RenameCommand { get; set; }
+        public RelayCommand MoveCommand { get; set; }
 
         public FileObjItemViewModel()
         {
@@ -157,6 +158,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             SelectAllCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectAll); });
             SelectNoCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectNo); });
             RenameCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuRename); });
+            MoveCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuMove); });
         }
 
         public void GetThumbnailImage(string thumbnailImage)
@@ -260,6 +262,21 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                     CreateTime = data.CreateTime;
                     IsRename = false;
                     LastUpdateTime = data.LastUpdateTime;
+                }
+            }
+            else 
+            {
+                string name = Name;
+                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>().PostAsync(Const.UPDATE_NAME, new UpdateFileObjectNameDto()
+                {
+                    Name = name,
+                    FileId = Id
+                });
+
+                if (resp != null)
+                {
+                    Name = name;
+                    IsRename = false;
                 }
             }
         }

@@ -5,13 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:hc="https://handyorg.github.io/handycontrol"
+        Icon="pack://application:,,,/HeadDisk;component/Icon.ico"
         xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win"
         mc:Ignorable="d"
         AllowsTransparency="True"
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Title="Login" Height="380" Width="700">
+        Title="头盘登录" Height="380" Width="700">
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
             <behaviors:InvokeCommandAction Command="{Binding LoadedCommandAsync}"></behaviors:InvokeCommandAction>
@@ -38,7 +39,8 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid MouseMove="Border_MouseMove" Grid.ColumnSpan="2" Background="Transparent">
-                <TextBlock Text="露西网盘" 
+                <TextBlock Text="头头网盘" 
+                           FontFamily="Tahoma"
                        Foreground="{StaticResource PrimaryBrush}"
                        Grid.Column="0"
                        Margin="12 10 0 0" 

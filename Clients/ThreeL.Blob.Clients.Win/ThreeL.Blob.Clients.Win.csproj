@@ -6,6 +6,14 @@
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
+		<Product>头头网盘</Product>
+		<ProductName>头头网盘</ProductName>
+		<Version>1.0.1</Version>
+		<ProductVersion>1.0.1</ProductVersion>
+		<Authors>Bruce Qiu</Authors>
+		<Company>Bruce Qiu</Company>
+		<PackageIcon>Icon.ico</PackageIcon>
+		<AssemblyName>HeadDisk</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -52,5 +60,14 @@
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
 		<PackageReference Include="SuperSocket.Udp" Version="2.0.0-beta.17" />
 		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Resource Include="Icon.ico" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Update="Icon.ico">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 </Project>

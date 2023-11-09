@@ -108,6 +108,60 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpPost("folders")]
+        [Authorize]
+        public async Task<ActionResult> CreateFoldersAsync(IEnumerable<FolderTreeCreationDto> folderTreeCreationDtos)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.CreateFoldersAsync(folderTreeCreationDtos, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [HttpPost("update-name")]
+        [Authorize]
+        public async Task<ActionResult> UpdateItemNameAsync(UpdateFileObjectNameDto updateFileObjectNameDto)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.UpdateFileObjectNameAsync(updateFileObjectNameDto, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [HttpPost("update-location")]
+        [Authorize]
+        public async Task<ActionResult> UpdateItemsLocationAsync(UpdateFileObjectLocationDto updateFileObjectLocationDto)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.UpdateFileObjectsLocationAsync(updateFileObjectLocationDto, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpPut("cancel/{fileId}")]
         [Authorize]
         public async Task<ActionResult> CancelUploadAsync(long fileId)
@@ -152,6 +206,24 @@ namespace ThreeL.Blob.Server.Controllers
             {
                 long.TryParse(HttpContext.User.Identity?.Name, out var userId);
                 var result = await _fileService.GetItemsAsync(parent, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [HttpGet("folders")]
+        [Authorize]
+        public async Task<ActionResult> GetFoldersAsync()
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.GetAllFoldersAsync(userId);
 
                 return result.ToActionResult();
             }

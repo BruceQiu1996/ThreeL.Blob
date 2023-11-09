@@ -16,6 +16,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Xml.Linq;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
@@ -198,6 +199,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 await RenameAsync(y);
             });
+            //移动
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuMove, async (x, y) =>
+            {
+                MoveCommand();
+            });
+            //确认移动
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, TreeViewFolderViewModel, string>(this, Const.ConfirmMove, async (x, y) =>
+            {
+                await ConfirmCommandAsync(y);
+            });
             #endregion
         }
 
@@ -216,6 +227,34 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             foreach (var item in AllFileObjViewModels)
             {
                 item.IsSelected = false;
+            }
+        }
+
+        private void MoveCommand()
+        {
+            if (FileObjViewModels.Count(x => x.IsSelected) == 0)
+                return;
+
+            var dialog = App.ServiceProvider.GetRequiredService<Move>();
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            dialog.Owner = App.ServiceProvider!.GetRequiredService<MainWindow>();
+            dialog.ShowDialog();
+        }
+
+        private async Task ConfirmCommandAsync(TreeViewFolderViewModel viewFolderViewModel)
+        {
+            if (viewFolderViewModel == null)
+                return;
+
+            var resp = await _httpRequest.PostAsync(Const.UPDATE_LOCATION, new UpdateFileObjectLocationDto()
+            {
+                FileIds = FileObjViewModels.Where(x => x.IsSelected).Select(x => x.Id).ToArray(),
+                ParentFolder = viewFolderViewModel.Id
+            });
+
+            if (resp != null)
+            {
+                await RefreshAsync();
             }
         }
 
@@ -281,9 +320,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     {
                         await UploadFileAsync(file.ToString(), parent);
                     }
-                    else
+                    else if (Directory.Exists(file.ToString()))
                     {
-                        _growlHelper.Warning($"文件：{file}不存在或不支持直接上传文件夹");
+
                     }
                 }
             }
@@ -626,6 +665,35 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
                     WeakReferenceMessenger.Default.Send(record, Const.AddUploadRecord);
                 }
+            }
+        }
+
+        private async Task UploadFolderAsync(string folder, long parentFolder)
+        {
+            DirectoryInfo directoryInfo = new DirectoryInfo(folder);
+            FolderTreeCreationDto folderTreeCreationDtos = new FolderTreeCreationDto();
+            folderTreeCreationDtos.ParentId = parentFolder;
+            folderTreeCreationDtos.Location = directoryInfo.FullName;
+            folderTreeCreationDtos.FolderName = directoryInfo.Name;
+            List<FolderTreeCreationDto> treeCreationDtos = new List<FolderTreeCreationDto>();
+            GetSubFolders(folderTreeCreationDtos, directoryInfo, treeCreationDtos);
+            var resp = await _httpRequest.PostAsync(Const.CREATE_MULTI_FOLDER, treeCreationDtos);
+
+        }
+
+        private void GetSubFolders(FolderTreeCreationDto parent, DirectoryInfo directoryInfo, List<FolderTreeCreationDto> treeCreationDtos)
+        {
+            treeCreationDtos.Add(parent);
+            foreach (var folder in directoryInfo.GetDirectories())
+            {
+                var newItem = new FolderTreeCreationDto()
+                {
+                    Location = folder.FullName,
+                    FolderName = folder.Name,
+                };
+                newItem.ParentFolderId = parent.Id;
+
+                GetSubFolders(newItem, folder, treeCreationDtos);
             }
         }
 

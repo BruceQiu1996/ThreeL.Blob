@@ -46,6 +46,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<LoginWindowViewModel>();
                 service.AddTransient<DownloadEnsure>();
                 service.AddTransient<DownloadEnsureViewModel>();
+                service.AddTransient<Move>();
+                service.AddTransient<MoveViewModel>();
 
                 service.AddSingleton<MainPage>();
                 service.AddSingleton<MainPageViewModel>();
@@ -67,6 +69,7 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<GrpcService>();
                 service.AddSingleton<GrowlHelper>();
                 service.AddSingleton<FileHelper>();
+                service.AddSingleton<SystemHelper>();
                 service.AddSingleton<DatabaseHelper>();
                 service.AddSingleton<IniHelper>();
                 service.AddSingleton<IniSettings>();

@@ -24,6 +24,8 @@
                       Command="{Binding DeleteCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="重命名" 
                       Command="{Binding RenameCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="移动" 
+                      Command="{Binding MoveCommand}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
         <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
             <MenuItem Header="新建文件夹" 

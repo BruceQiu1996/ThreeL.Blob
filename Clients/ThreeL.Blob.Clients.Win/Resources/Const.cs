@@ -5,9 +5,11 @@
         public const string LOGIN = "user/login";
         public const string REFRESH_TOKEN = "user/refresh/token";
         public const string UPLOAD_FILE = "file";
+        public const string Get_FOLDERS = "file/folders";
         public const string DELETE_FILE = "file/delete";
         public const string DOWNLOAD_FILE = "file/download/{0}";
         public const string CREATE_FOLDER = "file/folder";
+        public const string CREATE_MULTI_FOLDER = "file/folders";
         public const string UPLOADING_STATUS = "file/upload-status/{0}";
         public const string DOWNLOADING_STATUS = "file/download-status/{0}";
         public const string UPLOADING_PAUSE = "file/upload-pause/{0}";
@@ -15,6 +17,8 @@
         public const string CANCEL_DOWNLOADING = "file/cancel-download/{0}";
         public const string GET_THUMBNAIL_IMAGE = "thumbnailImages/{0}/{1}";
         public const string PRE_DOWNLOAD_FOLDER = "file/preDownloadFolder/{0}";
+        public const string UPDATE_NAME = "file/update-name";
+        public const string UPDATE_LOCATION = "file/update-location";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);
@@ -42,5 +46,7 @@
         public const string MenuSelectAll = nameof(MenuSelectAll);
         public const string MenuSelectNo = nameof(MenuSelectNo);
         public const string MenuRename = nameof(MenuRename);
+        public const string MenuMove = nameof(MenuMove);
+        public const string ConfirmMove = nameof(ConfirmMove);
     }
 }

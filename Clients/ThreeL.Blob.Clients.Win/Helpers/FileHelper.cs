@@ -97,7 +97,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             var source = new BitmapImage();
             try
             {
-                string imgUrl = $"pack://application:,,,/ThreeL.Blob.Clients.Win;component/Images/{imageName}";
+                string imgUrl = $"pack://application:,,,/HeadDisk;component/Images/{imageName}";
                 source.BeginInit();
                 source.UriSource = new Uri(imgUrl, UriKind.RelativeOrAbsolute);
                 source.EndInit();

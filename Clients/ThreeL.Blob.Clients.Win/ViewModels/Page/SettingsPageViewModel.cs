@@ -54,6 +54,29 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
+        private bool _autoStart;
+        public bool AutoStart
+        {
+            get => _autoStart;
+            set
+            {
+                SetProperty(ref _autoStart, value);
+                _iniSettings.WriteAutoStart(value).GetAwaiter().GetResult();
+            }
+        }
+
+        private bool _exitWithoutMin;
+        public bool ExitWithoutMin
+        {
+            get => _exitWithoutMin;
+            set
+            {
+                SetProperty(ref _exitWithoutMin, value);
+                _iniSettings.WriteExitWithoutMin(value).GetAwaiter().GetResult();
+            }
+        }
+
+        
         private readonly IniSettings _iniSettings;
         public SettingsPageViewModel(IniSettings iniSettings)
         {
@@ -71,7 +94,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             MaxUploadThreads = _iniSettings.MaxUploadThreads;
             MaxDownloadThreads = _iniSettings.MaxDownloadThreads;
             TempLocation = _iniSettings.TempLocation;
-
+            AutoStart = _iniSettings.AutoStart;
+            ExitWithoutMin = _iniSettings.ExitWithoutMin;
             return Task.CompletedTask;
         }
 

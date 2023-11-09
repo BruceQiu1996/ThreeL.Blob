@@ -13,6 +13,8 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public const string TempLocationKey = "TempLocation";
         public const string MaxUploadThreadsKey = "MaxUploadThreads";
         public const string MaxDownloadThreadsKey = "MaxDownloadThreads";
+        public const string AutoStartKey = "AutoStartKey";
+        public const string ExitWithoutMinKey = "ExitWithoutMinKey";
         #endregion
 
         #region 配置项
@@ -20,13 +22,17 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public string? TempLocation { get; private set; }
         public int MaxUploadThreads { get; private set; }
         public int MaxDownloadThreads { get; private set; }
+        public bool AutoStart { get; private set; }
+        public bool ExitWithoutMin { get; private set; }
         #endregion
 
         private readonly IniHelper _iniHelper;
-        public IniSettings(IniHelper iniHelper)
+        private readonly SystemHelper _systemHelper;
+        public IniSettings(IniHelper iniHelper, SystemHelper systemHelper)
         {
             _iniHelper = iniHelper;
             _iniHelper.Initialize(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Config.ini"));
+            _systemHelper = systemHelper;
         }
 
         public async Task InitializeAsync()
@@ -53,6 +59,8 @@ namespace ThreeL.Blob.Clients.Win.Resources
 
             MaxUploadThreads = int.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, MaxUploadThreadsKey),out var tempMaxUploadThreads)? tempMaxUploadThreads : 5;
             MaxDownloadThreads = int.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, MaxDownloadThreadsKey), out var tempMaxDownloadThreads) ? tempMaxDownloadThreads : 5;
+            AutoStart = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, AutoStartKey), out var tempAutoStart) ? tempAutoStart : false;
+            ExitWithoutMin = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, ExitWithoutMinKey), out var tempExitWithoutMin) ? tempExitWithoutMin : false;
         }
 
         /// <summary>
@@ -75,6 +83,26 @@ namespace ThreeL.Blob.Clients.Win.Resources
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, TempLocationKey, value);
             TempLocation = value;
+        }
+
+        public async Task WriteAutoStart(bool value)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, AutoStartKey, value.ToString());
+            AutoStart = value;
+            if (value)
+            {
+                _systemHelper.SetAutoStart();
+            }
+            else 
+            {
+                _systemHelper.CancelAutoStart();
+            }
+        }
+
+        public async Task WriteExitWithoutMin(bool value)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, ExitWithoutMinKey, value.ToString());
+            ExitWithoutMin = value;
         }
 
         public async Task WriteMaxUploadThreads(int value)

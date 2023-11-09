@@ -7,6 +7,7 @@
         xmlns:hc="https://handyorg.github.io/handycontrol"
         xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win"
         xmlns:convert ="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
+        Icon="pack://application:,,,/HeadDisk;component/Icon.ico"
         mc:Ignorable="d"
         AllowsTransparency="True"
         Background="Transparent"
@@ -15,6 +16,10 @@
         Title="主界面" Height="600" MinWidth="900" Width="900">
     <Window.Resources>
         <convert:String2BooleanConverter x:Key="String2BooleanConverter"></convert:String2BooleanConverter>
+        <ContextMenu x:Key="iconMenu" Width="150">
+            <MenuItem Header="打开软件" Click="NotifyIcon_Click"></MenuItem>
+            <MenuItem Header="退出软件" Command="{Binding ExitCommandAsync}"></MenuItem>
+        </ContextMenu>
     </Window.Resources>
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
@@ -73,12 +78,7 @@
                            ToolTip="关闭到托盘"
                            Margin="0 0 0 0"
                            Background="Transparent"
-                           HorizontalAlignment="Right">
-                        <behaviors:Interaction.Triggers>
-                            <behaviors:EventTrigger EventName="MouseLeftButtonDown">
-                                <behaviors:InvokeCommandAction Command="{Binding ExitCommandAsync}"></behaviors:InvokeCommandAction>
-                            </behaviors:EventTrigger>
-                        </behaviors:Interaction.Triggers>
+                           HorizontalAlignment="Right" MouseLeftButtonDown="Label_MouseLeftButtonDown_1">
                         <Path Data="{StaticResource CloseGeometry}" 
                               SnapsToDevicePixels="True"
                               Height="15"
@@ -215,5 +215,12 @@
 
             <StackPanel hc:Growl.GrowlParent="True" Grid.RowSpan="3" Grid.ColumnSpan="2" VerticalAlignment="Top" Margin="5"/>
         </Grid>
+
+        <hc:NotifyIcon Text="头头网盘" IsBlink="False" 
+               ToolTip="头头网盘"
+               Click="NotifyIcon_Click"
+               MouseDoubleClick="NotifyIcon_Click"
+               ContextMenu="{StaticResource iconMenu}"
+               Visibility="Visible" Icon="/HeadDisk;component/Icon.ico"/>
     </Grid>
 </Window>
