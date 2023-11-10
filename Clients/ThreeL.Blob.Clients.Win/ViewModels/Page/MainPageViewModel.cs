@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using System;
@@ -16,7 +15,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Xml.Linq;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
@@ -122,6 +120,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             get => _isListView;
             set => SetProperty(ref _isListView, value);
         }
+
         public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest,
                                  DatabaseHelper databaseHelper,
                                  GrowlHelper growlHelper, IMapper mapper, FileHelper fileHelper, IniSettings iniSettings)
@@ -322,7 +321,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     }
                     else if (Directory.Exists(file.ToString()))
                     {
-
+                        await UploadFolderAsync(file.ToString(), parent);
                     }
                 }
             }
@@ -671,29 +670,56 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task UploadFolderAsync(string folder, long parentFolder)
         {
             DirectoryInfo directoryInfo = new DirectoryInfo(folder);
-            FolderTreeCreationDto folderTreeCreationDtos = new FolderTreeCreationDto();
-            folderTreeCreationDtos.ParentId = parentFolder;
-            folderTreeCreationDtos.Location = directoryInfo.FullName;
-            folderTreeCreationDtos.FolderName = directoryInfo.Name;
-            List<FolderTreeCreationDto> treeCreationDtos = new List<FolderTreeCreationDto>();
-            GetSubFolders(folderTreeCreationDtos, directoryInfo, treeCreationDtos);
-            var resp = await _httpRequest.PostAsync(Const.CREATE_MULTI_FOLDER, treeCreationDtos);
+            FolderTreeCreationDto folderTreeCreationDto = new FolderTreeCreationDto();
+            folderTreeCreationDto.ParentId = parentFolder;
+            var root = new FolderTreeCreationItemDto()
+            {
+                FolderName = directoryInfo.Name,
+                Location = directoryInfo.FullName,
+                ParentClientId = string.Empty
+            };
+            GetSubFolders(root, directoryInfo, folderTreeCreationDto.Items);
+            if (folderTreeCreationDto.Items.Count > 512)
+            {
+                _growlHelper.Warning($"{folder}上传失败,目录或者目录层级过多，建议拆分上传");
+            }
+            var resp = await _httpRequest.PostAsync(Const.CREATE_MULTI_FOLDER, folderTreeCreationDto);
+            if (resp != null)
+            {
+                var results =
+                    JsonSerializer.Deserialize<IEnumerable<FolderTreeCreationResponseDto>>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                foreach (var item in results)
+                {
+                    folderTreeCreationDto.Items.FirstOrDefault(x => x.ClientId == item.ClientId)!.RemoteId = item.RemoteId;
+                }
 
+                foreach (var item in folderTreeCreationDto.Items)
+                {
+                    foreach (var item1 in item.Files)
+                    {
+                        await UploadFileAsync(item1, item.RemoteId);
+                    }
+                }
+            }
         }
 
-        private void GetSubFolders(FolderTreeCreationDto parent, DirectoryInfo directoryInfo, List<FolderTreeCreationDto> treeCreationDtos)
+        private void GetSubFolders(FolderTreeCreationItemDto parent, DirectoryInfo directoryInfo, List<FolderTreeCreationItemDto> treeCreationDtoItems)
         {
-            treeCreationDtos.Add(parent);
+            treeCreationDtoItems.Add(parent);
+            foreach (var item in directoryInfo.GetFiles())
+            {
+                parent.Files.Add(item.FullName);
+            }
             foreach (var folder in directoryInfo.GetDirectories())
             {
-                var newItem = new FolderTreeCreationDto()
+                var newItem = new FolderTreeCreationItemDto()
                 {
                     Location = folder.FullName,
                     FolderName = folder.Name,
                 };
-                newItem.ParentFolderId = parent.Id;
+                newItem.ParentClientId = parent.ClientId;
 
-                GetSubFolders(newItem, folder, treeCreationDtos);
+                GetSubFolders(newItem, folder, treeCreationDtoItems);
             }
         }
 

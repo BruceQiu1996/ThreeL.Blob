@@ -110,12 +110,12 @@ namespace ThreeL.Blob.Server.Controllers
 
         [HttpPost("folders")]
         [Authorize]
-        public async Task<ActionResult> CreateFoldersAsync(IEnumerable<FolderTreeCreationDto> folderTreeCreationDtos)
+        public async Task<ActionResult> CreateFoldersAsync(FolderTreeCreationDto folderTreeCreationDto)
         {
             try
             {
                 long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-                var result = await _fileService.CreateFoldersAsync(folderTreeCreationDtos, userId);
+                var result = await _fileService.CreateFoldersAsync(folderTreeCreationDto, userId);
 
                 return result.ToActionResult();
             }

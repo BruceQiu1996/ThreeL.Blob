@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Google.Protobuf.WellKnownTypes;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using ThreeL.Blob.Clients.Win.Helpers;
@@ -15,6 +16,9 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public const string MaxDownloadThreadsKey = "MaxDownloadThreads";
         public const string AutoStartKey = "AutoStartKey";
         public const string ExitWithoutMinKey = "ExitWithoutMinKey";
+        public const string UserNameKey = "UserNameKey";
+        public const string PasswordKey = "PasswordKey";
+        public const string LoginTimeKey = "LoginTimeKey";
         #endregion
 
         #region 配置项
@@ -24,6 +28,9 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public int MaxDownloadThreads { get; private set; }
         public bool AutoStart { get; private set; }
         public bool ExitWithoutMin { get; private set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
+        public string LoginTime { get; set; }
         #endregion
 
         private readonly IniHelper _iniHelper;
@@ -61,6 +68,9 @@ namespace ThreeL.Blob.Clients.Win.Resources
             MaxDownloadThreads = int.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, MaxDownloadThreadsKey), out var tempMaxDownloadThreads) ? tempMaxDownloadThreads : 5;
             AutoStart = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, AutoStartKey), out var tempAutoStart) ? tempAutoStart : false;
             ExitWithoutMin = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, ExitWithoutMinKey), out var tempExitWithoutMin) ? tempExitWithoutMin : false;
+            Password = await _iniHelper.ReadAsync(ApplicationSectionKey, PasswordKey);
+            UserName = await _iniHelper.ReadAsync(ApplicationSectionKey, UserNameKey);
+            LoginTime = await _iniHelper.ReadAsync(ApplicationSectionKey, LoginTimeKey);
         }
 
         /// <summary>
@@ -115,6 +125,17 @@ namespace ThreeL.Blob.Clients.Win.Resources
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, MaxDownloadThreadsKey, value.ToString());
             MaxDownloadThreads = value;
+        }
+
+        public async Task WriteUserInfo(string userName,string password,string loginTime)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, UserNameKey, userName);
+            await _iniHelper.WriteAsync(ApplicationSectionKey, PasswordKey, password);
+            await _iniHelper.WriteAsync(ApplicationSectionKey, LoginTimeKey, loginTime);
+
+            UserName = userName;
+            Password = password;
+            LoginTime = loginTime;
         }
     }
 }

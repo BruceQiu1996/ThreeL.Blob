@@ -1,10 +1,9 @@
 ﻿<Page x:Class="ThreeL.Blob.Clients.Win.Pages.SettingsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win.Pages"
       xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:hc="https://handyorg.github.io/handycontrol"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
@@ -95,6 +94,24 @@
                                 Cursor="Hand"
                                 FontSize="14"
                                 Style="{StaticResource ButtonDanger}"></Button>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Margin="2" Header="修改密码" 
+                          Width="500"
+                          HorizontalContentAlignment="Left"
+                          HorizontalAlignment="Left"
+                          Background="Transparent"
+                          Padding="5" FontSize="16" Style="{StaticResource GroupBoxTab}">
+                    <StackPanel HorizontalAlignment="Left">
+                        <PasswordBox Margin="5" 
+                                     Name="oldPwd"
+                                     Style="{StaticResource PasswordBoxExtend}" Width="450" hc:InfoElement.Placeholder="原密码"></PasswordBox>
+                        <PasswordBox Margin="5" Name="newPwd" Style="{StaticResource PasswordBoxExtend}" Width="450" hc:InfoElement.Placeholder="新密码"></PasswordBox>
+                        <PasswordBox Name="confirmPwd"
+                                     Margin="5" Style="{StaticResource PasswordBoxExtend}" Width="450" hc:InfoElement.Placeholder="确认密码"></PasswordBox>
+                        <Button Content="修改密码" 
+                                Margin="5" Style="{StaticResource ButtonDanger}" Cursor="Hand" 
+                                Command="{Binding ModifyPasswordAsyncCommand}"></Button>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

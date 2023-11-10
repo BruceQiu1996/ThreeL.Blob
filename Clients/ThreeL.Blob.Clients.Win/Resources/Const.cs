@@ -3,6 +3,7 @@
     public class Const
     {
         public const string LOGIN = "user/login";
+        public const string MODIFY_PASSWORD = "user/password";
         public const string REFRESH_TOKEN = "user/refresh/token";
         public const string UPLOAD_FILE = "file";
         public const string Get_FOLDERS = "file/folders";
@@ -27,6 +28,7 @@
         public const string DoubleClickItem = nameof(DoubleClickItem);
         public const string Exit = nameof(Exit);
         public const string CanExit = nameof(CanExit);
+        public const string ExitToLogin = nameof(ExitToLogin);
         public const string UploadFinish = nameof(UploadFinish);
         public const string DownloadFinish = nameof(DownloadFinish);
         public const string NotifyUploadingCount = nameof(NotifyUploadingCount);

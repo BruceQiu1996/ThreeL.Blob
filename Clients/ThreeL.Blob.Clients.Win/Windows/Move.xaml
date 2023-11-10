@@ -62,7 +62,6 @@
                     </behaviors:Interaction.Triggers>
                     <TreeView.ItemContainerStyle>
                         <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource TreeViewItemBaseStyle}">
-                            <Setter Property="IsExpanded" Value="True"></Setter>
                             <Setter Property="Padding" Value="0"></Setter>
                         </Style>
                     </TreeView.ItemContainerStyle>

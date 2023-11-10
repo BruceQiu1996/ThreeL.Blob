@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ThreeL.Blob.Clients.Win.Dtos;
@@ -23,20 +24,27 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             set { SetProperty(ref _userName, value); }
         }
         public AsyncRelayCommand<PasswordBox> LoginCommandAsync { get; set; }
+        public AsyncRelayCommand<PasswordBox> LoadedCommandAsync { get; set; }
 
         private readonly HttpRequest _httpRequest;
         private readonly GrpcService _grpcService;
         private readonly GrowlHelper _growlHelper;
         private readonly IMapper _mapper;
-        public LoginWindowViewModel(HttpRequest httpRequest, GrowlHelper growlHelper, IMapper mapper, GrpcService grpcService)
+        private readonly IniSettings _iniSettings;
+        private readonly EncryptHelper _encryptHelper;
+        public LoginWindowViewModel(HttpRequest httpRequest, GrowlHelper growlHelper, IMapper mapper, GrpcService grpcService, IniSettings iniSettings, EncryptHelper encryptHelper)
         {
             _httpRequest = httpRequest;
             _growlHelper = growlHelper;
             _mapper = mapper;
             httpRequest.ExcuteWhileBadRequest += _growlHelper.Warning;
             httpRequest.ExcuteWhileInternalServerError += _growlHelper.Warning;
+            httpRequest.TryRefreshToken = RefreshTokenAsync;
             LoginCommandAsync = new AsyncRelayCommand<PasswordBox>(LoginAsync);
+            LoadedCommandAsync = new AsyncRelayCommand<PasswordBox>(LoadedAsync);
             _grpcService = grpcService;
+            _iniSettings = iniSettings;
+            _encryptHelper = encryptHelper;
         }
 
         private async Task LoginAsync(PasswordBox password)
@@ -60,7 +68,53 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
                 App.UserProfile = _mapper.Map<UserProfile>(data);
                 App.ServiceProvider.GetRequiredService<LoginWindow>().Hide();
                 App.ServiceProvider.GetRequiredService<MainWindow>().Show();
+                string mockTime = Guid.NewGuid().ToString("N");
+                var enPwd = _encryptHelper.Encrypt(password.Password);
+                await _iniSettings.WriteUserInfo(UserName, enPwd, mockTime);
             }
+        }
+
+        private async Task LoadedAsync(PasswordBox passwordBox)
+        {
+            if (string.IsNullOrEmpty(_iniSettings.UserName))
+                return;
+
+            try
+            {
+                var enPwd = _iniSettings.Password;
+                var password = _encryptHelper.Decrypt(enPwd);
+                UserName = _iniSettings.UserName;
+                passwordBox.Password = password;
+            }
+            catch { }
+        }
+
+        //刷新token
+        private async Task<bool> RefreshTokenAsync()
+        {
+            if (string.IsNullOrEmpty(App.UserProfile?.RefreshToken) || string.IsNullOrEmpty(App.UserProfile?.AccessToken))
+            {
+                return false;
+            }
+
+            var token = await _httpRequest.RefreshTokenAsync(new UserRefreshTokenDto
+            {
+                Origin = "win",
+                AccessToken = App.UserProfile.AccessToken,
+                RefreshToken = App.UserProfile.RefreshToken
+            });
+
+            if (token == null)
+            {
+                return false;
+            }
+
+            _httpRequest.SetToken(token.AccessToken);
+            _grpcService.SetToken(token.AccessToken);
+            App.UserProfile.RefreshToken = token.RefreshToken;
+            App.UserProfile.AccessToken = token.AccessToken;
+
+            return true;
         }
     }
 }

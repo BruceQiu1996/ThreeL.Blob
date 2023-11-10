@@ -33,7 +33,7 @@ namespace ThreeL.Blob.Clients.Win
         {
             if (_settings.ExitWithoutMin)
             {
-                WeakReferenceMessenger.Default.Send<string, string>(string.Empty, Const.Exit);
+                WeakReferenceMessenger.Default.Send(string.Empty, Const.Exit);
             }
             else
             {

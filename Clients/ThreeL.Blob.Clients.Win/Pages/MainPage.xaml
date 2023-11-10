@@ -188,15 +188,15 @@
                                 <Setter Property="Padding" Value="0" />
                                 <Setter Property="Width" Value="108" />
                                 <Setter Property="Height" Value="130" />
-                                <Setter Property="Margin" Value="10 5"></Setter>
+                                <Setter Property="Margin" Value="5 5"></Setter>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="{x:Type ListBoxItem}">
                                             <Border Cursor="Hand"
                                                     ContextMenu="{StaticResource fileitemmenu}"
                                                     Padding="0"
-                                                    CornerRadius="2"
-                                                    BorderThickness="1.2"
+                                                    CornerRadius="3"
+                                                    BorderThickness="0"
                                                     BorderBrush="{TemplateBinding BorderBrush}"
                                                     Height="{TemplateBinding Height}"
                                                     Width="{TemplateBinding Width}"

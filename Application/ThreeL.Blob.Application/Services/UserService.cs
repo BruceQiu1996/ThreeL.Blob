@@ -73,8 +73,12 @@ namespace ThreeL.Blob.Application.Services
         private async Task<(string accessToken, string refreshToken)> CreateTokenAsync(User user, string origin)
         {
             var settings = await _redisProvider.HGetAllAsync<JwtSetting>(Const.REDIS_JWT_SECRET_KEY);
-            var setting = settings.FirstOrDefault(x => x.Key.StartsWith(_systemOptions.Name)
+            //拿到一个最晚过期的token
+            var setting = settings.OrderByDescending(x => x.Value.SecretExpireAt).FirstOrDefault(x => x.Key.StartsWith(_systemOptions.Name)
                 && x.Value.Issuer == _systemOptions.Name).Value;
+
+            if (setting == null)
+                throw new Exception("token获取异常");
 
             var refreshToken = await CreateRefreshTokenAsync(user.Id);
             var claims = new[]
@@ -155,6 +159,24 @@ namespace ThreeL.Blob.Application.Services
             }
             user.Location = userLocation;
             await _userBasicRepository.InsertAsync(user);
+
+            return new ServiceResult();
+        }
+
+        public async Task<ServiceResult> ModifyUserPasswordAsync(UserModifyPasswordDto modifyPasswordDto, long creator)
+        {
+            var user = await _userBasicRepository.GetAsync(creator);
+            if (user == null)
+                return new ServiceResult(HttpStatusCode.BadRequest, "用户数据异常");
+
+           var flag  = _passwordHelper.VerifyHashedPassword(modifyPasswordDto.OldPassword, user.Password);
+            if (!flag) 
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "密码错误");
+            }
+
+            user.Password = _passwordHelper.HashPassword(modifyPasswordDto.NewPassword);
+            await _userBasicRepository.UpdateAsync(user);
 
             return new ServiceResult();
         }

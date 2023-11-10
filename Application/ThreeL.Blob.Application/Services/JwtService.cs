@@ -24,14 +24,25 @@ namespace ThreeL.Blob.Application.Services
             _redisProvider = redisProvider;
         }
 
-        public async Task PreheatAsync()
+        public Task PreheatAsync()
         {
-            var jwtSetting = _jwtOptions.Value.ToEntity();
-            jwtSetting.Issuer = _systemOptions.Value.Name;
-            jwtSetting.SecretExpireAt = DateTime.Now.AddSeconds(_jwtOptions.Value.SecretExpireSeconds);
-            //默认设置jwt secret key每三天过期
-            await _redisProvider.HSetAsync(Const.REDIS_JWT_SECRET_KEY, $"{_systemOptions.Value.Name}-{DateTime.Now}",
-                jwtSetting, TimeSpan.FromSeconds(_jwtOptions.Value.SecretExpireSeconds), When.Always);
+            //随机创建token
+            var _ = Task.Run(async () =>
+            {
+                do
+                {
+                    var jwtSetting = _jwtOptions.Value.ToEntity();
+                    jwtSetting.Issuer = _systemOptions.Value.Name;
+                    jwtSetting.SecretExpireAt = DateTime.Now.AddSeconds(_jwtOptions.Value.SecretExpireSeconds);
+                    //默认设置jwt secret key每三天过期
+                    await _redisProvider.HSetAsync(Const.REDIS_JWT_SECRET_KEY, $"{_systemOptions.Value.Name}-{DateTime.Now}",
+                        jwtSetting, TimeSpan.FromSeconds(_jwtOptions.Value.SecretExpireSeconds), When.Always);
+
+                    await Task.Delay(_jwtOptions.Value.SecretExpireSeconds * 1000 - 60 * 1000);
+                } while (true);
+            });
+
+            return Task.CompletedTask;
         }
 
         public IEnumerable<SecurityKey> ValidateIssuerSigningKey(string token, SecurityToken securityToken, string kid, TokenValidationParameters validationParameters)

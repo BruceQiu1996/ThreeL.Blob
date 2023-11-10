@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
+using ThreeL.Blob.Shared.Domain.Metadata.User;
 
 namespace ThreeL.ContextAPI.Controllers
 {
@@ -20,6 +22,7 @@ namespace ThreeL.ContextAPI.Controllers
             _logger = logger;
         }
 
+        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
         [HttpPost]
         public async Task<ActionResult> Create(UserCreationDto creationDto)
         {
@@ -37,6 +40,25 @@ namespace ThreeL.ContextAPI.Controllers
             }
         }
 
+        [AllowAnonymous]
+        [HttpPost("refresh/token")]
+        public async Task<ActionResult> RefreshToken(UserRefreshTokenDto tokenDto)
+        {
+            try
+            {
+                var resp = await _userService.RefreshAuthTokenAsync(tokenDto);
+                if (resp == null)
+                    return BadRequest();
+
+                return Ok(resp);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpPost("login")]
         public async Task<ActionResult> Login(UserLoginDto userLoginDto)
         {
@@ -45,6 +67,23 @@ namespace ThreeL.ContextAPI.Controllers
                 var result = await _userService.AccountLoginAsync(userLoginDto);
 
                 return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [HttpPut("password")]
+        public async Task<ActionResult> ModifyPassword(UserModifyPasswordDto userModifyPasswordDto)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var sresult = await _userService.ModifyUserPasswordAsync(userModifyPasswordDto, userId);
+
+                return sresult.ToActionResult();
             }
             catch (Exception ex)
             {

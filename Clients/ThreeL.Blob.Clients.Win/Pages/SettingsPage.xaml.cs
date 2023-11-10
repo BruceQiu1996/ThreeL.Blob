@@ -12,6 +12,10 @@ namespace ThreeL.Blob.Clients.Win.Pages
         {
             InitializeComponent();
             DataContext = viewModel;
+
+            viewModel.OldPasswordBox = oldPwd;
+            viewModel.NewPassword = newPwd;
+            viewModel.ConfirmPasswordBox = confirmPwd;
         }
     }
 }

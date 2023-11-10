@@ -15,7 +15,7 @@ namespace ThreeL.Blob.Application.Contract.Services
         Task<ServiceResult> UpdateFileObjectNameAsync(UpdateFileObjectNameDto updateFileObjectDto, long userId);
         Task<ServiceResult> UpdateFileObjectsLocationAsync(UpdateFileObjectLocationDto updateFileObjectLocationDto, long userId);
         Task<ServiceResult<FileObjDto>> CreateFolderAsync(FolderCreationDto folderCreationDto, long userId);
-        Task<ServiceResult<FileObjDto>> CreateFoldersAsync(IEnumerable<FolderTreeCreationDto> folderTreeCreationDtos, long userId);
+        Task<ServiceResult<IEnumerable<FolderTreeCreationResponseDto>>> CreateFoldersAsync(FolderTreeCreationDto folderTreeCreationDto,long userId);
         Task<ServiceResult<FileUploadingStatusDto>> GetUploadingStatusAsync(long fileId, long userId);
         Task<ServiceResult<FileUploadingStatusDto>> CancelUploadingAsync(long fileId, long userId);
         Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId);

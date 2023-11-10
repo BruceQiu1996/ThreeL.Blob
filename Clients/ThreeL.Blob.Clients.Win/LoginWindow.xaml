@@ -15,7 +15,7 @@
         Title="头盘登录" Height="380" Width="700">
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
-            <behaviors:InvokeCommandAction Command="{Binding LoadedCommandAsync}"></behaviors:InvokeCommandAction>
+            <behaviors:InvokeCommandAction Command="{Binding LoadedCommandAsync}" CommandParameter="{Binding ElementName=pwd}"></behaviors:InvokeCommandAction>
         </behaviors:EventTrigger>
     </behaviors:Interaction.Triggers>
     <WindowChrome.WindowChrome>
@@ -41,14 +41,14 @@
             <Grid MouseMove="Border_MouseMove" Grid.ColumnSpan="2" Background="Transparent">
                 <TextBlock Text="头头网盘" 
                            FontFamily="Tahoma"
-                       Foreground="{StaticResource PrimaryBrush}"
-                       Grid.Column="0"
-                       Margin="12 10 0 0" 
-                       Cursor="Hand"
-                       Width="280"
-                       FontWeight="Bold"
-                       HorizontalAlignment="Left"
-                       FontSize="20">
+                           Foreground="{StaticResource PrimaryBrush}"
+                           Grid.Column="0"
+                           Margin="12 10 0 0" 
+                           Cursor="Hand"
+                           Width="280"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Left"
+                           FontSize="20">
                     <behaviors:Interaction.Triggers>
                         <behaviors:EventTrigger EventName="MouseLeftButtonDown">
                             <behaviors:InvokeCommandAction Command="{Binding ShiftMainPageCommand}"></behaviors:InvokeCommandAction>

@@ -72,6 +72,7 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<SystemHelper>();
                 service.AddSingleton<DatabaseHelper>();
                 service.AddSingleton<IniHelper>();
+                service.AddSingleton<EncryptHelper>();
                 service.AddSingleton<IniSettings>();
 
                 var connString = $"Data Source = {Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "db.db")}";

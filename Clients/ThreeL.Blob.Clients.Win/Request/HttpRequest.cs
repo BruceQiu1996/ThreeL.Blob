@@ -56,8 +56,8 @@ namespace ThreeL.Blob.Clients.Win.Request
             }
             else if (resp.StatusCode == HttpStatusCode.Unauthorized && !excuted)
             {
-                var result = TryRefreshToken?.Invoke();
-                if (result == null || !result.Value)
+                var result = await (TryRefreshToken?.Invoke());
+                if (!result)
                 {
                     ExcuteWhileUnauthorized?.Invoke();
                     return default;
@@ -90,7 +90,7 @@ namespace ThreeL.Blob.Clients.Win.Request
             {
                 var content = new StringContent(JsonSerializer.Serialize(body, _jsonOptions));
                 content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                resp = await _httpClient.PostAsync(url, content);
+                resp = await _httpClient.PutAsync(url, content);
             }
             if (resp.IsSuccessStatusCode)
             {
@@ -98,14 +98,14 @@ namespace ThreeL.Blob.Clients.Win.Request
             }
             else if (resp.StatusCode == HttpStatusCode.Unauthorized && !excuted)
             {
-                var result = TryRefreshToken?.Invoke();
-                if (result == null || !result.Value)
+                var result = await (TryRefreshToken?.Invoke());
+                if (!result)
                 {
                     ExcuteWhileUnauthorized?.Invoke();
                     return default;
                 }
                 excuted = true;
-                return await PostAsync(url, body, excuted);
+                return await PutAsync(url, body, excuted);
             }
             else if (resp.StatusCode == HttpStatusCode.BadRequest)
             {
@@ -130,8 +130,8 @@ namespace ThreeL.Blob.Clients.Win.Request
             }
             else if (resp.StatusCode == HttpStatusCode.Unauthorized && !excuted)
             {
-                var result = TryRefreshToken?.Invoke();
-                if (result == null || !result.Value)
+                var result = await (TryRefreshToken?.Invoke());
+                if (!result)
                 {
                     ExcuteWhileUnauthorized?.Invoke();
                     return default;
@@ -166,7 +166,7 @@ namespace ThreeL.Blob.Clients.Win.Request
             return default;
         }
 
-        public event Func<bool> TryRefreshToken;//当服务端返回401的时候，尝试利用refreshtoken重新获取accesstoken以及refreshtoken
+        public Func<Task<bool>> TryRefreshToken;//当服务端返回401的时候，尝试利用refreshtoken重新获取accesstoken以及refreshtoken
         public event Action ExcuteWhileUnauthorized; //401
         public event Action<string> ExcuteWhileBadRequest;//400
         public event Action<string> ExcuteWhileInternalServerError;//500

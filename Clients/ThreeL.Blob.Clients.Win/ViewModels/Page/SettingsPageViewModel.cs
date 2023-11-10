@@ -1,18 +1,28 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Windows.Forms;
+using ThreeL.Blob.Clients.Win.Dtos;
+using ThreeL.Blob.Clients.Win.Helpers;
+using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
     public class SettingsPageViewModel : ObservableObject
     {
+        public PasswordBox OldPasswordBox;
+        public PasswordBox NewPassword;
+        public PasswordBox ConfirmPasswordBox;
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand ChooseDownloadFolderCommandAsync { get; set; }
         public AsyncRelayCommand ChooseTempFolderCommandAsync { get; set; }
         public AsyncRelayCommand ModifyMaxUploadThreadsCommandAsync { get; set; }
         public AsyncRelayCommand ModifyMaxDownloadThreadsCommandAsync { get; set; }
+        public AsyncRelayCommand ModifyPasswordAsyncCommand { get; set; }
 
         private string? _downloadLocation;
         public string? DownloadLocation
@@ -78,14 +88,19 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         
         private readonly IniSettings _iniSettings;
-        public SettingsPageViewModel(IniSettings iniSettings)
+        private readonly GrowlHelper _growlHelper;
+        private readonly HttpRequest _httpRequest;
+        public SettingsPageViewModel(IniSettings iniSettings, GrowlHelper growlHelper, HttpRequest httpRequest)
         {
             _iniSettings = iniSettings;
+            _growlHelper = growlHelper;
+            _httpRequest = httpRequest;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ChooseDownloadFolderCommandAsync = new AsyncRelayCommand(ChooseDownloadFolderAsync);
             ChooseTempFolderCommandAsync = new AsyncRelayCommand(ChooseTempFolderAsync);
             ModifyMaxUploadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxUploadThreadsAsync);
             ModifyMaxDownloadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxDownloadThreadsAsync);
+            ModifyPasswordAsyncCommand = new AsyncRelayCommand(ModifyPasswordAsync);
         }
 
         private Task LoadAsync()
@@ -129,6 +144,45 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task ModifyMaxDownloadThreadsAsync()
         {
             await _iniSettings.WriteMaxDownloadThreads(MaxDownloadThreads);
+        }
+
+        //修改密码
+        private async Task ModifyPasswordAsync()
+        {
+            if (string.IsNullOrEmpty(OldPasswordBox.Password) || string.IsNullOrEmpty(NewPassword.Password)
+                || string.IsNullOrEmpty(ConfirmPasswordBox.Password))
+
+            {
+                _growlHelper.Warning("密码不能为空");
+                return;
+            }
+
+            if (ConfirmPasswordBox.Password != NewPassword.Password)
+            {
+                _growlHelper.Warning("两次密码不一致");
+                return;
+            }
+
+            if (!NewPassword.Password.ValidPassword())
+            {
+                _growlHelper.Warning("密码6-16个长度，并且需要包含数字和字母");
+                return;
+            }
+
+            var resp = await _httpRequest.PutAsync(Const.MODIFY_PASSWORD, new UserModifyPasswordDto()
+            {
+                OldPassword = OldPasswordBox.Password,
+                NewPassword = NewPassword.Password
+            });
+
+            if (resp != null)
+            {
+                //修改密码成功
+                _growlHelper.Success("修改密码成功,3秒后退出到登录界面");
+                await Task.Delay(3000);
+                //退出到登录界面
+                WeakReferenceMessenger.Default.Send(string.Empty, Const.ExitToLogin);
+            }
         }
     }
 }

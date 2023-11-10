@@ -11,6 +11,7 @@ namespace ThreeL.Blob.Application.Contract.Profiles
             CreateMap<UploadFileDto, FileObject>();
             CreateMap<FileObject, FileObjDto>();
             CreateMap<FileObject, PreDownloadFolderFileItemResponseDto>();
+            CreateMap<FolderTreeCreationItemDto, FolderTreeCreationResponseDto>();
         }
     }
 }

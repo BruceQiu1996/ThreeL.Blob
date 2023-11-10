@@ -1,12 +1,16 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using ThreeL.Blob.Clients.Win.Pages;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
+using ThreeL.Blob.Shared.Domain.Metadata.User;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels
 {
@@ -38,6 +42,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             set => SetProperty(ref _downloadingTasksCount, value);
         }
 
+        private bool _isAdmin;
+        public bool IsAdmin
+        {
+            get => _isAdmin;
+            set => SetProperty(ref _isAdmin, value);
+        }
+
         private bool _isUploadingReadyExit;
         private bool _isDownloadingReadyExit = true;
         private readonly MainPage _mainPage;
@@ -45,6 +56,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private readonly SettingsPage _settingsPage;
         public MainWindowViewModel(MainPage mainPage, TransferPage transferPage, SettingsPage settingsPage)
         {
+            IsAdmin = App.UserProfile.Role == Role.Admin.ToString() || App.UserProfile.Role == Role.SuperAdmin.ToString();
             _mainPage = mainPage;
             _transferPage = transferPage;
             _settingsPage = settingsPage;
@@ -82,6 +94,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
 
                 if (_isUploadingReadyExit && _isDownloadingReadyExit)
                     await App.CloseAsync();
+            });
+
+            WeakReferenceMessenger.Default.Register<MainWindowViewModel, string, string>(this, Const.ExitToLogin, async (x, y) =>
+            {
+                Process p = new Process();
+                p.StartInfo.FileName = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "HeadDisk.exe");
+                p.StartInfo.UseShellExecute = false;
+                p.Start();
+
+                WeakReferenceMessenger.Default.Send(string.Empty, Const.Exit);
             });
         }
 
