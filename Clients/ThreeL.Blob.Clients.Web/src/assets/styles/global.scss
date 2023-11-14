@@ -1,0 +1,14 @@
+body {
+    user-select: none; // 禁止选中;
+}
+
+img {
+    -webkit-user-drag: none; // 禁止拖拽;
+}
+
+//首页的样式布局
+.logo-vertical {
+    height: 32px;
+    margin: 16px;
+    background: rgba(255, 255, 255, 0.3);
+}

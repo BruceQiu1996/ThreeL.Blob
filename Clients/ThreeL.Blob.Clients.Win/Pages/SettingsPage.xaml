@@ -97,7 +97,7 @@
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Margin="2" Header="修改密码" 
-                          Width="500"
+                          Width="300"
                           HorizontalContentAlignment="Left"
                           HorizontalAlignment="Left"
                           Background="Transparent"
@@ -105,10 +105,10 @@
                     <StackPanel HorizontalAlignment="Left">
                         <PasswordBox Margin="5" 
                                      Name="oldPwd"
-                                     Style="{StaticResource PasswordBoxExtend}" Width="450" hc:InfoElement.Placeholder="原密码"></PasswordBox>
-                        <PasswordBox Margin="5" Name="newPwd" Style="{StaticResource PasswordBoxExtend}" Width="450" hc:InfoElement.Placeholder="新密码"></PasswordBox>
+                                     Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="原密码"></PasswordBox>
+                        <PasswordBox Margin="5" Name="newPwd" Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="新密码"></PasswordBox>
                         <PasswordBox Name="confirmPwd"
-                                     Margin="5" Style="{StaticResource PasswordBoxExtend}" Width="450" hc:InfoElement.Placeholder="确认密码"></PasswordBox>
+                                     Margin="5" Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="确认密码"></PasswordBox>
                         <Button Content="修改密码" 
                                 Margin="5" Style="{StaticResource ButtonDanger}" Cursor="Hand" 
                                 Command="{Binding ModifyPasswordAsyncCommand}"></Button>
