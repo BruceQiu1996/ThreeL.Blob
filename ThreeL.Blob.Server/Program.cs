@@ -33,11 +33,25 @@ namespace ThreeL.Blob.Server
 
             builder.Host.ConfigureServices((hostContext, services) =>
             {
-                services.AddGrpc(options => 
+                services.AddGrpc(options =>
                 {
                     options.MaxReceiveMessageSize = 1024 * 1024 * 10;//最大10M
                 });
                 services.AddApplicationService();
+                //配置跨域
+                services.AddCors(options =>
+                {
+                    options.AddPolicy("CorsPolicy", builder =>
+                    {
+                        builder.AllowAnyOrigin() //允许所有Origin策略
+
+                               //允许所有请求方法：Get,Post,Put,Delete
+                               .AllowAnyMethod()
+
+                               //允许所有请求头:application/json
+                               .AllowAnyHeader();
+                    });
+                });
                 services.AddControllers();
                 services.AddEndpointsApiExplorer();
                 if (hostContext.HostingEnvironment.IsDevelopment())
@@ -112,6 +126,7 @@ namespace ThreeL.Blob.Server
             host = builder.Build();
             await host.PreheatService();
             host.UseRouting();
+            host.UseCors("CorsPolicy");
             host.UseAuthentication();
             host.UseAuthorization();
             host.UseMiddleware<AuthorizeThumbnailImagesMiddleware>("/api/thumbnailImages"); //授权静态文件访问,如果使用，则表情获取那需要自己控制下载
