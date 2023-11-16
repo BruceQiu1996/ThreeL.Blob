@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Application\ThreeL.Blob.Shared.Application.csproj" />
+    <ProjectReference Include="..\ThreeL.Blob.Chat.Application.Contract\ThreeL.Blob.Chat.Application.Contract.csproj" />
+  </ItemGroup>
+
+</Project>

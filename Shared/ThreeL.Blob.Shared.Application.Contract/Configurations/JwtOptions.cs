@@ -1,6 +1,4 @@
-﻿using ThreeL.Blob.Domain.Entities;
-
-namespace ThreeL.Blob.Application.Contract.Configurations
+﻿namespace ThreeL.Blob.Shared.Application.Contract.Configurations
 {
     public class JwtOptions
     {

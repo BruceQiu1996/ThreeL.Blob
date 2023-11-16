@@ -1,6 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 
-namespace ThreeL.Blob.Application.Contract.Services
+namespace ThreeL.Blob.Shared.Application.Contract.Services
 {
     public interface IJwtService
     {

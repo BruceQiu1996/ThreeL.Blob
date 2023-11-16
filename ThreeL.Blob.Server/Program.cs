@@ -17,6 +17,7 @@ using ThreeL.Blob.Application.Extensions;
 using ThreeL.Blob.Application.Middlewares;
 using ThreeL.Blob.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Services;
 
 namespace ThreeL.Blob.Server
 {

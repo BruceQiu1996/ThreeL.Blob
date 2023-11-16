@@ -1,4 +1,4 @@
-﻿namespace ThreeL.Blob.Application.Contract.Configurations
+﻿namespace ThreeL.Blob.Shared.Application.Contract.Configurations
 {
     public class Const
     {

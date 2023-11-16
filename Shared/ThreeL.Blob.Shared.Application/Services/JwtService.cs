@@ -2,13 +2,11 @@
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
-using ThreeL.Blob.Application.Contract.Configurations;
-using ThreeL.Blob.Application.Contract.Services;
-using ThreeL.Blob.Domain.Entities;
 using ThreeL.Blob.Infra.Redis;
+using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 
-namespace ThreeL.Blob.Application.Services
+namespace ThreeL.Blob.Shared.Application.Services
 {
     public class JwtService : IJwtService, IAppService, IPreheatService
     {

@@ -25,6 +25,6 @@
 		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.5.0" />
 	</ItemGroup>
 	<ItemGroup>
-	  <ProjectReference Include="..\Shared\ThreeL.Blob.Shared.Application\ThreeL.Blob.Shared.Application.csproj" />
+	  <ProjectReference Include="..\Application\ThreeL.Blob.Chat.Application\ThreeL.Blob.Chat.Application.csproj" />
 	</ItemGroup>
 </Project>

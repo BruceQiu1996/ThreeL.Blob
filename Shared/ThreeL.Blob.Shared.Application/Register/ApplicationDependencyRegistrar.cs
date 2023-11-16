@@ -7,6 +7,8 @@ using ThreeL.Blob.Infra.Repository.EfCore.Mysql.Configuration;
 using ThreeL.Blob.Infra.Repository.EfCore.Mysql.Extensions;
 using ThreeL.Blob.Infra.Repository.Entities;
 using ThreeL.Blob.Shared.Application.Contract;
+using ThreeL.Blob.Shared.Application.Contract.Services;
+using ThreeL.Blob.Shared.Application.Services;
 
 namespace ThreeL.Blob.Shared.Application.Register
 {
@@ -25,9 +27,17 @@ namespace ThreeL.Blob.Shared.Application.Register
             AddEntitiesInfo();
             AddEfCoreContext();
             AddRedisCache();
-            AddHelpers();
             AddFluentValidator();
             AddAutoMapper();
+            AddJwtServiceCache();
+            AddHelpers();
+        }
+
+        public void AddChatInfraService()
+        {
+            AddRedisCache();
+            AddAutoMapper();
+            AddJwtServiceCache();
         }
 
         internal void AddEntitiesInfo()
@@ -57,6 +67,11 @@ namespace ThreeL.Blob.Shared.Application.Register
         internal void AddRedisCache()
         {
             _services.AddInfraRedis(_services.GetConfiguration());
+        }
+
+        internal void AddJwtServiceCache()
+        {
+            _services.AddScoped<IJwtService,JwtService>();
         }
     }
 }

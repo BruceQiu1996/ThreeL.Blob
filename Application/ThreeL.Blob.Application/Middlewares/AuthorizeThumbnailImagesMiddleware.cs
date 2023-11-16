@@ -3,7 +3,7 @@
 namespace ThreeL.Blob.Application.Middlewares
 {
     /// <summary>
-    /// 访问缩略路的中间件
+    /// 访问缩略图的中间件
     /// </summary>
     public class AuthorizeThumbnailImagesMiddleware
     {

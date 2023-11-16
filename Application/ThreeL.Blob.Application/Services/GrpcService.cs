@@ -2,12 +2,12 @@
 using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Channels;
-using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Domain.Aggregate.FileObject;
 using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Infra.Repository.IRepositories;
+using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 

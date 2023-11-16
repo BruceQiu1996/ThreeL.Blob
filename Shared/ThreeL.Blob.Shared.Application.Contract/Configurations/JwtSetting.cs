@@ -1,8 +1,6 @@
-﻿using ThreeL.Blob.Infra.Repository.Entities;
-
-namespace ThreeL.Blob.Domain.Entities
+﻿namespace ThreeL.Blob.Shared.Application.Contract.Configurations
 {
-    public class JwtSetting : IEntity<string>
+    public class JwtSetting
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string SecretKey { get; set; }

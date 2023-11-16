@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -8,15 +10,18 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Net;
 using ThreeL.Blob.Chat.Server.Controllers;
+using ThreeL.Blob.Shared.Application.Contract.Services;
+using ThreeL.Blob.Chat.Application.Extensions;
 
 namespace ThreeL.Blob.Chat.Server
 {
     internal class Program
     {
+        static WebApplication host = null;
         async static Task Main(string[] args)
         {
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-            var host = CreateHostBuilder(args).Build();
+            host = CreateHostBuilder(args).Build();
             host.UseRouting();
             host.MapControllers();
             host.UseAuthentication();
@@ -33,8 +38,14 @@ namespace ThreeL.Blob.Chat.Server
                 logger.WriteTo.Console();
             });
 
+            hostBuilder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory()).ConfigureContainer<ContainerBuilder>((hcontext, builder) =>
+            {
+                builder.AddApplicationContainer();
+            });
+
             hostBuilder.Host.ConfigureServices((hostContext, services) =>
             {
+                services.AddApplicationService();
                 services.AddControllers();
                 services.AddEndpointsApiExplorer();
                 services.AddSwaggerGen();
@@ -59,6 +70,7 @@ namespace ThreeL.Blob.Chat.Server
                         ValidateLifetime = true,
                         ClockSkew = TimeSpan.FromSeconds(int.Parse(hostContext.Configuration["Jwt:ClockSkew"]!)), //过期时间容错值，解决服务器端时间不同步问题（秒）
                         RequireExpirationTime = true,
+                        IssuerSigningKeyResolver = host!.Services.GetRequiredService<IJwtService>().ValidateIssuerSigningKey
                     };
                 });
             });

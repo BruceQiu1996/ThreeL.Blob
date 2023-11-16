@@ -2,9 +2,9 @@
 using Autofac.Extras.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using ThreeL.Blob.Application.Channels;
-using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Infra.Core.Extensions.Microsoft;
 using ThreeL.Blob.Shared.Application.Contract;
+using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Interceptors;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Shared.Application.Register;
