@@ -14,7 +14,7 @@ namespace ThreeL.Blob.Clients.Win.Request
 {
     public class HttpRequest
     {
-        private string _token;
+        internal string _token;
         private readonly HttpClient _httpClient;
         private readonly RemoteOptions _remoteOptions;
         private readonly JsonSerializerOptions _jsonOptions = SystemTextJsonSerializer.GetDefaultOptions();

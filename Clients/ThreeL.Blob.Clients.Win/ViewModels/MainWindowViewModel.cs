@@ -1,12 +1,20 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Amazon.Runtime;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
+using ThreeL.Blob.Clients.Win.Configurations;
+using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Pages;
+using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
@@ -54,12 +62,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private readonly MainPage _mainPage;
         private readonly TransferPage _transferPage;
         private readonly SettingsPage _settingsPage;
-        public MainWindowViewModel(MainPage mainPage, TransferPage transferPage, SettingsPage settingsPage)
+        private readonly HttpRequest _httpRequest;
+        private readonly RemoteOptions _remoteOptions;
+        private readonly GrowlHelper _growlHelper;
+        public MainWindowViewModel(MainPage mainPage, TransferPage transferPage, SettingsPage settingsPage, HttpRequest httpRequest,
+                                   IOptions<RemoteOptions> remoteOptions,
+                                   GrowlHelper growlHelper)
         {
             IsAdmin = App.UserProfile.Role == Role.Admin.ToString() || App.UserProfile.Role == Role.SuperAdmin.ToString();
             _mainPage = mainPage;
             _transferPage = transferPage;
             _settingsPage = settingsPage;
+            _httpRequest = httpRequest;
+            _growlHelper = growlHelper;
+            _remoteOptions = remoteOptions.Value;
             ShiftSettingsPageCommand = new RelayCommand(OpenSettingsPage);
             ShiftMainPageCommand = new RelayCommand(OpenMainPage);
             ShiftTransferPageCommand = new RelayCommand(OpenTransferPage);
@@ -118,6 +134,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         {
             CurrentPage = _mainPage;
             await (_transferPage.DataContext as TransferPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
+            App.HubConnection = new HubConnectionBuilder().WithUrl($"http://{_remoteOptions.Host}:{_remoteOptions.ChatPort}/Chat", option =>
+            {
+                option.CloseTimeout = TimeSpan.FromSeconds(60);
+                option.AccessTokenProvider = () => Task.FromResult(_httpRequest._token)!;
+            }).WithAutomaticReconnect().Build();
+
+            App.HubConnection.On("LoginSuccess", () =>
+            {
+                _growlHelper.Success("登录聊天系统成功");
+            });
+
+            await App.HubConnection.StartAsync();
         }
 
         private Task ExitAsync()

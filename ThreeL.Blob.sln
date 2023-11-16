@@ -43,6 +43,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Clients.Win", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Clients.Grpc", "Clients\ThreeL.Blob.Clients.Grpc\ThreeL.Blob.Clients.Grpc.csproj", "{2D76BE60-94D8-488C-B377-3EE0F1C86418}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Chat.Server", "ThreeL.Blob.Chat.Server\ThreeL.Blob.Chat.Server.csproj", "{43C77CF2-051D-4615-BB90-58AEDC9C1F02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +111,10 @@ Global
 		{2D76BE60-94D8-488C-B377-3EE0F1C86418}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D76BE60-94D8-488C-B377-3EE0F1C86418}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D76BE60-94D8-488C-B377-3EE0F1C86418}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43C77CF2-051D-4615-BB90-58AEDC9C1F02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43C77CF2-051D-4615-BB90-58AEDC9C1F02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43C77CF2-051D-4615-BB90-58AEDC9C1F02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43C77CF2-051D-4615-BB90-58AEDC9C1F02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

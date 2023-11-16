@@ -1,5 +1,6 @@
 ﻿using Autofac.Extensions.DependencyInjection;
 using AutoMapper;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,7 @@ namespace ThreeL.Blob.Clients.Win
         internal static IServiceProvider? ServiceProvider;
         internal static IHost host;
         internal static Entities.UserProfile UserProfile;
+        internal static HubConnection HubConnection;
         protected async override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -48,6 +50,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddTransient<DownloadEnsureViewModel>();
                 service.AddTransient<Move>();
                 service.AddTransient<MoveViewModel>();
+                service.AddSingleton<Chat>();
+                service.AddSingleton<ChatViewModel>();
 
                 service.AddSingleton<MainPage>();
                 service.AddSingleton<MainPageViewModel>();
