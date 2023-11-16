@@ -5,6 +5,7 @@ namespace ThreeL.Blob.Clients.Win.Entities
     public class TransferCompleteRecord
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public long  UserId { get; set; }
         public string TaskId { get; set; }
         public long FileId { get; set; }
         public string FileName { get; set; }

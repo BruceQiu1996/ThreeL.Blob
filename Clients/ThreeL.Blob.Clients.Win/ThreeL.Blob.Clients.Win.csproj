@@ -62,7 +62,9 @@
 		<PackageReference Include="System.Drawing.Common" Version="7.0.0" />
 	</ItemGroup>
 	<ItemGroup>
-	  <Resource Include="Icon.ico" />
+	  <Resource Include="Icon.ico">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Resource>
 	</ItemGroup>
 	<ItemGroup>
 	  <None Update="Icon.ico">

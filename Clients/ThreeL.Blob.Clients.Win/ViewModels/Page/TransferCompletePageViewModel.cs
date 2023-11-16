@@ -95,7 +95,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             try
             {
                 if (_loaded) return;
-                var records = await _databaseHelper.QueryListAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords ORDER BY BeginTime DESC",null);
+                var records = await _databaseHelper
+                    .QueryListAsync<TransferCompleteRecord>("SELECT * FROM TransferCompleteRecords WHERE UserId = @UserId ORDER BY BeginTime DESC", new 
+                    {
+                        UserId = App.UserProfile.Id
+                    });
                 foreach (var record in records)
                 {
                     AddRecord(_mapper.Map<TransferCompleteItemViewModel>(record));

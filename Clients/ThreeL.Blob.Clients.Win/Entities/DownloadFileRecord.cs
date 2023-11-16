@@ -6,6 +6,7 @@ namespace ThreeL.Blob.Clients.Win.Entities
     public class DownloadFileRecord
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public long UserId { get; set; }
         public string TaskId { get; set; }
         public long FileId { get; set; }
         public string FileName { get; set; }

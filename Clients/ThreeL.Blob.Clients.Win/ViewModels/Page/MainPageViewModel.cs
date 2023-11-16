@@ -650,6 +650,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                         Deserialize<UploadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
                     var record = new UploadFileRecord()
                     {
+                        UserId = App.UserProfile.Id,
                         FileId = result.FileId,
                         FileName = fileInfo.Name,
                         Size = fileInfo.Length,
@@ -659,8 +660,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                         Code = code
                     };
 
-                    _databaseHelper.Excute("INSERT INTO UploadFileRecords (Id,FileId,FileName,FileLocation,Size,TransferBytes,CreateTime,UploadFinishTime,Code,Status)" +
-                        "VALUES(@Id,@FileId,@FileName,@FileLocation,@Size,@TransferBytes,@CreateTime,@UploadFinishTime,@Code,@Status)", record);
+                    _databaseHelper.Excute("INSERT INTO UploadFileRecords (Id,FileId,FileName,FileLocation,Size,TransferBytes,CreateTime,UploadFinishTime,Code,Status,UserId)" +
+                        "VALUES(@Id,@FileId,@FileName,@FileLocation,@Size,@TransferBytes,@CreateTime,@UploadFinishTime,@Code,@Status,@UserId)", record);
 
                     WeakReferenceMessenger.Default.Send(record, Const.AddUploadRecord);
                 }
@@ -741,6 +742,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 File.Create(tempFileName).Close();
                 var record = new DownloadFileRecord()
                 {
+                    UserId = App.UserProfile.Id,
                     FileId = result.FileId,
                     TaskId = result.TaskId,
                     TempFileLocation = tempFileName,
@@ -751,8 +753,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     Code = result.Code
                 };
 
-                _databaseHelper.Excute("INSERT INTO DownloadFileRecords (Id,TaskId,FileId,FileName,TempFileLocation,Location,Size,TransferBytes,CreateTime,DownloadFinishTime,Code,Status)" +
-                    "VALUES(@Id,@TaskId,@FileId,@FileName,@TempFileLocation,@Location,@Size,@TransferBytes,@CreateTime,@DownloadFinishTime,@Code,@Status)", record);
+                _databaseHelper.Excute("INSERT INTO DownloadFileRecords (Id,TaskId,FileId,FileName,TempFileLocation,Location,Size,TransferBytes,CreateTime,DownloadFinishTime,Code,Status,UserId)" +
+                    "VALUES(@Id,@TaskId,@FileId,@FileName,@TempFileLocation,@Location,@Size,@TransferBytes,@CreateTime,@DownloadFinishTime,@Code,@Status,@UserId)", record);
 
                 //发送添加下载任务事件
                 WeakReferenceMessenger.Default.Send(new Tuple<DownloadFileRecord, bool>(record, openWhenFinished), Const.AddDownloadRecord);

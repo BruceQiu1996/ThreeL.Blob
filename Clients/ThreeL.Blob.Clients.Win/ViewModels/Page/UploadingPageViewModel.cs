@@ -169,7 +169,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     return;
 
                 var records = await _databaseHelper
-                    .QueryListAsync<UploadFileRecord>("SELECT * FROM UploadFileRecords WHERE Status <=3 ORDER BY CreateTime DESC", null);
+                    .QueryListAsync<UploadFileRecord>("SELECT * FROM UploadFileRecords WHERE Status <=3 AND UserId = @UserId ORDER BY CreateTime DESC", new 
+                    {
+                        UserId = App.UserProfile.Id
+                    });
 
                 _databaseHelper.Excute("UPDATE UploadFileRecords SET Status = 3 WHERE Id in @Ids", new { Ids = records.Select(x=>x.Id)});
                 foreach (var item in records)

@@ -167,7 +167,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                     //|| x.Status == FileDownloadingStatus.DownloadingSuspend || x.Status == FileDownloadingStatus.Wait).OrderByDescending(x => x.CreateTime).ToListAsync();
 
                 var downloadFileRecords = await _databaseHelper
-                    .QueryListAsync<DownloadFileRecord>("SELECT * FROM DownloadFileRecords WHERE Status <=3 ORDER BY CreateTime DESC",null);
+                    .QueryListAsync<DownloadFileRecord>("SELECT * FROM DownloadFileRecords WHERE Status <=3 AND UserId = @UserId ORDER BY CreateTime DESC", new 
+                    {
+                        UserId = App.UserProfile.Id
+                    });
 
                 _databaseHelper.Excute("UPDATE DownloadFileRecords SET Status = 3 WHERE Id in @Ids", new { Ids = downloadFileRecords.Select(x => x.Id) });
                 foreach (var item in downloadFileRecords)

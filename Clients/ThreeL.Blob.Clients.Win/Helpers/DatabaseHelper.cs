@@ -27,7 +27,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
 
         public async Task<IEnumerable<T>> QueryListAsync<T>(string sql, object parameters)
         {
-            return await _queryConnection.QueryAsync<T>(sql);
+            return await _queryConnection.QueryAsync<T>(sql,parameters);
         }
 
         public async Task<T> QueryFirstOrDefaultAsync<T>(string sql, object parameters)
