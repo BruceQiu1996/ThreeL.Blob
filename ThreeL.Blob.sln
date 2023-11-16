@@ -41,7 +41,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Infra.Redis", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Clients.Win", "Clients\ThreeL.Blob.Clients.Win\ThreeL.Blob.Clients.Win.csproj", "{3D8F74B1-1103-4177-B20B-9C5B77082BD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThreeL.Blob.Clients.Grpc", "Clients\ThreeL.Blob.Clients.Grpc\ThreeL.Blob.Clients.Grpc.csproj", "{2D76BE60-94D8-488C-B377-3EE0F1C86418}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThreeL.Blob.Clients.Grpc", "Clients\ThreeL.Blob.Clients.Grpc\ThreeL.Blob.Clients.Grpc.csproj", "{2D76BE60-94D8-488C-B377-3EE0F1C86418}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -61,8 +61,8 @@
         </TextBox>
         <Border Grid.Row="0" BorderThickness="0 0 0 1" BorderBrush="#ccc">
             <StackPanel Orientation="Horizontal" Margin="2 0 0 0">
-                <Button Content="立即上传" FontSize="14" Command="{Binding UploadCommandAsync}" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
-                <Button Content="新建文件夹" FontSize="14" Command="{Binding NewFolderCommand}" Margin="5 0 0 0" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
+                <Button Content="立即上传" FontSize="13" Command="{Binding UploadCommandAsync}" Style="{StaticResource ButtonPrimary}" Cursor="Hand"></Button>
+                <Button Content="新建文件夹" FontSize="13" Command="{Binding NewFolderCommand}" Margin="5 0 0 0" Style="{StaticResource ButtonWarning}" Cursor="Hand"></Button>
 
                 <hc:SearchBar Style="{StaticResource SearchBarExtend}" hc:InfoElement.Placeholder="搜索文件"
                               Height="30" Width="240"
@@ -79,10 +79,10 @@
                           ItemsSource="{Binding SortOptions}"
                           SelectedItem="{Binding SortOption}">
                 </ComboBox>
-                <Button Content="刷新" Margin="5 0 0 0" 
+                <!--<Button Content="刷新" Margin="5 0 0 0" 
                         FontSize="14"
                         Command="{Binding RefreshCommandAsync}"
-                        Width="120" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>
+                        Width="120" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>-->
                 <CheckBox Content="列表" Margin="20 0  0 0" ToolTip="切换为列表视图" FontSize="14" IsChecked="{Binding IsListView}" Cursor="Hand"></CheckBox>
             </StackPanel>
         </Border>
