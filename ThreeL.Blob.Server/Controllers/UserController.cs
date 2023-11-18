@@ -75,6 +75,7 @@ namespace ThreeL.ContextAPI.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("password")]
         public async Task<ActionResult> ModifyPassword(UserModifyPasswordDto userModifyPasswordDto)
         {
@@ -84,6 +85,29 @@ namespace ThreeL.ContextAPI.Controllers
                 var sresult = await _userService.ModifyUserPasswordAsync(userModifyPasswordDto, userId);
 
                 return sresult.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [Authorize]
+        [HttpPost("upload-avatar")]
+        public async Task<ActionResult> UploadAvatar([FromForm] IFormFile file)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _userService.UploadUserAvatarAsync(userId,file);
+
+                if (result.Value == null)
+                {
+                    return result.ToActionResult();
+                }
+
+                return new FileStreamResult(new FileStream(result.Value.FullName, FileMode.Open), "application/octet-stream") { FileDownloadName = result.Value.Name };
             }
             catch (Exception ex)
             {

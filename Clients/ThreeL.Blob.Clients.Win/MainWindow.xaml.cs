@@ -40,6 +40,7 @@ namespace ThreeL.Blob.Clients.Win
                 Hide();
             }
         }
+
         private void NotifyIcon_Click(object sender, RoutedEventArgs e)
         {
             Show();

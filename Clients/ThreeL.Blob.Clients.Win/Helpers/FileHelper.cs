@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HandyControl.Controls;
+using MongoDB.Bson.Serialization.Serializers;
+using System;
 using System.IO;
 using System.Windows.Media.Imaging;
 
@@ -139,6 +141,31 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             }
 
             return freeSpace;
+        }
+
+        public BitmapImage BytesToImage(byte[] bytes)
+        {
+            var source = new BitmapImage();
+            try
+            {
+                using (MemoryStream ms = new MemoryStream(bytes))
+                {
+                    source.BeginInit();
+                    source.StreamSource = ms;
+                    source.CacheOption = BitmapCacheOption.OnLoad;
+                    source.EndInit();
+
+                    return source;
+                }
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
+            finally
+            {
+                source.Freeze();
+            }
         }
     }
 }

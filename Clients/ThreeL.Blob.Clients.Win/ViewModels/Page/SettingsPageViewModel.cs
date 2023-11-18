@@ -1,11 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Helpers;
+using ThreeL.Blob.Clients.Win.Pages;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
@@ -23,6 +29,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand ModifyMaxUploadThreadsCommandAsync { get; set; }
         public AsyncRelayCommand ModifyMaxDownloadThreadsCommandAsync { get; set; }
         public AsyncRelayCommand ModifyPasswordAsyncCommand { get; set; }
+        public AsyncRelayCommand UploadAvatarCommandAsync { get; set; }
 
         private string? _downloadLocation;
         public string? DownloadLocation
@@ -86,7 +93,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        
+
         private readonly IniSettings _iniSettings;
         private readonly GrowlHelper _growlHelper;
         private readonly HttpRequest _httpRequest;
@@ -101,6 +108,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             ModifyMaxUploadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxUploadThreadsAsync);
             ModifyMaxDownloadThreadsCommandAsync = new AsyncRelayCommand(ModifyMaxDownloadThreadsAsync);
             ModifyPasswordAsyncCommand = new AsyncRelayCommand(ModifyPasswordAsync);
+            UploadAvatarCommandAsync = new AsyncRelayCommand(UploadAvatarAsync);
         }
 
         private Task LoadAsync()
@@ -136,7 +144,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        private async Task ModifyMaxUploadThreadsAsync() 
+        private async Task ModifyMaxUploadThreadsAsync()
         {
             await _iniSettings.WriteMaxUploadThreads(MaxUploadThreads);
         }
@@ -183,6 +191,36 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 //退出到登录界面
                 WeakReferenceMessenger.Default.Send(string.Empty, Const.ExitToLogin);
             }
+        }
+
+        //上传头像
+        private async Task UploadAvatarAsync()
+        {
+            var avatar = App.ServiceProvider!.GetRequiredService<SettingsPage>().avatar;
+            if (avatar.Uri == null || !avatar.HasValue || !File.Exists(avatar.Uri.LocalPath))
+            {
+                return;
+            }
+
+            var avatarInfo = new FileInfo(avatar.Uri.LocalPath);
+            if (avatarInfo.Length > 2 * 1024 * 1024)
+            {
+                _growlHelper.Warning("图片大于2M");
+                return;
+            }
+
+            var data = await File.ReadAllBytesAsync(avatar.Uri.LocalPath);
+            var resp = await _httpRequest.PostAvatarAsync(avatarInfo.Name, data);
+            if (resp != null)
+            {
+                WeakReferenceMessenger.Default.Send(await resp.Content.ReadAsByteArrayAsync(), Const.AvatarUploaded);
+            }
+
+            avatar.SetValue(HandyControl.Controls.ImageSelector.UriPropertyKey, default(Uri));
+            avatar.SetValue(HandyControl.Controls.ImageSelector.PreviewBrushPropertyKey, default(Brush));
+            avatar.SetValue(HandyControl.Controls.ImageSelector.HasValuePropertyKey, false);
+            avatar.SetCurrentValue(FrameworkElement.ToolTipProperty, default);
+            avatar.RaiseEvent(new RoutedEventArgs(HandyControl.Controls.ImageSelector.ImageUnselectedEvent, this));
         }
     }
 }

@@ -12,6 +12,7 @@ using System.Net;
 using ThreeL.Blob.Chat.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Chat.Application.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Extensions;
 
 namespace ThreeL.Blob.Chat.Server
 {
@@ -27,6 +28,7 @@ namespace ThreeL.Blob.Chat.Server
             host.UseAuthentication();
             host.UseAuthorization();
             host.MapHub<ChatHub>("/Chat");
+            await host.PreheatService();
             await host.RunAsync();
         }
 
@@ -86,7 +88,6 @@ namespace ThreeL.Blob.Chat.Server
             });
 
             return hostBuilder;
-
         }
     }
 }

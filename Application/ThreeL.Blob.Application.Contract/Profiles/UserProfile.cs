@@ -13,6 +13,11 @@ namespace ThreeL.Blob.Application.Contract.Profiles
                 {
                     y.MapFrom(src => src.Role.ToString());
                 });
+
+            CreateMap<User, RelationBriefDto>().AfterMap((x, y) =>
+            {
+                y.IsGroup = false;
+            });
         }
     }
 }

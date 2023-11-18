@@ -79,6 +79,61 @@ namespace ThreeL.Blob.Clients.Win.Request
             return default;
         }
 
+        public async Task<HttpResponseMessage> PostAvatarAsync(string filename,byte[] bytes, bool excuted = false)
+        {
+            using (var client = new HttpClient())
+            {
+                BuildHttpClient(client);
+                if (!string.IsNullOrEmpty(_token))
+                {
+                    if (client.DefaultRequestHeaders.Contains("Authorization"))
+                    {
+                        client.DefaultRequestHeaders.Remove("Authorization");
+                    }
+                    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_token}");
+                }
+                var fileContent = new ByteArrayContent(bytes);
+                fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                {
+                    Name = "file",
+                    FileName = filename
+                };
+                var content = new MultipartFormDataContent
+                {
+                    fileContent
+                };
+
+                var resp = await client.PostAsync(string.Format(Const.UPLOAD_AVATAR), content);
+                if (resp.IsSuccessStatusCode)
+                {
+                    return resp;
+                }
+                else if (resp.StatusCode == HttpStatusCode.Unauthorized && !excuted)
+                {
+                    var result = await (TryRefreshToken?.Invoke());
+                    if (!result)
+                    {
+                        ExcuteWhileUnauthorized?.Invoke();
+                        return default;
+                    }
+                    excuted = true;
+                    return await PostAvatarAsync(filename, bytes, excuted);
+                }
+                else if (resp.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var message = await resp.Content.ReadAsStringAsync();
+                    ExcuteWhileBadRequest?.Invoke(message);
+                }
+                else if (resp.StatusCode == HttpStatusCode.InternalServerError)
+                {
+                    var message = await resp.Content.ReadAsStringAsync();
+                    ExcuteWhileInternalServerError?.Invoke(message);
+                }
+            }
+
+            return default;
+        }
+
         public async Task<HttpResponseMessage> PutAsync(string url, dynamic body, bool excuted = false)
         {
             HttpResponseMessage resp = null;

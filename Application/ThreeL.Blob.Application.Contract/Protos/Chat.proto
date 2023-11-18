@@ -1,13 +1,2 @@
 ﻿syntax = "proto3";
 option csharp_namespace = "ThreeL.Blob.Application.Contract.Protos";
-
-message InitializeRequest {
-}
-
-message InitializeResponse {
-
-}
-
-service ChatGrpcService{
-	rpc Initialize(InitializeRequest) returns (InitializeResponse);
-}

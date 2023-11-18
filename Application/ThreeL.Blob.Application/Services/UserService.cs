@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +35,7 @@ namespace ThreeL.Blob.Application.Services
                            PasswordHelper passwordHelper,
                            IOptions<JwtOptions> jwtOptions,
                            IOptionsSnapshot<JwtBearerOptions> jwtBearerOptions,
+                           IConfiguration configuration,
                            IRedisProvider redisProvider, IOptions<SystemOptions> systemOptions,
                            IMapper mapper)
         {
@@ -44,6 +46,7 @@ namespace ThreeL.Blob.Application.Services
             _jwtOptions = jwtOptions.Value;
             _systemOptions = systemOptions.Value;
             _jwtBearerOptions = jwtBearerOptions.Get(JwtBearerDefaults.AuthenticationScheme);
+            _configuration = configuration;
         }
 
         public async Task<ServiceResult<UserLoginResponseDto>> AccountLoginAsync(UserLoginDto userLoginDto)
@@ -64,6 +67,7 @@ namespace ThreeL.Blob.Application.Services
                 var respDto = _mapper.Map<UserLoginResponseDto>(user);
                 respDto.RefreshToken = token.refreshToken;
                 respDto.AccessToken = token.accessToken;
+                respDto.Avatar = respDto.Avatar == null ? respDto.Avatar : respDto.Avatar.Replace(_configuration.GetSection("FileStorage:AvatarImagesLocation").Value!, null);
 
                 return new ServiceResult<UserLoginResponseDto>(respDto);
             }
@@ -178,6 +182,41 @@ namespace ThreeL.Blob.Application.Services
             await _userBasicRepository.UpdateAsync(user);
 
             return new ServiceResult();
+        }
+
+        public async Task<ServiceResult<FileInfo>> UploadUserAvatarAsync(long userId, IFormFile file)
+        {
+            var user = await _userBasicRepository.GetAsync(userId);
+            if (user == null) 
+            {
+                return new ServiceResult<FileInfo>(HttpStatusCode.BadRequest, "用户异常");
+            }
+
+            if (file.Length > 1024 * 1024 * 2)
+            {
+                return new ServiceResult<FileInfo>(HttpStatusCode.BadRequest, "图片大小不符要求");
+            }
+
+            var fileExtension = Path.GetExtension(file.FileName);
+            var saveFolder = Path.Combine(_configuration.GetSection("FileStorage:AvatarImagesLocation").Value!, $"user-{userId}");
+            var fileName = $"{Path.GetRandomFileName()}{fileExtension}";
+            var fullName = Path.Combine(saveFolder, fileName);
+
+            if (!Directory.Exists(saveFolder))
+            {
+                Directory.CreateDirectory(saveFolder);
+            }
+
+            using (var fs = File.Create(fullName))
+            {
+                await file.CopyToAsync(fs);
+                await fs.FlushAsync();
+            }
+
+            user.Avatar = fullName;
+            await _userBasicRepository.UpdateAsync(user);
+
+            return new ServiceResult<FileInfo>(new FileInfo(fullName));
         }
     }
 }

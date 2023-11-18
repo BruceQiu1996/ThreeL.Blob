@@ -69,7 +69,7 @@
                                 </behaviors:EventTrigger>
                             </behaviors:Interaction.Triggers>
                         </hc:NumericUpDown>
-                        
+
                         <hc:NumericUpDown Maximum="10" 
                                           HorizontalAlignment="Left"
                                           FontSize="14"
@@ -96,22 +96,31 @@
                                 Style="{StaticResource ButtonDanger}"></Button>
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Margin="2" Header="修改密码" 
-                          Width="300"
+                <GroupBox Margin="2" Header="个人信息" 
                           HorizontalContentAlignment="Left"
                           HorizontalAlignment="Left"
                           Background="Transparent"
                           Padding="5" FontSize="16" Style="{StaticResource GroupBoxTab}">
-                    <StackPanel HorizontalAlignment="Left">
-                        <PasswordBox Margin="5" 
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel HorizontalAlignment="Left">
+                            <PasswordBox Margin="5" 
                                      Name="oldPwd"
                                      Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="原密码"></PasswordBox>
-                        <PasswordBox Margin="5" Name="newPwd" Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="新密码"></PasswordBox>
-                        <PasswordBox Name="confirmPwd"
+                            <PasswordBox Margin="5" Name="newPwd" Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="新密码"></PasswordBox>
+                            <PasswordBox Name="confirmPwd"
                                      Margin="5" Style="{StaticResource PasswordBoxExtend}" Width="250" hc:InfoElement.Placeholder="确认密码"></PasswordBox>
-                        <Button Content="修改密码" 
+                            <Button Content="修改密码" 
                                 Margin="5" Style="{StaticResource ButtonDanger}" Cursor="Hand" 
                                 Command="{Binding ModifyPasswordAsyncCommand}"></Button>
+                        </StackPanel>
+                        <StackPanel>
+                        <hc:ImageSelector Width="120" Margin="5" Height="120" Name="avatar">
+                            
+                        </hc:ImageSelector>
+                            <Button Content="上传头像" Margin="0 5 0 0" 
+                                    Style="{StaticResource ButtonDanger}"
+                                    Command="{Binding UploadAvatarCommandAsync}"></Button>
+                        </StackPanel>
                     </StackPanel>
                 </GroupBox>
             </StackPanel>

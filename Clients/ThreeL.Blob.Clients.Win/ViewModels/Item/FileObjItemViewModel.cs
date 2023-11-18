@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Dtos;
+using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Extensions.System;
@@ -165,29 +166,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             var _ = Task.Run(async () =>
             {
-                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>()
+                var resp = await App.ServiceProvider!.GetRequiredService<HttpRequest>()
                     .GetAsync(string.Format(Const.GET_THUMBNAIL_IMAGE, App.UserProfile.Id, thumbnailImage));
 
                 if (resp != null && resp.IsSuccessStatusCode)
                 {
-                    var bytes = await resp.Content.ReadAsByteArrayAsync();
-                    var source = new BitmapImage();
-                    try
-                    {
-                        using (MemoryStream ms = new MemoryStream(bytes))
-                        {
-                            source.BeginInit();
-                            source.StreamSource = ms;
-                            source.CacheOption = BitmapCacheOption.OnLoad;
-                            source.EndInit();
-
-                            Icon = source;
-                        }
-                    }
-                    finally
-                    {
-                        source.Freeze();
-                    }
+                    Icon = App.ServiceProvider!.GetRequiredService<FileHelper>().BytesToImage(await resp.Content.ReadAsByteArrayAsync());
                 }
             });
         }

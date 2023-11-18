@@ -8,10 +8,12 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Configurations;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Pages;
@@ -21,6 +23,7 @@ using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
 using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Shared.Domain.Metadata.User;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels
 {
@@ -59,6 +62,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             set => SetProperty(ref _isAdmin, value);
         }
 
+        private string _userName;
+        public string UserName
+        {
+            get => _userName;
+            set => SetProperty(ref _userName, value);
+        }
+
+        private BitmapImage _avatar;
+        public BitmapImage Avatar
+        {
+            get => _avatar;
+            set => SetProperty(ref _avatar, value);
+        }
+
         private bool _isUploadingReadyExit;
         private bool _isDownloadingReadyExit = true;
         private readonly MainPage _mainPage;
@@ -67,6 +84,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private readonly HttpRequest _httpRequest;
         private readonly RemoteOptions _remoteOptions;
         private readonly GrowlHelper _growlHelper;
+        private readonly FileHelper _fileHelper;
         private readonly Chat _chat;
         public MainWindowViewModel(MainPage mainPage, 
                                    TransferPage transferPage, 
@@ -74,6 +92,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
                                    HttpRequest httpRequest,
                                    IOptions<RemoteOptions> remoteOptions,
                                    GrowlHelper growlHelper,
+                                   FileHelper fileHelper,
                                    Chat chat)
         {
             IsAdmin = App.UserProfile.Role == Role.Admin.ToString() || App.UserProfile.Role == Role.SuperAdmin.ToString();
@@ -82,6 +101,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             _settingsPage = settingsPage;
             _httpRequest = httpRequest;
             _growlHelper = growlHelper;
+            _fileHelper = fileHelper;
             _remoteOptions = remoteOptions.Value;
             _chat = chat;
             ShiftSettingsPageCommand = new RelayCommand(OpenSettingsPage);
@@ -129,6 +149,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
 
                 WeakReferenceMessenger.Default.Send(string.Empty, Const.Exit);
             });
+
+            //上传头像成功
+            WeakReferenceMessenger.Default.Register<MainWindowViewModel, byte[], string>(this, Const.AvatarUploaded, async (x, y) =>
+            {
+                Avatar =  _fileHelper.BytesToImage(y);
+            });
         }
 
         private System.Windows.Controls.Page _currentPage;
@@ -140,6 +166,15 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
 
         private async Task LoadAsync()
         {
+            UserName = App.UserProfile.UserName;
+            if (App.UserProfile.Avatar != null) 
+            {
+                var avatarResp = await App.ServiceProvider!.GetRequiredService<HttpRequest>().GetAsync(string.Format(Const.GET_AVATAR_IMAGE, App.UserProfile.Avatar.Replace("\\","/")));
+                if (avatarResp != null) 
+                {
+                    Avatar =  _fileHelper.BytesToImage(await avatarResp.Content.ReadAsByteArrayAsync());
+                }
+            }
             CurrentPage = _mainPage;
             await (_transferPage.DataContext as TransferPageViewModel)!.LoadCommandAsync.ExecuteAsync(null);
             _chat.Left = SystemParameters.WorkArea.Width - _chat.Width;

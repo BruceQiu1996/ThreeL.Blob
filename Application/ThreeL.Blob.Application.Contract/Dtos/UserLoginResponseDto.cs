@@ -12,5 +12,6 @@
         public long TodayUploadMaxSize { get; set; }
         public long? DownloadSpeedLimit { get; set; }
         public long? MaxSpaceSize { get; set; }
+        public string? Avatar { get; set; }
     }
 }

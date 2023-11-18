@@ -94,153 +94,169 @@
                      Margin="3 4 2 5"
                      Effect="{DynamicResource EffectShadow2}"
                      BorderThickness="0">
-                <ListBox Background="White" BorderThickness="0">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical"></StackPanel>
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBoxItem Height="50" Width="55" Margin="-1 1 0 0" IsSelected="True">
-                        <behaviors:Interaction.Triggers>
-                            <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                <behaviors:InvokeCommandAction Command="{Binding ShiftMainPageCommand}"></behaviors:InvokeCommandAction>
-                            </behaviors:EventTrigger>
-                        </behaviors:Interaction.Triggers>
-                        <ListBoxItem.Style>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="False">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#888"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBoxItem.Style>
-                        <Label BorderThickness="0"
+                <StackPanel Orientation="Vertical">
+                    <hc:Gravatar Id="{Binding UserName}" 
+                                 Visibility="{Binding Avatar,Converter={StaticResource Object2VisibilityReConverter}}" 
+                                 Margin="0 5 0 0" Background="#eee" Style="{StaticResource GravatarCircle}" Width="50" Height="50">
+
+                    </hc:Gravatar>
+
+                    <hc:Gravatar Visibility="{Binding Avatar,Converter={StaticResource Object2VisibilityConverter}}" 
+                                 Source="{Binding Avatar}"
+                                 Margin="0 5 0 0" 
+                                 Background="#eee" 
+                                 Style="{StaticResource GravatarCircle}" Width="50" Height="50">
+                        
+                    </hc:Gravatar>
+                    <ListBox Background="White" BorderThickness="0" Margin="0 20 0 0">
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical"></StackPanel>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+
+                        <ListBoxItem Height="50" Width="55" Margin="-1 2 0 0" IsSelected="True" Padding="0">
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                                    <behaviors:InvokeCommandAction Command="{Binding ShiftMainPageCommand}"></behaviors:InvokeCommandAction>
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                            <ListBoxItem.Style>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="False">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBoxItem.Style>
+                            <Label BorderThickness="0"
                                Cursor="Hand"
                                ToolTip="主页"
                                Height="55" Width="55"
                                Background="Transparent"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
-                            <Path Data="{StaticResource main}" 
+                                <Path Data="{StaticResource main}" 
                                   SnapsToDevicePixels="True"
                                   Height="28" Width="28"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" 
                                   Stretch="Uniform"/>
-                        </Label>
-                    </ListBoxItem>
+                            </Label>
+                        </ListBoxItem>
 
-                    <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
-                        <ListBoxItem.Style>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="False">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#888"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBoxItem.Style>
-                        <behaviors:Interaction.Triggers>
-                            <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                <behaviors:InvokeCommandAction Command="{Binding ShiftTransferPageCommand}"></behaviors:InvokeCommandAction>
-                            </behaviors:EventTrigger>
-                        </behaviors:Interaction.Triggers>
-                        <hc:Badge Text="{Binding TransferCounts}" BorderThickness="0"
+                        <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
+                            <ListBoxItem.Style>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="False">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBoxItem.Style>
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                                    <behaviors:InvokeCommandAction Command="{Binding ShiftTransferPageCommand}"></behaviors:InvokeCommandAction>
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                            <hc:Badge Text="{Binding TransferCounts}" BorderThickness="0"
                                   ShowBadge="{Binding TransferCounts,Converter={StaticResource String2BooleanConverter}}"
                                   Background="Red" Foreground="White" BadgeMargin="10 3 -5 0">
-                            <Label BorderThickness="0"
+                                <Label BorderThickness="0"
                                    Cursor="Hand"
                                    ToolTip="传输"
                                    Background="Transparent"
                                    Height="55" Width="55"
                                    VerticalContentAlignment="Center"
                                    Grid.Column="1">
-                                <Path Data="{StaticResource transfer}" 
+                                    <Path Data="{StaticResource transfer}" 
                                   SnapsToDevicePixels="True"
                                   Height="32" Width="32"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" Stretch="Uniform" />
-                            </Label>
-                        </hc:Badge>
-                    </ListBoxItem>
+                                </Label>
+                            </hc:Badge>
+                        </ListBoxItem>
 
-                    <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
-                        <ListBoxItem.Style>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="False">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#888"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBoxItem.Style>
-                        <behaviors:Interaction.Triggers>
-                            <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                <behaviors:InvokeCommandAction Command="{Binding ShiftSettingsPageCommand}"></behaviors:InvokeCommandAction>
-                            </behaviors:EventTrigger>
-                        </behaviors:Interaction.Triggers>
-                        <Label BorderThickness="0"
+                        <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
+                            <ListBoxItem.Style>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="False">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBoxItem.Style>
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                                    <behaviors:InvokeCommandAction Command="{Binding ShiftSettingsPageCommand}"></behaviors:InvokeCommandAction>
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                            <Label BorderThickness="0"
                                Cursor="Hand"
                                ToolTip="设置"
                                Background="Transparent"
                                Height="55" Width="55"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
-                            <Path Data="{StaticResource setting}" 
+                                <Path Data="{StaticResource setting}" 
                                   SnapsToDevicePixels="True"
                                   Height="32" Width="32"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" Stretch="Uniform" />
-                        </Label>
-                    </ListBoxItem>
+                            </Label>
+                        </ListBoxItem>
 
-                    <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0" Visibility="{Binding IsAdmin,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <ListBoxItem.Style>
-                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                                        <Setter Property="Foreground" Value="White"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="False">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="#888"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ListBoxItem.Style>
-                        <behaviors:Interaction.Triggers>
-                            <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                <behaviors:InvokeCommandAction Command="{Binding ShiftSettingsPageCommand}"></behaviors:InvokeCommandAction>
-                            </behaviors:EventTrigger>
-                        </behaviors:Interaction.Triggers>
-                        <Label BorderThickness="0"
+                        <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0" Visibility="{Binding IsAdmin,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <ListBoxItem.Style>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="False">
+                                            <Setter Property="Background" Value="Transparent"/>
+                                            <Setter Property="Foreground" Value="#888"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListBoxItem.Style>
+                            <behaviors:Interaction.Triggers>
+                                <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
+                                    <behaviors:InvokeCommandAction Command="{Binding ShiftSettingsPageCommand}"></behaviors:InvokeCommandAction>
+                                </behaviors:EventTrigger>
+                            </behaviors:Interaction.Triggers>
+                            <Label BorderThickness="0"
                                Cursor="Hand"
                                ToolTip="管理员"
                                Background="Transparent"
                                Height="55" Width="55"
                                VerticalContentAlignment="Center"
                                Grid.Column="1">
-                            <Path Data="{StaticResource team}" 
+                                <Path Data="{StaticResource team}" 
                                   SnapsToDevicePixels="True"
                                   Height="32" Width="32"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" Stretch="Uniform" />
-                        </Label>
-                    </ListBoxItem>
-                </ListBox>
+                            </Label>
+                        </ListBoxItem>
+                    </ListBox>
+                </StackPanel>
             </hc:Card>
 
             <Frame Content="{Binding CurrentPage,UpdateSourceTrigger=PropertyChanged}" Grid.Row="1" Grid.Column="1" BorderThickness="0"
