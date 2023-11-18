@@ -11,6 +11,7 @@ namespace ThreeL.Blob.Domain.Aggregate.User
         public bool IsDeleted { get; set; }
         public long CreateBy { get; set; }
         public DateTime CreateTime { get; set; }
+        public string? Avatar { get; set; }
         public Role Role { get; set; }
         public DateTime? LastLoginTime { get; set; }
         public long UploadMaxSizeLimit { get; set; }

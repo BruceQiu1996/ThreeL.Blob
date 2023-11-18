@@ -10,7 +10,8 @@ namespace ThreeL.Blob.Chat.Server.Controllers
         {
             await base.OnConnectedAsync();
             //登录成功
-            await Clients.Client(Context.ConnectionId).SendAsync("LoginSuccess");
+            await Clients.Client(Context.ConnectionId).SendAsync("" +
+                "LoginSuccess");
         }
 
         public async override Task OnDisconnectedAsync(Exception? exception)

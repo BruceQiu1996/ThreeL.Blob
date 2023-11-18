@@ -5,12 +5,13 @@
         xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         Icon="pack://application:,,,/HeadDisk;component/Icon.ico"
+        xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
         AllowsTransparency="True"
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Title="聊天界面" Height="750" MinWidth="550" Width="550">
+        Title="聊天界面" Height="550" MinWidth="320" Width="320">
     <behaviors:Interaction.Triggers>
         <behaviors:EventTrigger EventName="Loaded">
             <behaviors:InvokeCommandAction Command="{Binding LoadCommandAsync}"></behaviors:InvokeCommandAction>
@@ -47,7 +48,7 @@
                           Fill="{StaticResource PrimaryBrush}"
                           ></Path>
                     </Label>
-                    <TextBlock Text="头盘" FontFamily="Tahoma" FontSize="16" VerticalAlignment="Center" Margin="40 0 0 0" 
+                    <TextBlock Text="头聊" FontFamily="Tahoma" FontSize="16" VerticalAlignment="Center" Margin="40 0 0 0" 
                            Foreground="#555" FontWeight="Bold"></TextBlock>
                     <Label BorderThickness="0"
                        Cursor="Hand"
@@ -77,6 +78,41 @@
                     </Label>
                 </Grid>
             </Border>
+
+            <StackPanel Orientation="Vertical" Grid.Row="1" Grid.ColumnSpan="2">
+                <hc:SearchBar Style="{StaticResource SearchBarExtend}" 
+                              Margin="3"
+                              hc:InfoElement.Placeholder="搜索好友"></hc:SearchBar>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+
+                    <hc:Card Grid.Column="0">
+                        <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView">
+                            <ListBox Background="Transparent">
+                                <ListBoxItem>
+                                    <ListBoxItem.Style>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate>
+                                                        <Border BorderBrush="Red" Height="50" BorderThickness="1">
+
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ListBoxItem.Style>
+                                </ListBoxItem>
+                            </ListBox>
+                        </ScrollViewer>
+                    </hc:Card>
+                </Grid>
+            </StackPanel>
         </Grid>
     </Grid>
 </Window>

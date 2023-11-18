@@ -139,10 +139,19 @@ namespace ThreeL.Blob.Server
                 }
             });
 
+            ///缩略图
             host.UseFileServer(new FileServerOptions()
             {
                 FileProvider = new PhysicalFileProvider(host.Configuration.GetSection("FileStorage:ThumbnailImagesLocation").Value!),
                 RequestPath = new Microsoft.AspNetCore.Http.PathString("/api/thumbnailImages"),
+                EnableDirectoryBrowsing = false
+            });
+
+            //头像
+            host.UseFileServer(new FileServerOptions()
+            {
+                FileProvider = new PhysicalFileProvider(host.Configuration.GetSection("FileStorage:AvatarImagesLocation").Value!),
+                RequestPath = new Microsoft.AspNetCore.Http.PathString("/api/avatars"),
                 EnableDirectoryBrowsing = false
             });
 
