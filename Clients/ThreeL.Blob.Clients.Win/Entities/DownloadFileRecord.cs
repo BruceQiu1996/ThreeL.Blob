@@ -15,7 +15,7 @@ namespace ThreeL.Blob.Clients.Win.Entities
         public string? Location { get; set; }
         public long Size { get; set; }
         public long TransferBytes { get; set; }
-        public DateTime CreateTime { get; set; } = DateTime.UtcNow;
+        public DateTime CreateTime { get; set; } = DateTime.Now;
         public DateTime DownloadFinishTime { get; set; }
         public FileDownloadingStatus Status { get; set; }
     }

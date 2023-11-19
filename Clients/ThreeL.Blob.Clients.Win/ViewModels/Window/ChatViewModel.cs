@@ -1,32 +1,62 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using AutoMapper;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ThreeL.Blob.Clients.Win.Configurations;
+using ThreeL.Blob.Clients.Win.Dtos;
+using ThreeL.Blob.Clients.Win.Dtos.Message;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
+using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Clients.Win.ViewModels.Item;
+using ThreeL.Blob.Clients.Win.ViewModels.Message;
+using ThreeL.Blob.Infra.Core.Serializers;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 {
     public class ChatViewModel : ObservableObject
     {
         private bool _loaded;
-        public AsyncRelayCommand LoadCommandAsync { get; set; }
-        public ObservableCollection<string> Relations { get; set; }
 
+        private string _textMessage;
+        public string TextMessage
+        {
+            get => _textMessage;
+            set => SetProperty(ref _textMessage, value);
+        }
+
+        public AsyncRelayCommand LoadCommandAsync { get; set; }
+        public AsyncRelayCommand SendTextMessageCommandAsync { get; set; }
+        public ObservableCollection<RelationItemViewModel> Relations { get; set; }
+        private RelationItemViewModel? _relation;
+        public RelationItemViewModel? Relation
+        {
+            get => _relation;
+            set => SetProperty(ref _relation, value);
+        }
         private readonly HttpRequest _httpRequest;
         private readonly RemoteOptions _remoteOptions;
         private readonly GrowlHelper _growlHelper;
-        public ChatViewModel(HttpRequest httpRequest, IOptions<RemoteOptions> remoteOptions, GrowlHelper growlHelper)
+        private readonly IMapper _mapper;
+        public ChatViewModel(HttpRequest httpRequest, IOptions<RemoteOptions> remoteOptions, GrowlHelper growlHelper, IMapper mapper)
         {
+            _mapper = mapper;
             _httpRequest = httpRequest;
             _remoteOptions = remoteOptions.Value;
             _growlHelper = growlHelper;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
+            SendTextMessageCommandAsync = new AsyncRelayCommand(SendTextMessageAsync);
+            Relations = new ObservableCollection<RelationItemViewModel>();
         }
+
         private async Task LoadAsync()
         {
             if (!_loaded) 
@@ -42,10 +72,53 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     _growlHelper.Success("登录聊天系统成功");
                 });
 
+                App.HubConnection.On<UserSendTextMessageToUserResultDto>("ReceiveTextMessage", msg =>
+                {
+
+                });
+
                 await App.HubConnection.StartAsync();
 
-                _loaded = true;
+                //拉取关系
+                var resp = await _httpRequest.GetAsync(Const.RELATIONS);
+                if (resp != null) 
+                {
+                    var result = JsonSerializer
+                        .Deserialize<IEnumerable<RelationBriefDto>>(await resp.Content.ReadAsStringAsync(),SystemTextJsonSerializer.GetDefaultOptions());
+
+                    if (result != null && result.Count() > 0) 
+                    {
+                        foreach (var relationBriefDto in result) 
+                        {
+                            Relations.Add(_mapper.Map<RelationItemViewModel>(relationBriefDto));
+                        }
+
+                        Relation = Relations.First();
+                    }
+                    _loaded = true;
+                }
             }
+        }
+
+        public async Task SendTextMessageAsync() 
+        {
+            var temp = Relation;
+            if (temp == null || string.IsNullOrEmpty(TextMessage))
+                return;
+
+            var msg = new TextMessageViewModel()
+            {
+                Text = TextMessage,
+                RemoteTime = DateTime.Now,
+                From = App.UserProfile.Id,
+                To = temp.Id,
+                Sending = true
+            };
+            temp.Messages.Add(msg);
+            var dto = new TextMessageDto();
+            msg.ToDto(dto);
+
+            await App.HubConnection.SendAsync("SendTextMessage", dto);
         }
     }
 }

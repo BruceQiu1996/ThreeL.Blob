@@ -88,7 +88,7 @@ namespace ThreeL.Blob.Application.Services
                 });
 
             file.Status = FileStatus.Cancel;
-            file.UploadFinishTime = DateTime.UtcNow;
+            file.UploadFinishTime = DateTime.Now;
             await _fileBasicRepository.UpdateAsync(file);
 
             return new ServiceResult<FileUploadingStatusDto>
@@ -134,9 +134,9 @@ namespace ThreeL.Blob.Application.Services
             var fileObject = new FileObject()
             {
                 CreateBy = userId,
-                CreateTime = DateTime.UtcNow,
-                LastUpdateTime = DateTime.UtcNow,
-                UploadFinishTime = DateTime.UtcNow,
+                CreateTime = DateTime.Now,
+                LastUpdateTime = DateTime.Now,
+                UploadFinishTime = DateTime.Now,
                 IsFolder = true,
                 Name = folderCreationDto.FolderName,
                 ParentFolder = folderCreationDto.ParentId,
@@ -180,7 +180,7 @@ namespace ThreeL.Blob.Application.Services
 
             var task = new DownloadFileTask()
             {
-                CreateTime = DateTime.UtcNow,
+                CreateTime = DateTime.Now,
                 FileId = fileId,
                 CreateBy = userId,
                 Status = DownloadTaskStatus.Wait,
@@ -266,7 +266,7 @@ namespace ThreeL.Blob.Application.Services
                 return new ServiceResult(HttpStatusCode.BadRequest, "文件名已存在");
 
             file.Name = updateFileObjectNameDto.Name;
-            file.LastUpdateTime = DateTime.UtcNow;
+            file.LastUpdateTime = DateTime.Now;
             await _fileBasicRepository.UpdateAsync(file);
 
             return new ServiceResult();
@@ -297,9 +297,9 @@ namespace ThreeL.Blob.Application.Services
             File.Create(tempFileName).Close();
             var fileObj = _mapper.Map<FileObject>(uploadFileDto);
             fileObj.CreateBy = userId;
-            fileObj.CreateTime = DateTime.UtcNow;
-            fileObj.UploadFinishTime = DateTime.UtcNow;
-            fileObj.LastUpdateTime = DateTime.UtcNow;
+            fileObj.CreateTime = DateTime.Now;
+            fileObj.UploadFinishTime = DateTime.Now;
+            fileObj.LastUpdateTime = DateTime.Now;
             fileObj.Status = FileStatus.Wait;
             fileObj.TempFileLocation = tempFileName;
 
@@ -362,7 +362,7 @@ namespace ThreeL.Blob.Application.Services
             roots.ForEach(x =>
             {
                 x.ParentFolder = parentId;
-                x.LastUpdateTime = DateTime.UtcNow;
+                x.LastUpdateTime = DateTime.Now;
             });
             await _fileBasicRepository.UpdateRangeAsync(roots);
 
@@ -414,9 +414,9 @@ namespace ThreeL.Blob.Application.Services
                 var fileObject = new FileObject()
                 {
                     CreateBy = userId,
-                    CreateTime = DateTime.UtcNow,
-                    LastUpdateTime = DateTime.UtcNow,
-                    UploadFinishTime = DateTime.UtcNow,
+                    CreateTime = DateTime.Now,
+                    LastUpdateTime = DateTime.Now,
+                    UploadFinishTime = DateTime.Now,
                     IsFolder = true,
                     Name = item.FolderName,
                     ParentFolder = item.ParentId,

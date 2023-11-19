@@ -74,6 +74,7 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<GrowlHelper>();
                 service.AddSingleton<FileHelper>();
                 service.AddSingleton<SystemHelper>();
+                service.AddSingleton<DateTimeHelper>();
                 service.AddSingleton<DatabaseHelper>();
                 service.AddSingleton<IniHelper>();
                 service.AddSingleton<EncryptHelper>();
@@ -117,6 +118,7 @@ namespace ThreeL.Blob.Clients.Win
                 cfg.AddProfile<Profiles.UserProfile>();
                 cfg.AddProfile<TransferProfile>();
                 cfg.AddProfile<FileObjProfile>();
+                cfg.AddProfile<RelationProfile>();
             });
 
             services.AddSingleton(config);

@@ -13,7 +13,7 @@ namespace ThreeL.Blob.Infra.Core.Extensions.System
 
         public static bool ValidUserName(this string userName)
         {
-            Regex regex = new Regex("^(?=.*\\d)(?=.*[A-z])[\\da-zA-Z]{6,16}$");
+            Regex regex = new Regex("^[a-zA-Z0-9]{5,16}$");
 
             return regex.IsMatch(userName);
         }

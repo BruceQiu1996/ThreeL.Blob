@@ -1,16 +1,10 @@
-﻿using Amazon.Runtime;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -23,7 +17,6 @@ using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
 using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Shared.Domain.Metadata.User;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels
 {
@@ -169,7 +162,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             UserName = App.UserProfile.UserName;
             if (App.UserProfile.Avatar != null) 
             {
-                var avatarResp = await App.ServiceProvider!.GetRequiredService<HttpRequest>().GetAsync(string.Format(Const.GET_AVATAR_IMAGE, App.UserProfile.Avatar.Replace("\\","/")));
+                var avatarResp = await _httpRequest.GetAsync(string.Format(Const.GET_AVATAR_IMAGE, App.UserProfile.Avatar.Replace("\\","/")));
                 if (avatarResp != null) 
                 {
                     Avatar =  _fileHelper.BytesToImage(await avatarResp.Content.ReadAsByteArrayAsync());
@@ -184,7 +177,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
 
         private Task ExitAsync()
         {
-            WeakReferenceMessenger.Default.Send<string, string>(string.Empty, Const.Exit);
+            WeakReferenceMessenger.Default.Send(string.Empty, Const.Exit);
 
             return Task.CompletedTask;
         }

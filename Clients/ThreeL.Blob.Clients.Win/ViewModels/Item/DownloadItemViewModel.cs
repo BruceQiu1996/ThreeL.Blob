@@ -72,7 +72,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public string Code { get; set; }
 
-        public DateTime CreateTime { get; set; } = DateTime.UtcNow;
+        public DateTime CreateTime { get; set; } = DateTime.Now;
         public DateTime DownloadFinishTime { get; set; }
         private FileDownloadingStatus _status;
         public FileDownloadingStatus Status 
@@ -189,7 +189,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 record.Status = fileStatus;
                 if (fileStatus == FileDownloadingStatus.DownloadingComplete || fileStatus == FileDownloadingStatus.DownloadingFaild)
                 {
-                    record.DownloadFinishTime = DateTime.UtcNow;
+                    record.DownloadFinishTime = DateTime.Now;
                     DownloadFinishTime = record.DownloadFinishTime;
 
                     var transferRecord = _mapper.Map<TransferCompleteRecord>(record);

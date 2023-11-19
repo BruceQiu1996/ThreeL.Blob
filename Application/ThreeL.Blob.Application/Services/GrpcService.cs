@@ -122,7 +122,7 @@ namespace ThreeL.Blob.Application.Services
 
                 //更新状态
                 task.Status = DownloadTaskStatus.Finished;
-                task.FinishTime = DateTime.UtcNow;
+                task.FinishTime = DateTime.Now;
                 await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
                 //下载完成
                 await responseStream.WriteAsync(new DownloadFileResponse()
@@ -137,7 +137,7 @@ namespace ThreeL.Blob.Application.Services
                 var task = await _downloadFileTaskEfBasicRepository.GetAsync(request.TaskId);
                 if (task.Status == DownloadTaskStatus.Cancelled)
                 {
-                    task.FinishTime = DateTime.UtcNow;
+                    task.FinishTime = DateTime.Now;
                     task.Status = DownloadTaskStatus.Failed;
                 }
                 else
@@ -151,7 +151,7 @@ namespace ThreeL.Blob.Application.Services
             {
                 _logger.LogError(ex.ToString());
                 var task = await _downloadFileTaskEfBasicRepository.GetAsync(request.TaskId);
-                task.FinishTime = DateTime.UtcNow;
+                task.FinishTime = DateTime.Now;
                 task.Status = DownloadTaskStatus.Failed;
                 await _downloadFileTaskEfBasicRepository.UpdateAsync(task);
             }

@@ -6,7 +6,7 @@ namespace ThreeL.Blob.Domain.Aggregate.User
     {
         public long Activer { get; set; }
         public long Passiver { get; set; }
-        public DateTime CreateTime { get; set; } = DateTime.UtcNow;
+        public DateTime CreateTime { get; set; } = DateTime.Now;
         public string ActiverName { get; set; }
         public string PassiverName { get; set; }
     }

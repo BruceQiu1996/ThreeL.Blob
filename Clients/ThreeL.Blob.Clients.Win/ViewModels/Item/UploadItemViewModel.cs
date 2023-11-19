@@ -66,7 +66,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref message, value);
         }
 
-        public DateTime CreateTime { get; set; } = DateTime.UtcNow;
+        public DateTime CreateTime { get; set; } = DateTime.Now;
         public DateTime UploadFinishTime { get; set; }
 
         private FileUploadingStatus _status;
@@ -247,7 +247,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 record.Status = fileStatus;
                 if (fileStatus == FileUploadingStatus.UploadingComplete || fileStatus == FileUploadingStatus.UploadingFaild)
                 {
-                    record.UploadFinishTime = DateTime.UtcNow;
+                    record.UploadFinishTime = DateTime.Now;
                     UploadFinishTime = record.UploadFinishTime;
 
                     var transferRecord = _mapper.Map<TransferCompleteRecord>(record);

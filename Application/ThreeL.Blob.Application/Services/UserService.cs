@@ -61,7 +61,7 @@ namespace ThreeL.Blob.Application.Services
             }
             else
             {
-                user.LastLoginTime = DateTime.UtcNow;
+                user.LastLoginTime = DateTime.Now;
                 await _userBasicRepository.UpdateAsync(user);
                 var token = await CreateTokenAsync(user, userLoginDto.Origin);
                 var respDto = _mapper.Map<UserLoginResponseDto>(user);
@@ -87,6 +87,7 @@ namespace ThreeL.Blob.Application.Services
             var claims = new[]
             {
                 new Claim(ClaimTypes.Name, user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim(RefreshTokenIdClaimType,refreshToken.refreshTokenId)
             };

@@ -20,6 +20,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Domain\ThreeL.Blob.Domain\ThreeL.Blob.Domain.csproj" />
 		<ProjectReference Include="..\..\Shared\ThreeL.Blob.Shared.Application.Contract\ThreeL.Blob.Shared.Application.Contract.csproj" />
 	</ItemGroup>
 

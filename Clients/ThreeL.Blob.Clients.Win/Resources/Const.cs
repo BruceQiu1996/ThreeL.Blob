@@ -22,6 +22,7 @@
         public const string UPDATE_NAME = "file/update-name";
         public const string UPDATE_LOCATION = "file/update-location";
         public const string UPLOAD_AVATAR = "user/upload-avatar";
+        public const string RELATIONS = "relations";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);
