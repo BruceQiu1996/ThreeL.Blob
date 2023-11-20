@@ -2,7 +2,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -33,8 +32,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             set => SetProperty(ref _textMessage, value);
         }
 
+        private string _keyword;
+        public string Keyword
+        {
+            get => _keyword;
+            set => SetProperty(ref _keyword, value);
+        }
+
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand SendTextMessageCommandAsync { get; set; }
+        public AsyncRelayCommand SearchUsersCommandAsync { get; set; }
         public ObservableCollection<RelationItemViewModel> Relations { get; set; }
         private RelationItemViewModel? _relation;
         public RelationItemViewModel? Relation
@@ -53,6 +60,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             _remoteOptions = remoteOptions.Value;
             _growlHelper = growlHelper;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
+            SearchUsersCommandAsync = new AsyncRelayCommand(SearchUsersAsync);
             SendTextMessageCommandAsync = new AsyncRelayCommand(SendTextMessageAsync);
             Relations = new ObservableCollection<RelationItemViewModel>();
         }
@@ -74,7 +82,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 
                 App.HubConnection.On<UserSendTextMessageToUserResultDto>("ReceiveTextMessage", msg =>
                 {
-
+                    if (msg.Success) 
+                    {
+                        var relation = Relations.FirstOrDefault(x => x.Id == msg.Message.From || x.Id == msg.Message.To);
+                        if (relation != null) 
+                        {
+                            var message = relation.Messages.FirstOrDefault(x => x.MessageId == msg.Message.MessageId);
+                            var vm = new TextMessageViewModel();
+                            vm.FromDto(msg.Message);
+                            relation.AddMessage(vm);
+                        }
+                    }
                 });
 
                 await App.HubConnection.StartAsync();
@@ -100,6 +118,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             }
         }
 
+        private async Task SearchUsersAsync() 
+        {
+            var resp = await _httpRequest.GetAsync(string.Format(Const.QUERYRELATIONS,Keyword));
+        }
+
         public async Task SendTextMessageAsync() 
         {
             var temp = Relation;
@@ -109,7 +132,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             var msg = new TextMessageViewModel()
             {
                 Text = TextMessage,
-                RemoteTime = DateTime.Now,
+                LocalSendTime = DateTime.Now,
                 From = App.UserProfile.Id,
                 To = temp.Id,
                 Sending = true

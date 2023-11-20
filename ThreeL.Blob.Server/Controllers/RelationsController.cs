@@ -27,11 +27,20 @@ namespace ThreeL.Blob.Server.Controllers
             return result.ToActionResult();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddFriend()
+        [HttpPost("addFriend/{target}")]
+        public async Task<IActionResult> AddFriend(long target)
         {
             long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-            var result = await _relationService.GetRelationsAsync(userId);
+            var result = await _relationService.AddFriendApplyAsync(userId, target);
+
+            return result.ToActionResult();
+        }
+
+        [HttpGet("query/{key}")]
+        public async Task<IActionResult> QueryRelations(string key)
+        {
+            long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+            var result = await _relationService.QueryRelationsByKeywordAsync(userId, key);
 
             return result.ToActionResult();
         }

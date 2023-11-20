@@ -240,7 +240,12 @@
                 <hc:SearchBar Style="{StaticResource SearchBarExtend}" 
                               Margin="3"
                               Grid.Row="0"
-                              hc:InfoElement.Placeholder="搜索好友"></hc:SearchBar>
+                              hc:InfoElement.Placeholder="搜索好友"
+                              Text="{Binding Keyword,UpdateSourceTrigger=PropertyChanged}">
+                    <hc:SearchBar.InputBindings>
+                        <KeyBinding Command="{Binding SearchUsersCommandAsync}" Key="Enter"/>
+                    </hc:SearchBar.InputBindings>
+                </hc:SearchBar>
 
                 <Grid Grid.Row="1">
                     <Grid.ColumnDefinitions>

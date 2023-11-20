@@ -15,5 +15,6 @@ namespace ThreeL.Blob.Infra.Repository.IRepositories
 
         Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, bool writeDb = false, CancellationToken cancellationToken = default);
         Task<IEnumerable<TEntity>> QuerySqlAsync(string sql, bool writeDb = false, CancellationToken cancellationToken = default);
+        Task<IEnumerable<TEntity>> AllAsync();
     }
 }

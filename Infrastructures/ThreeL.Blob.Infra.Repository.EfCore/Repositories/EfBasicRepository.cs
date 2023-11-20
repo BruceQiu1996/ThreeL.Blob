@@ -13,6 +13,11 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
         {
         }
 
+        public async Task<IEnumerable<TEntity>> AllAsync()
+        {
+            return await DbContext.Set<TEntity>().ToListAsync();
+        }
+
         public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity,bool>> filter, bool writeDb = false, CancellationToken cancellationToken = default)
         {
             return await GetDbSet(writeDb, false).FirstOrDefaultAsync(filter);

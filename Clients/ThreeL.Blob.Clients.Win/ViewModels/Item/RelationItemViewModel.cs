@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
@@ -72,27 +73,30 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public void AddMessage(MessageViewModel message)
         {
-            Messages.Remove(message);
-            var temp = Messages.FirstOrDefault(x => x.MessageId == message.MessageId);
-            if (temp != null)
+            Application.Current.Dispatcher.Invoke(() =>
             {
-                Messages.Remove(temp);
-            }
-            if (LastMessage == null)
-                Messages.Add(new TimeMessageViewModel()
+                Messages.Remove(message);
+                var temp = Messages.FirstOrDefault(x => x.MessageId == message.MessageId);
+                if (temp != null)
                 {
-                    Time = App.ServiceProvider.GetService<DateTimeHelper>().ConvertDateTimeToText(message.RemoteTime)
-                });
+                    Messages.Remove(temp);
+                }
+                if (LastMessage == null)
+                    Messages.Add(new TimeMessageViewModel()
+                    {
+                        Time = App.ServiceProvider.GetService<DateTimeHelper>().ConvertDateTimeToText(message.UsefulTime)
+                    });
 
-            if (LastMessage != null && LastMessage.RemoteTime.AddMinutes(5) <= message.RemoteTime)
-                Messages.Add(new TimeMessageViewModel()
-                {
-                    Time = App.ServiceProvider.GetService<DateTimeHelper>().ConvertDateTimeToText(message.RemoteTime)
-                });
+                if (LastMessage != null && LastMessage.UsefulTime.AddMinutes(5) <= message.UsefulTime)
+                    Messages.Add(new TimeMessageViewModel()
+                    {
+                        Time = App.ServiceProvider.GetService<DateTimeHelper>().ConvertDateTimeToText(message.UsefulTime)
+                    });
 
-            Messages.Add(message);
-            LastMessage = message;
-            App.ServiceProvider.GetRequiredService<Chat>().chatScrollViewer.ScrollToEnd();
+                Messages.Add(message);
+                LastMessage = message;
+                App.ServiceProvider.GetRequiredService<Chat>().chatScrollViewer.ScrollToEnd();
+            });
         }
     }
 }

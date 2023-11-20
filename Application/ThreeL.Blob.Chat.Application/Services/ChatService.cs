@@ -31,6 +31,7 @@ namespace ThreeL.Blob.Chat.Application.Services
                 return;
             }
 
+            textMessageDto.RemoteSendTime = DateTime.Now;
             //TODO判断是否是好友以及消息存储
             await _chatRecordRepository.AddAsync(_mapper.Map<ChatRecord>(textMessageDto));
 
@@ -38,11 +39,13 @@ namespace ThreeL.Blob.Chat.Application.Services
             await clients.User(textMessageDto.From.ToString()).SendAsync("ReceiveTextMessage", new UserSendTextMessageToUserResultDto()
             {
                 Message = textMessageDto,
+                Success = true
             });
 
             await clients.User(textMessageDto.To.ToString()).SendAsync("ReceiveTextMessage", new UserSendTextMessageToUserResultDto()
             {
-                Message = textMessageDto
+                Message = textMessageDto,
+                Success = true
             });
         }
     }

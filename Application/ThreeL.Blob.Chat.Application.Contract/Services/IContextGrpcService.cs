@@ -2,7 +2,8 @@
 
 namespace ThreeL.Blob.Chat.Application.Contract.Services
 {
-    public interface IContextGrpcService
+    public interface IGrpcService
     {
+        Task<AddFriendApplyResponse> SendAddFriendApply(AddFriendApplyRequest addFriendApplyRequest);
     }
 }

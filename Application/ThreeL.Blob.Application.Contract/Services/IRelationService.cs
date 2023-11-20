@@ -6,6 +6,7 @@ namespace ThreeL.Blob.Application.Contract.Services
     public interface IRelationService
     {
         Task<ServiceResult<IEnumerable<RelationBriefDto>>> GetRelationsAsync(long userId);
-        Task<ServiceResult> AddFriendApplyAsync(long userId,long target);
+        Task<ServiceResult> AddFriendApplyAsync(long userId, long target);
+        Task<ServiceResult<IEnumerable<RelationBriefDto>>> QueryRelationsByKeywordAsync(long userId, string key);
     }
 }

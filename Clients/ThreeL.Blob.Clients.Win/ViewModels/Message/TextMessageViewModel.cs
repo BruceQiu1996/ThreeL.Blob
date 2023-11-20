@@ -16,5 +16,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Message
             base.ToDto(messageDto);
             (messageDto as TextMessageDto)!.Text = Text;
         }
+
+        public override void FromDto(MessageDto messageDto)
+        {
+            base.FromDto(messageDto);
+            Text = (messageDto as TextMessageDto)!.Text;
+        }
     }
 }

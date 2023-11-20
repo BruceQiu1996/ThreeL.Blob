@@ -2,6 +2,7 @@
 using Autofac.Extras.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection;
 using ThreeL.Blob.Application.Channels;
+using ThreeL.Blob.Application.Contract.Configurations;
 using ThreeL.Blob.Infra.Core.Extensions.Microsoft;
 using ThreeL.Blob.Shared.Application.Contract;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
@@ -26,6 +27,7 @@ namespace ThreeL.Blob.Application.Extensions
             services.AddSingleton<DeleteFilesChannel>();
             services.Configure<JwtOptions>(services.GetConfiguration().GetSection("Jwt"));
             services.Configure<SystemOptions>(services.GetConfiguration().GetSection("System"));
+            services.Configure<ChatServerGrpcOptions>(services.GetConfiguration().GetSection("ChatServerGrpcOptions"));
             ApplicationDependencyRegistrar applicationDependencyRegistrar = new ApplicationDependencyRegistrar(_applicationAssemblyInfo, services);
             applicationDependencyRegistrar.AddBlobInfraService();
         }

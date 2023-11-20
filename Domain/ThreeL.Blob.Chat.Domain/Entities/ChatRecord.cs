@@ -11,7 +11,7 @@ namespace ThreeL.Blob.Chat.Domain.Entities
         public string Message { get; set; }
         public long? FileObjectId { get; set; }
         public DateTime LocalSendTime { get; set; }
-        public DateTime RemoteSendTime { get; set; } = DateTime.Now;
+        public DateTime RemoteSendTime { get; set; }
         public MessageType MessageType { get; set; }
         public bool Withdraw { get; set; }
         public DateTime? WithdrawTime { get; set; }

@@ -85,6 +85,11 @@ namespace ThreeL.Blob.Chat.Server
                 {
                     listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
                 });
+
+                options.Listen(IPAddress.Any, 5827, listenOptions =>
+                {
+                    listenOptions.Protocols = HttpProtocols.Http2;
+                });
             });
 
             return hostBuilder;

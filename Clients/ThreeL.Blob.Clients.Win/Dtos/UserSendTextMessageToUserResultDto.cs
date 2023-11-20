@@ -6,6 +6,6 @@ namespace ThreeL.Blob.Clients.Win.Dtos
     {
         public string Description { get; set; }
         public bool Success { get; set; }
-        public MessageDto Message { get; set; }
+        public TextMessageDto Message { get; set; }
     }
 }

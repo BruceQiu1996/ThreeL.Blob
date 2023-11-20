@@ -3,10 +3,10 @@ option csharp_namespace = "ThreeL.Blob.Chat.Application.Contract.Protos";
 
 message AddFriendApplyRequest{
 	int64 ApplyId = 1;
+	int64 ApplyToId = 2;
 }
 
 message AddFriendApplyResponse{
-	int64 ApplyId = 1;
 }
 
 service ChatService{
