@@ -26,5 +26,14 @@ namespace ThreeL.Blob.Server.Controllers
 
             return result.ToActionResult();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> AddFriend()
+        {
+            long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+            var result = await _relationService.GetRelationsAsync(userId);
+
+            return result.ToActionResult();
+        }
     }
 }

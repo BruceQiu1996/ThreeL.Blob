@@ -12,10 +12,12 @@ namespace ThreeL.Blob.Application.Services
     public class RelationService : IRelationService, IAppService
     {
         private readonly IMapper _mapper;
+        private readonly IEfBasicRepository<FriendApply, long> _friendApplyEfBasicRepository;
         private readonly IEfBasicRepository<FriendRelation, long> _friendRelationEfBasicRepository;
         private readonly IEfBasicRepository<User, long> _userEfBasicRepository;
         private readonly IConfiguration _configuration;
         public RelationService(IEfBasicRepository<FriendRelation, long> friendRelationEfBasicRepository,
+                               IEfBasicRepository<FriendApply, long> friendApplyEfBasicRepository,
                                IEfBasicRepository<User, long> userEfBasicRepository,
                                IMapper mapper,
                                IConfiguration configuration)
@@ -23,7 +25,43 @@ namespace ThreeL.Blob.Application.Services
             _mapper = mapper;
             _configuration = configuration;
             _friendRelationEfBasicRepository = friendRelationEfBasicRepository;
+            _friendApplyEfBasicRepository = friendApplyEfBasicRepository;
             _userEfBasicRepository = userEfBasicRepository;
+        }
+
+        public async Task<ServiceResult> AddFriendApplyAsync(long userId, long target)
+        {
+            var friend = await _userEfBasicRepository.GetAsync(target);
+            if (friend == null) 
+            {
+                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "对方账号异常");
+            }
+            var relation = await _friendRelationEfBasicRepository
+                .FirstOrDefaultAsync(x => (x.Passiver == userId && x.Activer == target) || (x.Passiver == target && x.Activer == userId));
+
+            if (relation != null) 
+            {
+                return new ServiceResult(System.Net.HttpStatusCode.BadRequest,"重复添加好友");
+            }
+
+            var apply = await _friendApplyEfBasicRepository
+                .FirstOrDefaultAsync(x => ((x.Passiver == userId && x.Activer == target) || (x.Passiver == target && x.Activer == userId)) && x.Status == Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled );
+
+            if (apply != null) 
+            {
+                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "存在相同的未处理的好友请求");
+            }
+
+            await _friendApplyEfBasicRepository.InsertAsync(new FriendApply()
+            {
+                Activer = userId,
+                Passiver = target,
+                Status = Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled
+            });
+
+            //grpc让chatserver通知目标
+
+            return new ServiceResult();
         }
 
         public async Task<ServiceResult<IEnumerable<RelationBriefDto>>> GetRelationsAsync(long userId)

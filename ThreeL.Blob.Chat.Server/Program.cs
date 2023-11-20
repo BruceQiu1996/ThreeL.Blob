@@ -9,10 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Net;
-using ThreeL.Blob.Chat.Server.Controllers;
-using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Chat.Application.Extensions;
+using ThreeL.Blob.Chat.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Services;
 
 namespace ThreeL.Blob.Chat.Server
 {
