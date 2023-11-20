@@ -5,6 +5,6 @@ namespace ThreeL.Blob.Chat.Application.Contract.Services
 {
     public interface IChatService
     {
-        Task SendTextMessageAsync(long sender,TextMessageDto textMessageDto, IHubCallerClients clients);
-    }
+        Task SendTextMessageAsync(long sender, TextMessageDto textMessageDto, IHubCallerClients clients);
+}
 }

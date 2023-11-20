@@ -8,7 +8,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Message
     public class MessageViewModel : ObservableObject
     {
         public string MessageId = Guid.NewGuid().ToString();
-        public DateTime LocalCreateTime { get; set; } = DateTime.Now;
+        public DateTime LocalSendTime { get; set; } = DateTime.Now;
         public DateTime RemoteTime { get; set; }
         public long From { get; set; }
         public long To { get; set; }
@@ -37,7 +37,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Message
         public virtual void ToDto(MessageDto messageDto) 
         {
             messageDto.MessageId = MessageId;
-            messageDto.LocalCreateTime = LocalCreateTime;
+            messageDto.LocalSendTime = LocalSendTime;
             messageDto.RemoteTime = RemoteTime;
             messageDto.From = From;
             messageDto.To = To;

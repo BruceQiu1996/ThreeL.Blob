@@ -8,21 +8,26 @@ using ThreeL.Blob.Shared.Application.Contract.Services;
 
 namespace ThreeL.Blob.Shared.Application.Services
 {
-    public class JwtService : IJwtService, IAppService, IPreheatService
+    public class JwtService : IJwtService, IAppService
     {
         private readonly IOptions<JwtOptions> _jwtOptions;
         private readonly IOptions<SystemOptions> _systemOptions;
         private readonly IRedisProvider _redisProvider;
         public JwtService(IOptions<JwtOptions> jwtOptions,
                           IOptions<SystemOptions> systemOptions,
-                          IRedisProvider redisProvider)
+                          IRedisProvider redisProvider,
+                          bool generateKey = false)
         {
             _jwtOptions = jwtOptions;
             _systemOptions = systemOptions;
             _redisProvider = redisProvider;
+            if (generateKey) 
+            {
+                GenerateSecretKeys();
+            }
         }
 
-        public Task PreheatAsync()
+        public void GenerateSecretKeys()
         {
             //随机创建token
             var _ = Task.Run(async () =>
@@ -36,11 +41,9 @@ namespace ThreeL.Blob.Shared.Application.Services
                     await _redisProvider.HSetAsync(Const.REDIS_JWT_SECRET_KEY, $"{_systemOptions.Value.Name}-{DateTime.Now}",
                         jwtSetting, TimeSpan.FromSeconds(_jwtOptions.Value.SecretExpireSeconds), When.Always);
 
-                    await Task.Delay(_jwtOptions.Value.SecretExpireSeconds * 1000 - 60 * 1000);
+                    await Task.Delay(_jwtOptions.Value.SecretExpireSeconds * 1000 - 60 * 60 * 1000 * 3);
                 } while (true);
             });
-
-            return Task.CompletedTask;
         }
 
         public IEnumerable<SecurityKey> ValidateIssuerSigningKey(string token, SecurityToken securityToken, string kid, TokenValidationParameters validationParameters)

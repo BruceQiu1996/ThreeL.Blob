@@ -4,6 +4,7 @@ using ThreeL.Blob.Chat.Application.Contract.Configurations;
 using ThreeL.Blob.Infra.Core.Extensions.Microsoft;
 using ThreeL.Blob.Shared.Application.Contract;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
+using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Shared.Application.Register;
 
 namespace ThreeL.Blob.Chat.Application.Extensions
@@ -27,7 +28,8 @@ namespace ThreeL.Blob.Chat.Application.Extensions
 
         public static void AddApplicationContainer(this ContainerBuilder container)
         {
-
+            container.RegisterAssemblyTypes(_applicationAssemblyInfo.ImplementAssembly)
+                .Where(t => typeof(IAppService).IsAssignableFrom(t)).AsImplementedInterfaces().InstancePerLifetimeScope();
         }
     }
 }

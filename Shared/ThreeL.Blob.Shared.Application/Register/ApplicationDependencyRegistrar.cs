@@ -1,12 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ThreeL.Blob.Infra.Core.Extensions.Microsoft;
+using ThreeL.Blob.Infra.MongoDb;
+using ThreeL.Blob.Infra.MongoDb.Configuration;
+using ThreeL.Blob.Infra.MongoDb.Extensions;
+using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Infra.Redis.Extensions;
 using ThreeL.Blob.Infra.Repository.EfCore.Mysql.Configuration;
 using ThreeL.Blob.Infra.Repository.EfCore.Mysql.Extensions;
 using ThreeL.Blob.Infra.Repository.Entities;
 using ThreeL.Blob.Shared.Application.Contract;
+using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Shared.Application.Services;
 
@@ -29,7 +35,7 @@ namespace ThreeL.Blob.Shared.Application.Register
             AddRedisCache();
             AddFluentValidator();
             AddAutoMapper();
-            AddJwtServiceCache();
+            AddJwtServiceCache(true);
             AddHelpers();
         }
 
@@ -37,7 +43,8 @@ namespace ThreeL.Blob.Shared.Application.Register
         {
             AddRedisCache();
             AddAutoMapper();
-            AddJwtServiceCache();
+            AddMongo();
+            AddJwtServiceCache(false);
         }
 
         internal void AddEntitiesInfo()
@@ -69,9 +76,24 @@ namespace ThreeL.Blob.Shared.Application.Register
             _services.AddInfraRedis(_services.GetConfiguration());
         }
 
-        internal void AddJwtServiceCache()
+        internal void AddMongo()
         {
-            _services.AddScoped<IJwtService,JwtService>();
+            var config = _services.GetConfiguration().GetSection("MongoOptions").Get<MongoOptions>();
+            _services.AddInfraMongo<MongoContext>(options =>
+            {
+                options.ConnectionString = config.ConnectionString;
+                options.PluralizeCollectionNames = config.PluralizeCollectionNames;
+            });
+        }
+
+        internal void AddJwtServiceCache(bool generateKey)
+        {
+            _services.AddScoped<IJwtService, JwtService>(x => 
+            {
+                return new JwtService(x.GetRequiredService<IOptions<JwtOptions>>(), 
+                    x.GetRequiredService<IOptions<SystemOptions>>(), 
+                    x.GetRequiredService<IRedisProvider>(), generateKey);
+            });
         }
     }
 }

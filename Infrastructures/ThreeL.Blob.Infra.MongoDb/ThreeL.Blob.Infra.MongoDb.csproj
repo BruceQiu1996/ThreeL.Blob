@@ -7,11 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="mongocsharpdriver" Version="2.22.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ThreeL.Blob.Infra.Core\ThreeL.Blob.Infra.Core.csproj" />
+    <ProjectReference Include="..\ThreeL.Blob.Infra.Repository\ThreeL.Blob.Infra.Repository.csproj" />
   </ItemGroup>
 
 </Project>

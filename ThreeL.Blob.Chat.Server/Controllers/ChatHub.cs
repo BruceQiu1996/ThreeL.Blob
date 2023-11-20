@@ -26,8 +26,9 @@ namespace ThreeL.Blob.Chat.Server.Controllers
             var id = long.Parse(Context.User.Identity.Name);
         }
 
+        [HubMethodName("SendTextMessage")]
         [Authorize]
-        public async Task SendMessage(TextMessageDto messageDto)
+        public async Task SendTextMessage(TextMessageDto messageDto)
         {
             var id = long.Parse(Context.User.Identity.Name);
             await _chatService.SendTextMessageAsync(id, messageDto, Clients);
