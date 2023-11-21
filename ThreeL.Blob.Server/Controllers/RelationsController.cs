@@ -61,5 +61,15 @@ namespace ThreeL.Blob.Server.Controllers
 
             return result.ToActionResult();
         }
+
+        [Authorize]
+        [HttpPost("handleFriendApply/{applyId}/{status}")]
+        public async Task<IActionResult> HandleFriendApply(long applyId, string status)
+        {
+            long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+            var result = await _relationService.HandleApplyAsync(userId, applyId, status);
+
+            return result.ToActionResult();
+        }
     }
 }

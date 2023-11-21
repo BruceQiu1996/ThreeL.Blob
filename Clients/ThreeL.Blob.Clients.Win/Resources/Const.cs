@@ -26,6 +26,7 @@
         public const string QUERYRELATIONS = "relations/query/{0}";
         public const string ADDFRIEND = "relations/AddFriend/{0}";
         public const string QUERYAPPLYS = "relations/applys";
+        public const string HANDLEAPPLY = "relations/handleFriendApply/{0}/{1}";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);

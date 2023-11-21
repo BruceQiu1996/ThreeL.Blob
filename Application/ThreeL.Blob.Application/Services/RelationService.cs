@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using ThreeL.Blob.Application.Channels;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
@@ -21,13 +22,15 @@ namespace ThreeL.Blob.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IChatGrpcService _chatGrpcService;
         private readonly IRedisProvider _redisProvider;
+        private readonly CallChatGrpcChannel _callChatGrpcChannel;
         public RelationService(IEfBasicRepository<FriendRelation, long> friendRelationEfBasicRepository,
                                IEfBasicRepository<FriendApply, long> friendApplyEfBasicRepository,
                                IEfBasicRepository<User, long> userEfBasicRepository,
                                IMapper mapper,
                                IConfiguration configuration,
                                IChatGrpcService chatGrpcService,
-                               IRedisProvider redisProvider)
+                               IRedisProvider redisProvider,
+                               CallChatGrpcChannel callChatGrpcChannel)
         {
             _mapper = mapper;
             _redisProvider = redisProvider;
@@ -36,6 +39,7 @@ namespace ThreeL.Blob.Application.Services
             _friendRelationEfBasicRepository = friendRelationEfBasicRepository;
             _friendApplyEfBasicRepository = friendApplyEfBasicRepository;
             _userEfBasicRepository = userEfBasicRepository;
+            _callChatGrpcChannel = callChatGrpcChannel;
         }
 
         public async Task<ServiceResult> AddFriendApplyAsync(long userId, string userName, long target, string token)
@@ -73,10 +77,13 @@ namespace ThreeL.Blob.Application.Services
             };
             await _friendApplyEfBasicRepository.InsertAsync(newApply);
 
-            await _chatGrpcService.AddFriendApplyAsync(token, new AddFriendApplyRequest
+            await _callChatGrpcChannel.WriteMessageAsync(async () => 
             {
-                ApplyId = newApply.Id,
-                ApplyToId = target,
+                await _chatGrpcService.AddFriendApplyAsync(token, new AddFriendApplyRequest
+                {
+                    ApplyId = newApply.Id,
+                    ApplyToId = target,
+                });
             });
 
             return new ServiceResult();
@@ -117,6 +124,44 @@ namespace ThreeL.Blob.Application.Services
             {
                 Value = friendBriefs
             };
+        }
+
+        public async Task<ServiceResult> HandleApplyAsync(long userId, long applyId, string status)
+        {
+            var apply = await _friendApplyEfBasicRepository.GetAsync(applyId);
+            if (apply == null || apply.Status != Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled) 
+            {
+                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "请求不存在或已处理");
+            }
+
+            if (apply.Passiver != userId)
+            {
+                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "无权限处理该请求");
+            }
+
+            if (status == "accept")
+            {
+                apply.Status = Shared.Domain.Metadata.User.FriendApplyStatus.Agreed;
+                apply.UpdateTime = DateTime.Now;
+                var relation = new FriendRelation()
+                {
+                    Activer = apply.Activer,
+                    Passiver = apply.Passiver,
+                    CreateTime = DateTime.Now,
+                    ActiverName = apply.ActiverName,
+                    PassiverName = apply.PassiverName,
+                };
+                await _friendApplyEfBasicRepository.UpdateAsync(apply);
+                await _friendRelationEfBasicRepository.InsertAsync(relation);
+            }
+            else 
+            {
+                apply.Status = Shared.Domain.Metadata.User.FriendApplyStatus.Rejected;
+                apply.UpdateTime = DateTime.Now;
+                await _friendApplyEfBasicRepository.UpdateAsync(apply);
+            }
+
+            return new ServiceResult();
         }
 
         public async Task PreheatAsync()

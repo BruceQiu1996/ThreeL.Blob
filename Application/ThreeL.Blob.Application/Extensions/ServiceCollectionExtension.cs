@@ -24,6 +24,7 @@ namespace ThreeL.Blob.Application.Extensions
         public static void AddApplicationService(this IServiceCollection services)
         {
             services.AddSingleton<GenerateThumbnailChannel>();
+            services.AddSingleton<CallChatGrpcChannel>();
             services.AddSingleton<DeleteFilesChannel>();
             services.Configure<JwtOptions>(services.GetConfiguration().GetSection("Jwt"));
             services.Configure<SystemOptions>(services.GetConfiguration().GetSection("System"));

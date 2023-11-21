@@ -4,6 +4,7 @@ namespace ThreeL.Blob.Application.Contract.Dtos
 {
     public class ApplyDto
     {
+        public long Id { get; set; }
         public long Activer { get; set; }
         public long Passiver { get; set; }
         public DateTime CreateTime { get; set; }

@@ -8,6 +8,7 @@
         xmlns:hc="https://handyorg.github.io/handycontrol"
         Icon="pack://application:,,,/HeadDisk;component/Icon.ico"
         xmlns:converts="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
+        xmlns:enum ="clr-namespace:ThreeL.Blob.Shared.Domain.Metadata.User;assembly=ThreeL.Blob.Shared.Domain"
         mc:Ignorable="d"
         AllowsTransparency="True"
         Background="Transparent"
@@ -168,27 +169,84 @@
 
         <!--申请-->
         <DataTemplate x:Key="addfriend">
-            <Grid>
+            <Grid Height="45">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220"></ColumnDefinition>
+                    <ColumnDefinition Width="100"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
-                    <ColumnDefinition Width="150"></ColumnDefinition>
-                    <ColumnDefinition Width="150"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Text="{Binding Desc,Mode=OneWay}"></TextBlock>
-                <TextBlock Text="{Binding CreateDate}" Grid.Column="1" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Text="{Binding Desc,Mode=OneWay}" VerticalAlignment="Center" FontSize="13"></TextBlock>
+                <TextBlock Text="{Binding CreateDate}" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"></TextBlock>
+
+                <StackPanel Orientation="Horizontal" Grid.Column="2">
+                    <Button Content="同意" Width="80"
+                            Command="{Binding AcceptApplyCommandAsync}" Height="30" Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}">
+                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}">
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}">
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="拒绝" Width="50" Margin="10 0 0 0" 
+                            Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource ButtonDanger}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}">
+                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}">
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}">
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <TextBlock Text="{Binding Status,UpdateSourceTrigger=PropertyChanged}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}">
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}">
+                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}">
+                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
             </Grid>
         </DataTemplate>
 
         <DataTemplate x:Key="adddate">
-            <Border Background="#ccc">
+            <Grid Background="#ccc" Height="45">
                 <Grid>
                     <TextBlock Text="{Binding CreateDate,UpdateSourceTrigger=PropertyChanged}"
                                FontSize="18"
+                               VerticalAlignment="Center"
                                FontWeight="Bold"
                                />
                 </Grid>
-            </Border>
+            </Grid>
         </DataTemplate>
     </Window.Resources>
     <behaviors:Interaction.Triggers>
@@ -297,9 +355,11 @@
                            PlacementTarget="{Binding ElementName=tip}"
                            Style="{x:Null}"
                            MaxHeight="450"
+                           Width="500"
                            Placement="Bottom" AllowsTransparency="True" StaysOpen="False" IsOpen="{Binding OpenApply}">
-                        <Border Background="#ccc" BorderBrush="#ccc" BorderThickness="1" CornerRadius="5">
+                        <hc:Card Background="#ccc" BorderBrush="#ccc" BorderThickness="1">
                             <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView" 
+                                          Margin="1"
                                           BorderThickness="0"
                                           Background="Transparent">
                                 <ListBox ScrollViewer.CanContentScroll="False"
@@ -320,7 +380,7 @@
                                     </ListBox.ItemsPanel>
                                 </ListBox>
                             </ScrollViewer>
-                        </Border>
+                        </hc:Card>
                     </Popup>
                     <Ellipse Height="10" Width="10" Fill="Red" Grid.Column="1"
                              Margin="10 0 0 20"></Ellipse>
@@ -515,8 +575,8 @@
                                                     <Border Cursor="Hand"
                                                             Padding="0"
                                                             CornerRadius="0"
-                                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="0 0 0 1"
+                                                            BorderBrush="#eee"
                                                             Height="{TemplateBinding Height}"
                                                             Background="{TemplateBinding Background}"
                                                             Width="{TemplateBinding Width}"
