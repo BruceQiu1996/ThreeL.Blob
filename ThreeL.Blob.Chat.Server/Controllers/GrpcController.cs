@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using ThreeL.Blob.Chat.Application.Contract.Protos;
 using ThreeL.Blob.Chat.Application.Contract.Services;
-using ThreeL.Blob.Shared.Application.Contract.Services;
 
 namespace ThreeL.Blob.Chat.Server.Controllers
 {
-    public class GrpcController : ChatService.ChatServiceBase, IAppService
+    public class GrpcController : ChatService.ChatServiceBase
     {
         private readonly IGrpcService _grpcService;
         public GrpcController(IGrpcService grpcService)

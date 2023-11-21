@@ -2,11 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
-using ThreeL.Blob.Shared.Application.Contract.Services;
 
 namespace ThreeL.Blob.Server.Controllers
 {
-    public class GrpcController : FileGrpcService.FileGrpcServiceBase, IAppService
+    public class GrpcController : FileGrpcService.FileGrpcServiceBase
     {
         private readonly IGrpcService _grpcService;
         public GrpcController(IGrpcService grpcService)

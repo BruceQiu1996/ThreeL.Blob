@@ -15,6 +15,7 @@ using ThreeL.Blob.Clients.Win.Dtos.Message;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Clients.Win.ViewModels.Apply;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Message;
 using ThreeL.Blob.Infra.Core.Serializers;
@@ -39,10 +40,32 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             set => SetProperty(ref _keyword, value);
         }
 
+        private bool _searching;
+        public bool Searching
+        {
+            get => _searching;
+            set => SetProperty(ref _searching, value);
+        }
+
+        private bool openApply;
+        public bool OpenApply
+        {
+            get => openApply;
+            set => SetProperty(ref openApply, value);
+        }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand SendTextMessageCommandAsync { get; set; }
         public AsyncRelayCommand SearchUsersCommandAsync { get; set; }
         public ObservableCollection<RelationItemViewModel> Relations { get; set; }
+        public ObservableCollection<UnRelationItemViewModel> UnRelations { get; set; }
+        private ObservableCollection<ApplyMessageViewModel> _applys;
+        public ObservableCollection<ApplyMessageViewModel> Applys
+        {
+            get => _applys;
+            set => SetProperty(ref _applys, value);
+        }
+        public RelayCommand OpenApplyCommand { get; set; }
+
         private RelationItemViewModel? _relation;
         public RelationItemViewModel? Relation
         {
@@ -62,12 +85,15 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             SearchUsersCommandAsync = new AsyncRelayCommand(SearchUsersAsync);
             SendTextMessageCommandAsync = new AsyncRelayCommand(SendTextMessageAsync);
+            OpenApplyCommand = new RelayCommand(OpenApplyM);
             Relations = new ObservableCollection<RelationItemViewModel>();
+            UnRelations = new ObservableCollection<UnRelationItemViewModel>();
+            Applys = new ObservableCollection<ApplyMessageViewModel>();
         }
 
         private async Task LoadAsync()
         {
-            if (!_loaded) 
+            if (!_loaded)
             {
                 App.HubConnection = new HubConnectionBuilder().WithUrl($"http://{_remoteOptions.Host}:{_remoteOptions.ChatPort}/Chat", option =>
                 {
@@ -82,10 +108,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 
                 App.HubConnection.On<UserSendTextMessageToUserResultDto>("ReceiveTextMessage", msg =>
                 {
-                    if (msg.Success) 
+                    if (msg.Success)
                     {
                         var relation = Relations.FirstOrDefault(x => x.Id == msg.Message.From || x.Id == msg.Message.To);
-                        if (relation != null) 
+                        if (relation != null)
                         {
                             var message = relation.Messages.FirstOrDefault(x => x.MessageId == msg.Message.MessageId);
                             var vm = new TextMessageViewModel();
@@ -99,31 +125,89 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 
                 //拉取关系
                 var resp = await _httpRequest.GetAsync(Const.RELATIONS);
-                if (resp != null) 
+                if (resp != null)
                 {
                     var result = JsonSerializer
-                        .Deserialize<IEnumerable<RelationBriefDto>>(await resp.Content.ReadAsStringAsync(),SystemTextJsonSerializer.GetDefaultOptions());
+                        .Deserialize<IEnumerable<RelationBriefDto>>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
 
-                    if (result != null && result.Count() > 0) 
+                    if (result != null && result.Count() > 0)
                     {
-                        foreach (var relationBriefDto in result) 
+                        foreach (var relationBriefDto in result)
                         {
                             Relations.Add(_mapper.Map<RelationItemViewModel>(relationBriefDto));
                         }
 
                         Relation = Relations.First();
                     }
+
                     _loaded = true;
+                }
+
+                //拉取申请
+                var applyResp = await _httpRequest.GetAsync(Const.QUERYAPPLYS);
+                if (applyResp != null)
+                {
+                    var result = JsonSerializer
+                        .Deserialize<IEnumerable<ApplyDto>>(await applyResp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+
+                    if (result != null && result.Count() > 0)
+                    {
+                        var dates = result
+                            .GroupBy(x => x.CreateTime.ToString("yyyy-MM-dd"));
+
+                        List<ApplyMessageViewModel> applys = new List<ApplyMessageViewModel>();
+                        foreach (var date in dates.OrderByDescending(x => x.Key))
+                        {
+                            applys.Add(new ApplyDateMessageViewModel()
+                            {
+                                CreateDate = date.Key,
+                            });
+
+                            foreach (var item in date.OrderBy(x => x.CreateTime))
+                            {
+                                applys.Add(_mapper.Map<AddFriendApplyMessageViewModel>(item));
+                            }
+                        }
+
+                        Applys = new ObservableCollection<ApplyMessageViewModel>(applys);
+                    }
                 }
             }
         }
 
-        private async Task SearchUsersAsync() 
+        private async Task SearchUsersAsync()
         {
-            var resp = await _httpRequest.GetAsync(string.Format(Const.QUERYRELATIONS,Keyword));
+            UnRelations.Clear();
+            if (string.IsNullOrEmpty(Keyword))
+            {
+                Searching = false;
+                return;
+            }
+            Searching = true;
+            try
+            {
+                var resp = await _httpRequest.GetAsync(string.Format(Const.QUERYRELATIONS, Keyword));
+                if (resp != null)
+                {
+                    var result = JsonSerializer
+                            .Deserialize<IEnumerable<RelationBriefDto>>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+
+                    if (result != null && result.Count() > 0)
+                    {
+                        foreach (var relationBriefDto in result)
+                        {
+                            UnRelations.Add(_mapper.Map<UnRelationItemViewModel>(relationBriefDto));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Searching = false;
+            }
         }
 
-        public async Task SendTextMessageAsync() 
+        public async Task SendTextMessageAsync()
         {
             var temp = Relation;
             if (temp == null || string.IsNullOrEmpty(TextMessage))
@@ -142,6 +226,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             msg.ToDto(dto);
 
             await App.HubConnection.SendAsync("SendTextMessage", dto);
+        }
+
+        private void OpenApplyM()
+        {
+            OpenApply = true;
         }
     }
 }

@@ -88,6 +88,7 @@ namespace ThreeL.Blob.Application.Services
             {
                 new Claim(ClaimTypes.Name, user.Id.ToString()),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Sid,user.UserName),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim(RefreshTokenIdClaimType,refreshToken.refreshTokenId)
             };
@@ -154,6 +155,11 @@ namespace ThreeL.Blob.Application.Services
 
         public async Task<ServiceResult> CreateUserAsync(UserCreationDto creationDto, long creator)
         {
+            var temp = await _userBasicRepository.FirstOrDefaultAsync(x => x.UserName == creationDto.UserName);
+            if (temp != null) 
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "用户名已存在");
+            }
             var user = creationDto.ToUser(creator);
             user.Password = _passwordHelper.HashPassword(creationDto.Password);
             var userLocation = Path.Combine(_configuration.GetSection("FileStorage:RootLocation").Value,user.UserName);

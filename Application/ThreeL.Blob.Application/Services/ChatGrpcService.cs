@@ -10,7 +10,7 @@ using ThreeL.Blob.Shared.Application.Contract.Services;
 namespace ThreeL.Blob.Application.Services
 {
     //与聊天服务器之间的通信
-    public class ChatGrpcService : ChatService.ChatServiceClient, IChatGrpcService, IPreheatService, IAppService
+    public class ChatGrpcService : IChatGrpcService, IAppService
     {
         private readonly ILogger<ChatGrpcService> _logger;
         private readonly ChatServerGrpcOptions _chatServerGrpcOptions;
@@ -19,15 +19,7 @@ namespace ThreeL.Blob.Application.Services
         {
             _logger = logger;
             _chatServerGrpcOptions = chatServerGrpcOptions.Value;
-        }
 
-        public async Task<AddFriendApplyResponse> AddFriendApplyAsync(AddFriendApplyRequest addFriendApplyRequest)
-        {
-            return await _chatServiceClient.AddFriendApplyAsync(addFriendApplyRequest);
-        }
-
-        public Task PreheatAsync()
-        {
             var channel = GrpcChannel.ForAddress($"http://{_chatServerGrpcOptions.Host}:{_chatServerGrpcOptions.Port}", new GrpcChannelOptions()
             {
                 HttpHandler = new HttpClientHandler()
@@ -41,7 +33,14 @@ namespace ThreeL.Blob.Application.Services
             });
 
             _chatServiceClient = new ChatService.ChatServiceClient(channel);
-            return Task.CompletedTask;
+        }
+
+        public async Task<AddFriendApplyResponse> AddFriendApplyAsync(string token, AddFriendApplyRequest addFriendApplyRequest)
+        {
+            return await _chatServiceClient.AddFriendApplyAsync(addFriendApplyRequest, new Metadata()
+            {
+                { "Authorization", token }
+            });
         }
     }
 }

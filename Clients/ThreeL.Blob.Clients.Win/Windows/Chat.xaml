@@ -18,6 +18,7 @@
         <converts:ValueHalfConverter x:Key="ValueHalfConverter"></converts:ValueHalfConverter>
         <converts:ValueHalfConverter_2 x:Key="ValueHalfConverter_2"></converts:ValueHalfConverter_2>
         <helpers:MessageDataTemplateSelector x:Key="MessageDataTemplateSelector"></helpers:MessageDataTemplateSelector>
+        <helpers:ApplyMessageDataTemplateSelector x:Key="ApplyMessageDataTemplateSelector"></helpers:ApplyMessageDataTemplateSelector>
         <DataTemplate x:Key="time">
             <TextBox Text="{Binding Time}"
                      IsReadOnly="True"
@@ -26,14 +27,14 @@
                      VerticalAlignment="Top"
                      VerticalContentAlignment="Top"
                      BorderThickness="0"
-                     Foreground="#ddd"
+                     Foreground="#555"
                      Opacity="0.8"
-                     Background="#555"
+                     Background="#eee"
                      HorizontalAlignment="Center"
                      FontSize="12">
             </TextBox>
         </DataTemplate>
-        
+
         <DataTemplate x:Key="txtSender">
             <Grid Name="ctx">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
@@ -48,7 +49,7 @@
                              BorderThickness="0"
                              Foreground="#555"
                              HorizontalAlignment="Right"
-                             FontSize="15">
+                             FontSize="14">
                     </TextBox>
                 </StackPanel>
             </Grid>
@@ -113,7 +114,7 @@
                              BorderThickness="0"
                              Foreground="#555"
                              HorizontalAlignment="Left"
-                             FontSize="15">
+                             FontSize="14">
                     </TextBox>
                 </StackPanel>
             </Grid>
@@ -163,6 +164,31 @@
                     </Border>
                 </StackPanel>
             </Grid>
+        </DataTemplate>
+
+        <!--申请-->
+        <DataTemplate x:Key="addfriend">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="150"></ColumnDefinition>
+                    <ColumnDefinition Width="150"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Text="{Binding Desc,Mode=OneWay}"></TextBlock>
+                <TextBlock Text="{Binding CreateDate}" Grid.Column="1" HorizontalAlignment="Center"></TextBlock>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="adddate">
+            <Border Background="#ccc">
+                <Grid>
+                    <TextBlock Text="{Binding CreateDate,UpdateSourceTrigger=PropertyChanged}"
+                               FontSize="18"
+                               FontWeight="Bold"
+                               />
+                </Grid>
+            </Border>
         </DataTemplate>
     </Window.Resources>
     <behaviors:Interaction.Triggers>
@@ -237,17 +263,69 @@
                     <RowDefinition Height="40"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
                 </Grid.RowDefinitions>
-                <hc:SearchBar Style="{StaticResource SearchBarExtend}" 
-                              Margin="3"
-                              Grid.Row="0"
-                              hc:InfoElement.Placeholder="搜索好友"
-                              Text="{Binding Keyword,UpdateSourceTrigger=PropertyChanged}">
-                    <hc:SearchBar.InputBindings>
-                        <KeyBinding Command="{Binding SearchUsersCommandAsync}" Key="Enter"/>
-                    </hc:SearchBar.InputBindings>
-                </hc:SearchBar>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="35"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <hc:SearchBar Style="{StaticResource SearchBarExtend}" 
+                                  Margin="3,3,3,3"
+                                  Grid.Row="0"
+                                  Grid.Column="0"
+                                  hc:InfoElement.Placeholder="搜索好友"
+                                  Text="{Binding Keyword,UpdateSourceTrigger=PropertyChanged}">
+                        <hc:SearchBar.InputBindings>
+                            <KeyBinding Command="{Binding SearchUsersCommandAsync}" Key="Enter"/>
+                        </hc:SearchBar.InputBindings>
+                    </hc:SearchBar>
 
-                <Grid Grid.Row="1">
+                    <Button Width="25" Height="25" Grid.Column="2"
+                            BorderThickness="0"
+                            Cursor="Hand"
+                            Name="tip"
+                            ToolTip="通知"
+                            Command="{Binding OpenApplyCommand}"
+                            Padding="0" Background="Transparent">
+                        <Path Data="{StaticResource tip}"
+                              Stretch="Uniform"
+                              Margin="3"
+                              Cursor="Hand"
+                              Fill="{StaticResource PrimaryBrush}"></Path>
+                    </Button>
+
+                    <Popup x:Name="pop" PopupAnimation="Fade"
+                           PlacementTarget="{Binding ElementName=tip}"
+                           Style="{x:Null}"
+                           MaxHeight="450"
+                           Placement="Bottom" AllowsTransparency="True" StaysOpen="False" IsOpen="{Binding OpenApply}">
+                        <Border Background="#ccc" BorderBrush="#ccc" BorderThickness="1" CornerRadius="5">
+                            <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView" 
+                                          BorderThickness="0"
+                                          Background="Transparent">
+                                <ListBox ScrollViewer.CanContentScroll="False"
+                                         Padding="0"
+                                         AllowDrop="True"
+                                         hc:BorderElement.CornerRadius="0"
+                                         ScrollViewer.IsDeferredScrollingEnabled="True"
+                                         ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                         PreviewMouseWheel="ListView_PreviewMouseWheel"
+                                         Background="Transparent"
+                                         ItemsSource="{Binding Applys,UpdateSourceTrigger=PropertyChanged}"
+                                         ItemTemplateSelector="{StaticResource ApplyMessageDataTemplateSelector}"
+                                         BorderThickness="0" BorderBrush="Transparent">
+                                    <ListBox.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical"></StackPanel>
+                                        </ItemsPanelTemplate>
+                                    </ListBox.ItemsPanel>
+                                </ListBox>
+                            </ScrollViewer>
+                        </Border>
+                    </Popup>
+                    <Ellipse Height="10" Width="10" Fill="Red" Grid.Column="1"
+                             Margin="10 0 0 20"></Ellipse>
+                </Grid>
+                <Grid Grid.Row="1" Visibility="{Binding Searching,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="80"></ColumnDefinition>
                         <ColumnDefinition Width="*"></ColumnDefinition>
@@ -333,12 +411,14 @@
 
                     <Grid Grid.Column="1">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="40"></RowDefinition>
+                            <RowDefinition Height="35"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>
                             <RowDefinition Height="45"></RowDefinition>
                         </Grid.RowDefinitions>
                         <hc:Card hc:BorderElement.CornerRadius="10 0 0 10" Margin="-1 3 3 0" Grid.Row="0">
-                            <TextBlock Text="{Binding Relation.UserName}" FontSize="18" Margin="5 4" Foreground="#555"></TextBlock>
+                            <TextBlock Text="{Binding Relation.UserName}" 
+                                       VerticalAlignment="Center"
+                                       FontSize="16" Margin="5 4" Foreground="#555"></TextBlock>
                         </hc:Card>
                         <ScrollViewer helpers:ScrollViewerHelper.AlwaysScrollToEnd="True" 
                                       Margin="0 3 3 3"
@@ -402,6 +482,86 @@
                                     Content="发送"></Button>
                         </Grid>
                     </Grid>
+                </Grid>
+                <Grid Grid.Row="1" Visibility="{Binding Searching,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <hc:Card Grid.Column="0" Margin="3">
+                        <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView" Background="Transparent">
+                            <ListBox ScrollViewer.CanContentScroll="False"
+                                     Padding="0"
+                                     AllowDrop="True"
+                                     hc:BorderElement.CornerRadius="0"
+                                     ScrollViewer.IsDeferredScrollingEnabled="True"
+                                     ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                     PreviewMouseWheel="ListView_PreviewMouseWheel"
+                                     Background="Transparent"
+                                     ItemsSource="{Binding UnRelations,UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0" BorderBrush="Transparent">
+                                <ListBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Vertical"></StackPanel>
+                                    </ItemsPanelTemplate>
+                                </ListBox.ItemsPanel>
+
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="{x:Type ListBoxItem}">
+                                        <Setter Property="OverridesDefaultStyle" Value="True" />
+                                        <Setter Property="SnapsToDevicePixels" Value="True" />
+                                        <Setter Property="Foreground" Value="Black" />
+                                        <Setter Property="Padding" Value="0" />
+                                        <Setter Property="Height" Value="55" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ListBoxItem}">
+                                                    <Border Cursor="Hand"
+                                                            Padding="0"
+                                                            CornerRadius="0"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            Height="{TemplateBinding Height}"
+                                                            Background="{TemplateBinding Background}"
+                                                            Width="{TemplateBinding Width}"
+                                                            Name="fileObjectDetail">
+                                                        <Grid>
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <hc:Gravatar Id="{Binding UserName}" 
+                                                                         Visibility="{Binding Icon,Converter={StaticResource Object2VisibilityReConverter}}" 
+                                                                         Margin="10 0 0 0" Background="#eee" Style="{StaticResource GravatarCircle}" Width="50" Height="50">
+                                                                </hc:Gravatar>
+
+                                                                <hc:Gravatar Visibility="{Binding Icon,Converter={StaticResource Object2VisibilityConverter}}" 
+                                                                         Source="{Binding Icon}"
+                                                                         Margin="10 0 0 0" 
+                                                                         Background="#eee" 
+                                                                         Style="{StaticResource GravatarCircle}" Width="50" Height="50">
+                                                                </hc:Gravatar>
+                                                                <TextBlock Text="{Binding UserName}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                                       FontSize="15"
+                                                                       Foreground="{TemplateBinding Foreground}"
+                                                                       Margin="5 0 0 0"></TextBlock>
+                                                            </StackPanel>
+                                                            <Button Style="{StaticResource ButtonPrimary}" 
+                                                                    HorizontalAlignment="Right"
+                                                                    IsEnabled="{Binding CanAdd,UpdateSourceTrigger=PropertyChanged}"
+                                                                    Command="{Binding AddRelationCommandAsync}"
+                                                                    Content="添加好友" Cursor="Hand" Margin="0 0 10 0"></Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#ddd"></Setter>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="False">
+                                                <Setter Property="Background" Value="Transparent"></Setter>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                        </ScrollViewer>
+                    </hc:Card>
                 </Grid>
             </Grid>
         </Grid>

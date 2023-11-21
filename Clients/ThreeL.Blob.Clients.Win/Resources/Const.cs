@@ -24,6 +24,8 @@
         public const string UPLOAD_AVATAR = "user/upload-avatar";
         public const string RELATIONS = "relations";
         public const string QUERYRELATIONS = "relations/query/{0}";
+        public const string ADDFRIEND = "relations/AddFriend/{0}";
+        public const string QUERYAPPLYS = "relations/applys";
 
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);

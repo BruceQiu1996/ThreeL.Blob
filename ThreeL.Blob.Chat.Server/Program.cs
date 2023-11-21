@@ -28,6 +28,7 @@ namespace ThreeL.Blob.Chat.Server
             host.UseAuthentication();
             host.UseAuthorization();
             host.MapHub<ChatHub>("/Chat");
+            host.MapGrpcService<GrpcController>();
             await host.PreheatService();
             await host.RunAsync();
         }
@@ -47,6 +48,10 @@ namespace ThreeL.Blob.Chat.Server
 
             hostBuilder.Host.ConfigureServices((hostContext, services) =>
             {
+                services.AddGrpc(options =>
+                {
+                    options.MaxReceiveMessageSize = 1024 * 1024 * 10;//最大10M
+                });
                 services.AddApplicationService();
                 services.AddControllers();
                 services.AddEndpointsApiExplorer();

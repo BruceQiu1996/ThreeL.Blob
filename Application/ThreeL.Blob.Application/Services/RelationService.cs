@@ -38,7 +38,7 @@ namespace ThreeL.Blob.Application.Services
             _userEfBasicRepository = userEfBasicRepository;
         }
 
-        public async Task<ServiceResult> AddFriendApplyAsync(long userId, long target)
+        public async Task<ServiceResult> AddFriendApplyAsync(long userId, string userName, long target, string token)
         {
             var friend = await _userEfBasicRepository.GetAsync(target);
             if (friend == null)
@@ -65,11 +65,15 @@ namespace ThreeL.Blob.Application.Services
             {
                 Activer = userId,
                 Passiver = target,
+                PassiverName = friend.UserName,
+                ActiverName = userName,
+                CreateTime = DateTime.Now,
+                UpdateTime = DateTime.Now,
                 Status = Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled
             };
             await _friendApplyEfBasicRepository.InsertAsync(newApply);
 
-            await _chatGrpcService.AddFriendApplyAsync(new AddFriendApplyRequest
+            await _chatGrpcService.AddFriendApplyAsync(token, new AddFriendApplyRequest
             {
                 ApplyId = newApply.Id,
                 ApplyToId = target,
@@ -129,11 +133,19 @@ namespace ThreeL.Blob.Application.Services
             await _redisProvider.SetAddAsync(Const.REDIS_FRIEND_RELATIONS, fRelations.ToArray());
         }
 
+        public async Task<ServiceResult<IEnumerable<ApplyDto>>> QueryApplysAsync(long userId)
+        {
+            var applys = await _friendApplyEfBasicRepository
+                .Where(x => x.Passiver == userId || x.Activer == userId).ToListAsync();
+
+            return new ServiceResult<IEnumerable<ApplyDto>>(applys.Select(_mapper.Map<ApplyDto>));
+        }
+
         public async Task<ServiceResult<IEnumerable<RelationBriefDto>>> QueryRelationsByKeywordAsync(long userId, string key)
         {
             var users = await _userEfBasicRepository.Where(x => x.UserName.Contains(key)).ToListAsync();
             List<RelationBriefDto> friendRelationBriefDtos = new List<RelationBriefDto>();
-            users.ForEach(async x =>
+            users.OrderByDescending(x=>x.CreateTime).ToList().ForEach(async x =>
             {
                 var min = Math.Min(userId, x.Id);
                 var max = Math.Max(userId, x.Id);

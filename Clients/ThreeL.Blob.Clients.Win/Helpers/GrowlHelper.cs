@@ -40,5 +40,41 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 WaitTime = 2
             });
         }
+
+        public void InfoGlobal(string message)
+        {
+            Growl.InfoGlobal(new GrowlInfo()
+            {
+                Message = message,
+                ShowDateTime = false,
+                ShowCloseButton = true,
+                StaysOpen = false,
+                WaitTime = 2
+            });
+        }
+
+        public void SuccessGlobal(string message)
+        {
+            Growl.SuccessGlobal(new GrowlInfo()
+            {
+                Message = message,
+                ShowDateTime = false,
+                ShowCloseButton = true,
+                StaysOpen = false,
+                WaitTime = 2
+            });
+        }
+
+        public void WarningGlobal(string message)
+        {
+            Growl.WarningGlobal(new GrowlInfo()
+            {
+                Message = message,
+                ShowDateTime = false,
+                ShowCloseButton = true,
+                StaysOpen = false,
+                WaitTime = 2
+            });
+        }
     }
 }

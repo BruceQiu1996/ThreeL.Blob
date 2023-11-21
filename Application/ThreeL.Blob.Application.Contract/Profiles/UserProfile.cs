@@ -18,6 +18,8 @@ namespace ThreeL.Blob.Application.Contract.Profiles
             {
                 y.IsGroup = false;
             });
+
+            CreateMap<FriendApply, ApplyDto>();
         }
     }
 }

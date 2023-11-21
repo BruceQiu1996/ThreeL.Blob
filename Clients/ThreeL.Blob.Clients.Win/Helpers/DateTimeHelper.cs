@@ -85,7 +85,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             }
             else
             {
-                return dateTime.ToString("yyyy/MM/dd");
+                return dateTime.ToString("yyyy-MM-dd");
             }
         }
     }
