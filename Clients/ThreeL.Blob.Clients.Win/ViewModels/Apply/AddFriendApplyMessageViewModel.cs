@@ -15,7 +15,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Apply
         public DateTime CreateTime { get; set; }
         public string ActiverName { get; set; }
         public string PassiverName { get; set; }
-        public FriendApplyStatus Status { get; set; }
+        private FriendApplyStatus _status;
+        public FriendApplyStatus Status 
+        {
+            get => _status;
+            set => SetProperty(ref _status, value);
+        }
+        public bool FromSelf => App.UserProfile.Id == Activer;
         public string Desc => App.UserProfile.Id == Activer ? $"添加【{PassiverName}】为好友" : $"【{ActiverName}】请求添加您为好友";
 
         public AsyncRelayCommand AcceptApplyCommandAsync { get; set; }

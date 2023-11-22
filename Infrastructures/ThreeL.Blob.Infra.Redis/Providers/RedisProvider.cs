@@ -101,7 +101,16 @@ namespace ThreeL.Blob.Infra.Redis.Providers
 
         public async Task<bool> SetIsMemberAsync(string cacheKey, string cacheValue)
         {
-            return await _redisDb.SetContainsAsync(cacheKey, cacheValue);
+            try
+            {
+                var result =  await _redisDb.SetContainsAsync(cacheKey, cacheValue);
+
+                return result;
+            }
+            catch (Exception ex) 
+            {
+                return false;
+            }
         }
 
         public async Task<List<string>> SetGetAsync(string cacheKey)

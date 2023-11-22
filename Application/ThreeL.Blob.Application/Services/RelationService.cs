@@ -77,7 +77,7 @@ namespace ThreeL.Blob.Application.Services
             };
             await _friendApplyEfBasicRepository.InsertAsync(newApply);
 
-            await _callChatGrpcChannel.WriteMessageAsync(async () => 
+            await _callChatGrpcChannel.WriteMessageAsync(async () =>
             {
                 await _chatGrpcService.AddFriendApplyAsync(token, new AddFriendApplyRequest
                 {
@@ -129,7 +129,7 @@ namespace ThreeL.Blob.Application.Services
         public async Task<ServiceResult> HandleApplyAsync(long userId, long applyId, string status)
         {
             var apply = await _friendApplyEfBasicRepository.GetAsync(applyId);
-            if (apply == null || apply.Status != Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled) 
+            if (apply == null || apply.Status != Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled)
             {
                 return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "请求不存在或已处理");
             }
@@ -154,7 +154,7 @@ namespace ThreeL.Blob.Application.Services
                 await _friendApplyEfBasicRepository.UpdateAsync(apply);
                 await _friendRelationEfBasicRepository.InsertAsync(relation);
             }
-            else 
+            else
             {
                 apply.Status = Shared.Domain.Metadata.User.FriendApplyStatus.Rejected;
                 apply.UpdateTime = DateTime.Now;
@@ -189,16 +189,32 @@ namespace ThreeL.Blob.Application.Services
         public async Task<ServiceResult<IEnumerable<RelationBriefDto>>> QueryRelationsByKeywordAsync(long userId, string key)
         {
             var users = await _userEfBasicRepository.Where(x => x.UserName.Contains(key)).ToListAsync();
-            List<RelationBriefDto> friendRelationBriefDtos = new List<RelationBriefDto>();
-            users.OrderByDescending(x=>x.CreateTime).ToList().ForEach(async x =>
+            if (users.Count < 2)
             {
-                var min = Math.Min(userId, x.Id);
-                var max = Math.Max(userId, x.Id);
+
+            }
+            List<RelationBriefDto> friendRelationBriefDtos = new List<RelationBriefDto>();
+            //users.ForEach(async x =>
+            //{
+            //    var min = Math.Min(userId, x.Id);
+            //    var max = Math.Max(userId, x.Id);
+            //    if (!await _redisProvider.SetIsMemberAsync(Const.REDIS_FRIEND_RELATIONS, $"{min}-{max}"))
+            //    {
+            //        x.Avatar = x.Avatar == null ? x.Avatar : x.Avatar.Replace(_configuration.GetSection("FileStorage:AvatarImagesLocation").Value!, null);
+            //        friendRelationBriefDtos.Add(_mapper.Map<RelationBriefDto>(x));
+            //    }
+            //});
+
+            foreach (var user in users)
+            {
+                var min = Math.Min(userId, user.Id);
+                var max = Math.Max(userId, user.Id);
                 if (!await _redisProvider.SetIsMemberAsync(Const.REDIS_FRIEND_RELATIONS, $"{min}-{max}"))
                 {
-                    friendRelationBriefDtos.Add(_mapper.Map<RelationBriefDto>(x));
+                    user.Avatar = user.Avatar == null ? user.Avatar : user.Avatar.Replace(_configuration.GetSection("FileStorage:AvatarImagesLocation").Value!, null);
+                    friendRelationBriefDtos.Add(_mapper.Map<RelationBriefDto>(user));
                 }
-            });
+            }
 
             return new ServiceResult<IEnumerable<RelationBriefDto>>(friendRelationBriefDtos);
         }

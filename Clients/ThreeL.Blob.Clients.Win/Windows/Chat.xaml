@@ -9,6 +9,7 @@
         Icon="pack://application:,,,/HeadDisk;component/Icon.ico"
         xmlns:converts="clr-namespace:ThreeL.Blob.Clients.Win.Converts"
         xmlns:enum ="clr-namespace:ThreeL.Blob.Shared.Domain.Metadata.User;assembly=ThreeL.Blob.Shared.Domain"
+        xmlns:local="clr-namespace:ThreeL.Blob.Clients.Win"
         mc:Ignorable="d"
         AllowsTransparency="True"
         Background="Transparent"
@@ -180,55 +181,134 @@
                 <TextBlock Text="{Binding CreateDate}" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"></TextBlock>
 
                 <StackPanel Orientation="Horizontal" Grid.Column="2">
-                    <Button Content="同意" Width="80"
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}"></Condition>
+                                            <Condition Binding="{Binding FromSelf}" Value="True"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}"></Condition>
+                                            <Condition Binding="{Binding FromSelf}" Value="False"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <Button Content="同意" Width="80"
+                            Style="{StaticResource ButtonPrimary}"
                             Command="{Binding AcceptApplyCommandAsync}" Height="30" Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ButtonPrimary}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}">
-                                        <Setter Property="Visibility" Value="Visible"></Setter>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}">
-                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}">
-                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <Button Content="拒绝" Width="50" Margin="10 0 0 0" 
-                            Cursor="Hand">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource ButtonDanger}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}">
-                                        <Setter Property="Visibility" Value="Visible"></Setter>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}">
-                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}">
-                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    <TextBlock Text="{Binding Status,UpdateSourceTrigger=PropertyChanged}">
+                        </Button>
+                        <Button Content="拒绝" Width="50" Margin="10 0 0 0" 
+                            Cursor="Hand"
+                            Style="{StaticResource ButtonDanger}">
+                        </Button>
+                    </StackPanel>
+
+                    <TextBlock Text="待对方处理" VerticalAlignment="Center" FontSize="13" HorizontalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}">
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}"></Condition>
+                                            <Condition Binding="{Binding FromSelf}" Value="True"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Visible"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}"></Condition>
+                                            <Condition Binding="{Binding FromSelf}" Value="False"></Condition>
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Visibility" Value="Collapsed"></Setter>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}">
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock Text="已同意" VerticalAlignment="Center" FontSize="13" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}"></Condition>
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Visibility" Value="Visible"></Setter>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}">
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock Text="已拒绝" VerticalAlignment="Center" FontSize="13" HorizontalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Rejected}"></Condition>
+                                        </MultiDataTrigger.Conditions>
                                         <Setter Property="Visibility" Value="Visible"></Setter>
-                                    </DataTrigger>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Unhandled}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger >
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Status}" Value="{x:Static enum:FriendApplyStatus.Agreed}"></Condition>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"></Setter>
+                                    </MultiDataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBlock.Style>
@@ -357,7 +437,7 @@
                            MaxHeight="450"
                            Width="500"
                            Placement="Bottom" AllowsTransparency="True" StaysOpen="False" IsOpen="{Binding OpenApply}">
-                        <hc:Card Background="#ccc" BorderBrush="#ccc" BorderThickness="1">
+                        <hc:Card Background="#fff" BorderBrush="#eee" BorderThickness="2">
                             <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView" 
                                           Margin="1"
                                           BorderThickness="0"
@@ -378,6 +458,21 @@
                                             <StackPanel Orientation="Vertical"></StackPanel>
                                         </ItemsPanelTemplate>
                                     </ListBox.ItemsPanel>
+
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="Transparent"></Setter>
+                                                    <Setter Property="Foreground" Value="Black"></Setter>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="False">
+                                                    <Setter Property="Background" Value="Transparent"></Setter>
+                                                    <Setter Property="Foreground" Value="Black"></Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
                                 </ListBox>
                             </ScrollViewer>
                         </hc:Card>
