@@ -28,7 +28,6 @@ namespace ThreeL.Blob.Chat.Server
             host.UseAuthentication();
             host.UseAuthorization();
             host.MapHub<ChatHub>("/Chat");
-            host.MapGrpcService<GrpcController>();
             await host.PreheatService();
             await host.RunAsync();
         }
@@ -89,11 +88,6 @@ namespace ThreeL.Blob.Chat.Server
                 options.Listen(IPAddress.Any, 5826, listenOptions =>
                 {
                     listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-                });
-
-                options.Listen(IPAddress.Any, 5827, listenOptions =>
-                {
-                    listenOptions.Protocols = HttpProtocols.Http2;
                 });
             });
 

@@ -40,6 +40,15 @@
         <DataTemplate x:Key="txtSender">
             <Grid Name="ctx">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Label Padding="0" Background="Transparent" BorderThickness="0"
+                           Visibility="{Binding SendFaild,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}"
+                           Cursor="Hand"
+                           Margin=" 0 0 5 0">
+                        <Path Data="{StaticResource ErrorGeometry}"
+                              Height="18" Width="18" Fill="Red"
+                              Stretch="Uniform">
+                        </Path>
+                    </Label>
                     <TextBox Text="{Binding Text,UpdateSourceTrigger=PropertyChanged}"
                              MaxWidth="{Binding ElementName=ctx,Path=ActualWidth,Converter={StaticResource ValueHalfConverter},UpdateSourceTrigger=PropertyChanged}"
                              TextWrapping="Wrap"
@@ -170,7 +179,7 @@
 
         <!--申请-->
         <DataTemplate x:Key="addfriend">
-            <Grid Height="45">
+            <Grid Height="35">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="220"></ColumnDefinition>
                     <ColumnDefinition Width="100"></ColumnDefinition>
@@ -215,13 +224,14 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <Button Content="同意" Width="80"
-                            Style="{StaticResource ButtonPrimary}"
-                            Command="{Binding AcceptApplyCommandAsync}" Height="30" Cursor="Hand">
+                        <Button Content="同意" Width="70"
+                                Style="{StaticResource ButtonPrimary}"
+                                Command="{Binding AcceptApplyCommandAsync}" Height="30" Cursor="Hand">
                         </Button>
-                        <Button Content="拒绝" Width="50" Margin="10 0 0 0" 
-                            Cursor="Hand"
-                            Style="{StaticResource ButtonDanger}">
+                        <Button Content="拒绝" Width="50" Margin="5 0 0 0" 
+                                Cursor="Hand"
+                                Style="{StaticResource ButtonDanger}"
+                                Command="{Binding RejectApplyCommandAsync}">
                         </Button>
                     </StackPanel>
 
@@ -435,14 +445,18 @@
                            PlacementTarget="{Binding ElementName=tip}"
                            Style="{x:Null}"
                            MaxHeight="450"
-                           Width="500"
+                           Width="480"
                            Placement="Bottom" AllowsTransparency="True" StaysOpen="False" IsOpen="{Binding OpenApply}">
                         <hc:Card Background="#fff" BorderBrush="#eee" BorderThickness="2">
-                            <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView" 
+                            <StackPanel>
+                                <Button Content="刷新" Width="100" 
+                                        Command="{Binding RefreshApplysCommandAsync}"
+                                        Cursor="Hand" Height="30" HorizontalAlignment="Left" Margin="10 5 5 5"></Button>
+                                <ScrollViewer RequestBringIntoView="ScrollViewer_RequestBringIntoView" 
                                           Margin="1"
                                           BorderThickness="0"
                                           Background="Transparent">
-                                <ListBox ScrollViewer.CanContentScroll="False"
+                                    <ListBox ScrollViewer.CanContentScroll="False"
                                          Padding="0"
                                          AllowDrop="True"
                                          hc:BorderElement.CornerRadius="0"
@@ -453,28 +467,29 @@
                                          ItemsSource="{Binding Applys,UpdateSourceTrigger=PropertyChanged}"
                                          ItemTemplateSelector="{StaticResource ApplyMessageDataTemplateSelector}"
                                          BorderThickness="0" BorderBrush="Transparent">
-                                    <ListBox.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical"></StackPanel>
-                                        </ItemsPanelTemplate>
-                                    </ListBox.ItemsPanel>
+                                        <ListBox.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Vertical"></StackPanel>
+                                            </ItemsPanelTemplate>
+                                        </ListBox.ItemsPanel>
 
-                                    <ListBox.ItemContainerStyle>
-                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="Background" Value="Transparent"></Setter>
-                                                    <Setter Property="Foreground" Value="Black"></Setter>
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="False">
-                                                    <Setter Property="Background" Value="Transparent"></Setter>
-                                                    <Setter Property="Foreground" Value="Black"></Setter>
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ListBox.ItemContainerStyle>
-                                </ListBox>
-                            </ScrollViewer>
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="False">
+                                                        <Setter Property="Background" Value="Transparent"></Setter>
+                                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                    </ListBox>
+                                </ScrollViewer>
+                            </StackPanel>
                         </hc:Card>
                     </Popup>
                     <Ellipse Height="10" Width="10" Fill="Red" Grid.Column="1"
@@ -624,14 +639,18 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="60"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Text="{Binding TextMessage}" FontSize="12" 
+                            <TextBox Text="{Binding TextMessage,UpdateSourceTrigger=PropertyChanged}" FontSize="12" 
                                      AcceptsReturn="True"
                                      VerticalContentAlignment="Top"
                                      TextWrapping="Wrap"
                                      BorderThickness="0"
                                      Style="{StaticResource TextBoxExtend}"
                                      hc:InfoElement.Placeholder="输入发送的消息"
-                                     MinWidth="200"></TextBox>
+                                     MinWidth="200">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Command="{Binding SendTextMessageCommandAsync}" Key="Enter"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
                             <Button Width="50" Cursor="Hand" Grid.Column="1" Margin="5" Height="50" Style="{StaticResource ButtonPrimary}" 
                                     Command="{Binding SendTextMessageCommandAsync}"
                                     Content="发送"></Button>

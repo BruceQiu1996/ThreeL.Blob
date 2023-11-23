@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using HandyControl.Controls;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Threading.Tasks;
@@ -8,6 +10,7 @@ using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Shared.Domain;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 {
@@ -50,6 +53,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public bool IsGroup { get; set; }
         public AsyncRelayCommand AddRelationCommandAsync { get; set; }
+        public AsyncRelayCommand RejectRelationCommandAsync { get; set; }
 
         public UnRelationItemViewModel()
         {
@@ -71,15 +75,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         private async Task AddRelationAsync() 
         {
             CanAdd = false;
-            var resp = await App.ServiceProvider!.GetRequiredService<HttpRequest>().PostAsync(string.Format(Const.ADDFRIEND, Id),null);
-            if (resp == null)
-            {
-                CanAdd = true;
-            }
-            else 
-            {
-                App.ServiceProvider!.GetRequiredService<GrowlHelper>().SuccessGlobal("好友添加申请已发送");
-            }
+            await App.HubConnection.SendAsync(HubConst.SendAddFriendApply,Id);
         }
     }
 }

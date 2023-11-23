@@ -1,6 +1,6 @@
-﻿namespace ThreeL.Blob.Application.Contract.Configurations
+﻿namespace ThreeL.Blob.Chat.Application.Contract.Configurations
 {
-    public class ChatServerGrpcOptions
+    public class ContextApiGrpcOptions
     {
         public string Host { get; set; }
         public int Timeout { get; set; }

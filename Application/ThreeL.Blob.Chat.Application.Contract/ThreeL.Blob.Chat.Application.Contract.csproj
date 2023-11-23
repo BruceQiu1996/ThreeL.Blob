@@ -29,7 +29,7 @@
 
 	<ItemGroup>
 		<Protobuf Include="Protos\Chat.proto">
-			<GrpcServices>Both</GrpcServices>
+			<GrpcServices>Client</GrpcServices>
 		</Protobuf>
 	</ItemGroup>
 

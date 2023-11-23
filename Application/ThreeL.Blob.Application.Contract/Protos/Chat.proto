@@ -2,13 +2,27 @@
 option csharp_namespace = "ThreeL.Blob.Application.Contract.Protos";
 
 message AddFriendApplyRequest{
-	int64 ApplyId = 1;
-	int64 ApplyToId = 2;
+	int64 target = 1;
 }
 
-message AddFriendApplyResponse{
+message CommonResponse{
+	bool success = 1;
+	string message = 2;
 }
 
-service ChatService{
-	rpc AddFriendApply(AddFriendApplyRequest) returns (AddFriendApplyResponse);
+message HandleAddFriendApplyRequest{
+	int64 applyId = 1;
+    bool isAgree = 2;
+}
+
+message HandleAddFriendApplyResponse{
+	bool success = 1;
+	string message = 2;
+    int64 activer = 3;
+	int64 passiver = 4;
+}
+
+service RpcContextAPIService{
+	rpc AddFriendApply(AddFriendApplyRequest) returns (CommonResponse);
+	rpc HandleAddFriendApply(HandleAddFriendApplyRequest) returns (HandleAddFriendApplyResponse);
 }

@@ -23,8 +23,8 @@
         public const string UPDATE_LOCATION = "file/update-location";
         public const string UPLOAD_AVATAR = "user/upload-avatar";
         public const string RELATIONS = "relations";
+        public const string RELATION_SOMEONE = "relations/{0}";
         public const string QUERYRELATIONS = "relations/query/{0}";
-        public const string ADDFRIEND = "relations/AddFriend/{0}";
         public const string QUERYAPPLYS = "relations/applys";
         public const string HANDLEAPPLY = "relations/handleFriendApply/{0}/{1}";
 
@@ -46,6 +46,7 @@
         public const string StartNewUploadTask = nameof(StartNewUploadTask);
         public const string StartNewDownloadTask = nameof(StartNewDownloadTask);
         public const string AvatarUploaded = nameof(AvatarUploaded);
+        public const string AddFRIENDAPPLYSUCCESS = nameof(AddFRIENDAPPLYSUCCESS);
         public static object UploadRunTaskLock = new object();
         public static object DownloadRunTaskLock = new object();
 

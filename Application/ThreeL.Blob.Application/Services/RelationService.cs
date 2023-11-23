@@ -1,12 +1,14 @@
 ﻿using AutoMapper;
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using ThreeL.Blob.Application.Channels;
+using System.Security.Claims;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Domain.Aggregate.User;
 using ThreeL.Blob.Infra.Redis;
+using ThreeL.Blob.Infra.Redis.Providers;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
@@ -20,55 +22,65 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<FriendRelation, long> _friendRelationEfBasicRepository;
         private readonly IEfBasicRepository<User, long> _userEfBasicRepository;
         private readonly IConfiguration _configuration;
-        private readonly IChatGrpcService _chatGrpcService;
         private readonly IRedisProvider _redisProvider;
-        private readonly CallChatGrpcChannel _callChatGrpcChannel;
+
         public RelationService(IEfBasicRepository<FriendRelation, long> friendRelationEfBasicRepository,
                                IEfBasicRepository<FriendApply, long> friendApplyEfBasicRepository,
                                IEfBasicRepository<User, long> userEfBasicRepository,
                                IMapper mapper,
                                IConfiguration configuration,
-                               IChatGrpcService chatGrpcService,
-                               IRedisProvider redisProvider,
-                               CallChatGrpcChannel callChatGrpcChannel)
+                               IRedisProvider redisProvider)
         {
             _mapper = mapper;
             _redisProvider = redisProvider;
-            _chatGrpcService = chatGrpcService;
             _configuration = configuration;
             _friendRelationEfBasicRepository = friendRelationEfBasicRepository;
             _friendApplyEfBasicRepository = friendApplyEfBasicRepository;
             _userEfBasicRepository = userEfBasicRepository;
-            _callChatGrpcChannel = callChatGrpcChannel;
         }
 
-        public async Task<ServiceResult> AddFriendApplyAsync(long userId, string userName, long target, string token)
+        public async Task<CommonResponse> AddFriendApplyAsync(AddFriendApplyRequest request, ServerCallContext serverCallContext)
         {
-            var friend = await _userEfBasicRepository.GetAsync(target);
+            var userName = serverCallContext.GetHttpContext().User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid)?.Value;
+            var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
+            var friend = await _userEfBasicRepository.GetAsync(request.Target);
             if (friend == null)
             {
-                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "对方账号异常");
+                return new CommonResponse()
+                {
+                    Success = false,
+                    Message = "好友不存在"
+                };
             }
+
             var relation = await _friendRelationEfBasicRepository
-                .FirstOrDefaultAsync(x => (x.Passiver == userId && x.Activer == target) || (x.Passiver == target && x.Activer == userId));
+                .FirstOrDefaultAsync(x => (x.Passiver == userId && x.Activer == request.Target) || (x.Passiver == request.Target && x.Activer == userId));
 
             if (relation != null)
             {
-                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "重复添加好友");
+                return new CommonResponse()
+                {
+                    Message = "无法重复添加好友",
+                    Success = false
+                };
             }
 
             var apply = await _friendApplyEfBasicRepository
-                .FirstOrDefaultAsync(x => ((x.Passiver == userId && x.Activer == target) || (x.Passiver == target && x.Activer == userId)) && x.Status == Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled);
+                .FirstOrDefaultAsync(x => ((x.Passiver == userId && x.Activer == request.Target) || (x.Passiver == request.Target && x.Activer == userId)) && x.Status == Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled);
 
             if (apply != null)
             {
-                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "存在相同的未处理的好友请求");
+                return new CommonResponse()
+                {
+                    Message = "存在相同的未处理的好友请求",
+                    Success = false
+                };
             }
 
             var newApply = new FriendApply()
             {
                 Activer = userId,
-                Passiver = target,
+                Passiver = request.Target,
                 PassiverName = friend.UserName,
                 ActiverName = userName,
                 CreateTime = DateTime.Now,
@@ -77,16 +89,11 @@ namespace ThreeL.Blob.Application.Services
             };
             await _friendApplyEfBasicRepository.InsertAsync(newApply);
 
-            await _callChatGrpcChannel.WriteMessageAsync(async () =>
+            return new CommonResponse()
             {
-                await _chatGrpcService.AddFriendApplyAsync(token, new AddFriendApplyRequest
-                {
-                    ApplyId = newApply.Id,
-                    ApplyToId = target,
-                });
-            });
-
-            return new ServiceResult();
+                Success = true,
+                Message = "好友请求已发送"
+            };
         }
 
         public async Task<ServiceResult<IEnumerable<RelationBriefDto>>> GetRelationsAsync(long userId)
@@ -126,20 +133,64 @@ namespace ThreeL.Blob.Application.Services
             };
         }
 
-        public async Task<ServiceResult> HandleApplyAsync(long userId, long applyId, string status)
+        public async Task<ServiceResult<RelationBriefDto>> GetRelationAsync(long userId, long target)
         {
-            var apply = await _friendApplyEfBasicRepository.GetAsync(applyId);
+            //获取所有的好友
+            var relation = await _friendRelationEfBasicRepository
+                .FirstOrDefaultAsync(x =>(x.Passiver == userId && x.Activer == target) || (x.Activer == userId && x.Passiver == target));
+
+            if (relation == null) 
+            {
+                return new ServiceResult<RelationBriefDto>(System.Net.HttpStatusCode.BadRequest,"好友关系异常")
+                {
+                    Value = null
+                };
+            }
+
+            var friend = await _userEfBasicRepository.GetAsync(target);
+            if (friend == null)
+            {
+                return new ServiceResult<RelationBriefDto>(System.Net.HttpStatusCode.BadRequest, "好友不存在")
+                {
+                    Value = null
+                };
+            }
+
+            var friendBrief = _mapper.Map<RelationBriefDto>(friend);
+            if (friendBrief.Avatar != null)
+            {
+                friendBrief.Avatar = friendBrief.Avatar.Replace(_configuration.GetSection("FileStorage:AvatarImagesLocation").Value!, null);
+            }
+
+            return new ServiceResult<RelationBriefDto>()
+            {
+                Value = friendBrief
+            };
+        }
+
+        public async Task<HandleAddFriendApplyResponse> HandleAddFriendApplyAsync(HandleAddFriendApplyRequest request, ServerCallContext serverCallContext)
+        {
+            var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
+            var apply = await _friendApplyEfBasicRepository.GetAsync(request.ApplyId);
             if (apply == null || apply.Status != Shared.Domain.Metadata.User.FriendApplyStatus.Unhandled)
             {
-                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "请求不存在或已处理");
+                return new HandleAddFriendApplyResponse()
+                {
+                    Success = false,
+                    Message = "好友请求不存在或已处理"
+                };
             }
 
             if (apply.Passiver != userId)
             {
-                return new ServiceResult(System.Net.HttpStatusCode.BadRequest, "无权限处理该请求");
+                return new HandleAddFriendApplyResponse()
+                {
+                    Success = false,
+                    Message = "无权处理该好友请求"
+                };
             }
 
-            if (status == "accept")
+            if (request.IsAgree)
             {
                 apply.Status = Shared.Domain.Metadata.User.FriendApplyStatus.Agreed;
                 apply.UpdateTime = DateTime.Now;
@@ -161,11 +212,18 @@ namespace ThreeL.Blob.Application.Services
                 await _friendApplyEfBasicRepository.UpdateAsync(apply);
             }
 
-            return new ServiceResult();
+            return new HandleAddFriendApplyResponse()
+            {
+                Success = true,
+                Message = "处理成功",
+                Activer = apply.Activer,
+                Passiver = apply.Passiver,
+            };
         }
 
         public async Task PreheatAsync()
         {
+            await _redisProvider.KeyDelAsync(Const.REDIS_FRIEND_RELATIONS);
             var relations = await _friendRelationEfBasicRepository.AllAsync();
             List<string> fRelations = new List<string>();
             foreach (var relation in relations)
@@ -204,6 +262,7 @@ namespace ThreeL.Blob.Application.Services
             //        friendRelationBriefDtos.Add(_mapper.Map<RelationBriefDto>(x));
             //    }
             //});
+
 
             foreach (var user in users)
             {

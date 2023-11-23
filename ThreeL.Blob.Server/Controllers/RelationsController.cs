@@ -31,13 +31,11 @@ namespace ThreeL.Blob.Server.Controllers
         }
 
         [Authorize]
-        [HttpPost("addFriend/{target}")]
-        public async Task<IActionResult> AddFriend(long target)
+        [HttpGet("{Id}")]
+        public async Task<IActionResult> GetSomeOne(long id)
         {
-            var userName = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid)?.Value;
             long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-            var token = HttpContext.Request.Headers["Authorization"];
-            var result = await _relationService.AddFriendApplyAsync(userId, userName, target, token);
+            var result = await _relationService.GetRelationAsync(userId,id);
 
             return result.ToActionResult();
         }
@@ -58,16 +56,6 @@ namespace ThreeL.Blob.Server.Controllers
         {
             long.TryParse(HttpContext.User.Identity?.Name, out var userId);
             var result = await _relationService.QueryApplysAsync(userId);
-
-            return result.ToActionResult();
-        }
-
-        [Authorize]
-        [HttpPost("handleFriendApply/{applyId}/{status}")]
-        public async Task<IActionResult> HandleFriendApply(long applyId, string status)
-        {
-            long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-            var result = await _relationService.HandleApplyAsync(userId, applyId, status);
 
             return result.ToActionResult();
         }

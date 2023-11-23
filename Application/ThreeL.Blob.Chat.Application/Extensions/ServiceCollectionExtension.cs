@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using Microsoft.Extensions.DependencyInjection;
-using ThreeL.Blob.Chat.Application.Channels;
 using ThreeL.Blob.Chat.Application.Contract.Configurations;
 using ThreeL.Blob.Infra.Core.Extensions.Microsoft;
 using ThreeL.Blob.Shared.Application.Contract;
@@ -20,10 +19,9 @@ namespace ThreeL.Blob.Chat.Application.Extensions
 
         public static void AddApplicationService(this IServiceCollection services)
         {
-            services.AddSingleton<PushMessageToClientChannel>();
             services.Configure<JwtOptions>(services.GetConfiguration().GetSection("Jwt"));
             services.Configure<SystemOptions>(services.GetConfiguration().GetSection("System"));
-            services.Configure<ContextApiOptions>(services.GetConfiguration().GetSection("ContextApiOptions"));
+            services.Configure<ContextApiGrpcOptions>(services.GetConfiguration().GetSection("ContextApiOptions"));
             ApplicationDependencyRegistrar applicationDependencyRegistrar = new ApplicationDependencyRegistrar(_applicationAssemblyInfo, services);
             applicationDependencyRegistrar.AddChatInfraService();
         }

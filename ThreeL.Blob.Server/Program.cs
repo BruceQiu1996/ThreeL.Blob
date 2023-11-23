@@ -166,6 +166,7 @@ namespace ThreeL.Blob.Server
             });
             host.MapControllers();
             host.MapGrpcService<GrpcController>();
+            host.MapGrpcService<ChatGrpcController>();
             await host.RunAsync();
         }
     }

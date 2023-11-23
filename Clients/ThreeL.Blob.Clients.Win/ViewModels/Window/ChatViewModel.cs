@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 using System;
@@ -9,8 +10,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Windows;
 using ThreeL.Blob.Clients.Win.Configurations;
 using ThreeL.Blob.Clients.Win.Dtos;
+using ThreeL.Blob.Clients.Win.Dtos.ChatServer;
 using ThreeL.Blob.Clients.Win.Dtos.Message;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
@@ -19,6 +22,7 @@ using ThreeL.Blob.Clients.Win.ViewModels.Apply;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Message;
 using ThreeL.Blob.Infra.Core.Serializers;
+using ThreeL.Blob.Shared.Domain;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 {
@@ -56,6 +60,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand SendTextMessageCommandAsync { get; set; }
         public AsyncRelayCommand SearchUsersCommandAsync { get; set; }
+        public AsyncRelayCommand RefreshApplysCommandAsync { get; set; }
         public ObservableCollection<RelationItemViewModel> Relations { get; set; }
         public ObservableCollection<UnRelationItemViewModel> UnRelations { get; set; }
         private ObservableCollection<ApplyMessageViewModel> _applys;
@@ -86,9 +91,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             SearchUsersCommandAsync = new AsyncRelayCommand(SearchUsersAsync);
             SendTextMessageCommandAsync = new AsyncRelayCommand(SendTextMessageAsync);
             OpenApplyCommand = new RelayCommand(OpenApplyM);
+            RefreshApplysCommandAsync = new AsyncRelayCommand(RefreshApplysAsync);
             Relations = new ObservableCollection<RelationItemViewModel>();
             UnRelations = new ObservableCollection<UnRelationItemViewModel>();
             Applys = new ObservableCollection<ApplyMessageViewModel>();
+
+            //被通知发送好友申请成功
+            WeakReferenceMessenger.Default.Register<ChatViewModel, string, string>(this, Const.AddFRIENDAPPLYSUCCESS, async (x, y) =>
+            {
+                await RefreshApplysAsync();
+            });
         }
 
         private async Task LoadAsync()
@@ -101,23 +113,68 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     option.AccessTokenProvider = () => Task.FromResult(_httpRequest._token)!;
                 }).WithAutomaticReconnect().Build();
 
-                App.HubConnection.On("LoginSuccess", () =>
+                //登录成功回调
+                App.HubConnection.On(HubConst.LoginSuccess, () =>
                 {
                     _growlHelper.Success("登录聊天系统成功");
                 });
 
-                App.HubConnection.On<UserSendTextMessageToUserResultDto>("ReceiveTextMessage", msg =>
+                //发送文本消息回调
+                App.HubConnection.On<HubMessageResponseDto<TextMessageDto>>(HubConst.ReceiveTextMessage, msg =>
+                {
+                    var relation = Relations.FirstOrDefault(x => x.Id == msg.Data.From || x.Id == msg.Data.To);
+                    if (relation != null)
+                    {
+                        var vm = new TextMessageViewModel();
+                        vm.FromDto(msg.Data);
+                        vm.Sending = false;
+                        vm.SendFaild = !msg.Success;
+                        relation.AddMessage(vm);
+                    }
+
+                    if (!msg.Success) _growlHelper.Warning(msg.Message);
+                });
+
+                //收到好友请求回调
+                App.HubConnection.On<HubMessageResponseDto<object>>(HubConst.NewAddFriendApply, async msg =>
                 {
                     if (msg.Success)
                     {
-                        var relation = Relations.FirstOrDefault(x => x.Id == msg.Message.From || x.Id == msg.Message.To);
-                        if (relation != null)
+                        //刷新好友请求
+                        await RefreshApplysAsync();
+                    }
+                    else 
+                    {
+                        _growlHelper.WarningGlobal(msg.Message);
+                    }
+                });
+
+                //处理好友请求回调
+                App.HubConnection.On<HubMessageResponseDto<HandleAddFriendApplyResponseDto>>(HubConst.AddFriendApplyResult, async msg =>
+                {
+                    if (msg.Success)
+                    {
+                        await RefreshApplysAsync();
+                        if (msg.Data.IsAgree && Relations.FirstOrDefault(x => x.Id == msg.Data.FriendId) == null)
                         {
-                            var message = relation.Messages.FirstOrDefault(x => x.MessageId == msg.Message.MessageId);
-                            var vm = new TextMessageViewModel();
-                            vm.FromDto(msg.Message);
-                            relation.AddMessage(vm);
+                            //加载好友
+                            var resp = await _httpRequest.GetAsync(string.Format(Const.RELATION_SOMEONE, msg.Data.FriendId));
+                            if (resp != null)
+                            {
+                                var result = JsonSerializer
+                                    .Deserialize<RelationBriefDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    Relations.Insert(0, _mapper.Map<RelationItemViewModel>(result));
+                                });
+
+                                if (Relation == null) Relation = Relations.First();
+                            }
                         }
+                    }
+                    else
+                    {
+                        _growlHelper.WarningGlobal(msg.Message);
                     }
                 });
 
@@ -144,33 +201,38 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                 }
 
                 //拉取申请
-                var applyResp = await _httpRequest.GetAsync(Const.QUERYAPPLYS);
-                if (applyResp != null)
+                await RefreshApplysAsync();
+            }
+        }
+
+        private async Task RefreshApplysAsync()
+        {
+            var applyResp = await _httpRequest.GetAsync(Const.QUERYAPPLYS);
+            if (applyResp != null)
+            {
+                var result = JsonSerializer
+                    .Deserialize<IEnumerable<ApplyDto>>(await applyResp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+
+                if (result != null && result.Count() > 0)
                 {
-                    var result = JsonSerializer
-                        .Deserialize<IEnumerable<ApplyDto>>(await applyResp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                    var dates = result
+                        .GroupBy(x => x.CreateTime.ToString("yyyy-MM-dd"));
 
-                    if (result != null && result.Count() > 0)
+                    List<ApplyMessageViewModel> applys = new List<ApplyMessageViewModel>();
+                    foreach (var date in dates.OrderByDescending(x => x.Key))
                     {
-                        var dates = result
-                            .GroupBy(x => x.CreateTime.ToString("yyyy-MM-dd"));
-
-                        List<ApplyMessageViewModel> applys = new List<ApplyMessageViewModel>();
-                        foreach (var date in dates.OrderByDescending(x => x.Key))
+                        applys.Add(new ApplyDateMessageViewModel()
                         {
-                            applys.Add(new ApplyDateMessageViewModel()
-                            {
-                                CreateDate = date.Key,
-                            });
+                            CreateDate = date.Key,
+                        });
 
-                            foreach (var item in date.OrderBy(x => x.CreateTime))
-                            {
-                                applys.Add(_mapper.Map<AddFriendApplyMessageViewModel>(item));
-                            }
+                        foreach (var item in date.OrderBy(x => x.CreateTime))
+                        {
+                            applys.Add(_mapper.Map<AddFriendApplyMessageViewModel>(item));
                         }
-
-                        Applys = new ObservableCollection<ApplyMessageViewModel>(applys);
                     }
+
+                    Applys = new ObservableCollection<ApplyMessageViewModel>(applys);
                 }
             }
         }
@@ -221,11 +283,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                 To = temp.Id,
                 Sending = true
             };
-            temp.Messages.Add(msg);
+            temp.AddMessage(msg);
             var dto = new TextMessageDto();
             msg.ToDto(dto);
 
-            await App.HubConnection.SendAsync("SendTextMessage", dto);
+            await App.HubConnection.SendAsync(HubConst.SendTextMessage, dto);
+            TextMessage = null;
         }
 
         private void OpenApplyM()
