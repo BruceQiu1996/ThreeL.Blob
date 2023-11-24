@@ -1,5 +1,5 @@
 import { ChangeEvent, useEffect, useState } from 'react'
-import { Space, Input, Button } from 'antd'
+import { Space, Input, Button,message } from 'antd'
 import initLoginBg from '@/views/Login/init.ts'
 import styles from './login.module.scss'
 import './login.less'
@@ -22,8 +22,14 @@ const View: React.FC = () => {
     }
 
     const OnLogin: Function = async () => {
-        var resp = await loginAPI({ username: userName, password: passWord })
-        console.log(resp);
+        var resp = await loginAPI({ username: userName, password: passWord, origin: "web" })
+        if (resp.role !== "admin" && resp.role !== "superadmin") {
+            message.error("你没有权限登录后台管理系统");
+            return;
+        }
+        if (resp !== undefined) {
+            
+        }
     }
 
     return (

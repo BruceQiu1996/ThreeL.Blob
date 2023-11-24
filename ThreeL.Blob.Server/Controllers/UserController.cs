@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
+using ThreeL.Blob.Application.Contract.Validators.User;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Interceptors.Attributes;
 using ThreeL.Blob.Shared.Domain.Metadata.User;
 
 namespace ThreeL.ContextAPI.Controllers
@@ -22,7 +24,8 @@ namespace ThreeL.ContextAPI.Controllers
             _logger = logger;
         }
 
-        //[Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
+        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
+        [ParamValidate(typeof(UserCreationDtoValidator))]
         [HttpPost]
         public async Task<ActionResult> Create(UserCreationDto creationDto)
         {
@@ -59,6 +62,7 @@ namespace ThreeL.ContextAPI.Controllers
             }
         }
 
+        [ParamValidate(typeof(UserLoginDtoValidator))]
         [HttpPost("login")]
         public async Task<ActionResult> Login(UserLoginDto userLoginDto)
         {
@@ -77,6 +81,7 @@ namespace ThreeL.ContextAPI.Controllers
 
         [Authorize]
         [HttpPut("password")]
+        [ParamValidate(typeof(UserModifyPasswordDtoValidator))]
         public async Task<ActionResult> ModifyPassword(UserModifyPasswordDto userModifyPasswordDto)
         {
             try

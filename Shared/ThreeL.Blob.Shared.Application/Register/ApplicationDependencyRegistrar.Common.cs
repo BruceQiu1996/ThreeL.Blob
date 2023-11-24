@@ -16,7 +16,7 @@ namespace ThreeL.Blob.Shared.Application.Register
 
         internal void AddFluentValidator()
         {
-            _services.AddFluentValidationAutoValidation();
+            //_services.AddFluentValidationAutoValidation();
             _services.AddValidatorsFromAssembly(_applicationAssemblyInfo.ContractAssembly);
         }
 

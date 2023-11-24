@@ -1,35 +1,30 @@
 import axios, { AxiosError } from "axios"
 import { message } from "antd"
 
-const codeMessage = {
-    200: '服务器成功返回请求的数据。',
-    201: '新建或修改数据成功。',
-    202: '一个请求已经进入后台排队（异步任务）。',
-    204: '删除数据成功。',
-    400: '发出的请求有错误，服务器没有进行新建或修改数据的操作。',
-    401: '用户没有权限（令牌、用户名、密码错误）。',
-    403: '用户得到授权，但是访问是被禁止的。',
-    404: '发出的请求针对的是不存在的记录，服务器没有进行操作。',
-    406: '请求的格式不可得。',
-    410: '请求的资源被永久删除，且不会再得到的。',
-    422: '当创建一个对象时，发生一个验证错误。',
-    500: '服务器发生错误，请检查服务器。',
-    502: '网关错误。',
-    503: '服务不可用，服务器暂时过载或维护。',
-    504: '网关超时。',
-}
 // 创建axios实例
 const instance = axios.create({
     // 基本请求路径的抽取
     baseURL: "http://127.0.0.1:5824",
-    timeout: 20000
+    timeout: 20000,
 })
+
+export const setJwtAuthToken = (token: string) => {
+    if (token) {
+        // token存在设置header,因为后续每个请求都需要
+        instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+        // 没有token就移除
+        delete instance.defaults.headers.common['Authorization'];
+    }
+}
+
 // 请求拦截器
-instance.interceptors.request.use(config => {
-    return config
+instance.interceptors.request.use(data => {
+    return data
 }, err => {
     return Promise.reject(err)
 });
+
 // 响应拦截器
 instance.interceptors.response.use(res => {
     return res.data
@@ -38,9 +33,18 @@ instance.interceptors.response.use(res => {
         message.warning('服务请求超时')
         return Promise.reject(error)
     }
-    
+    if (error.response === undefined) {
+        message.error('远程服务器未响应')
+        return Promise.reject(error)
+    }
+
+    if (error.response.status === 500) {
+        message.error('服务器出现错误')
+        return Promise.reject(error)
+    }
+
     const data = error.response.data;
-    message.error(`${data}`)
+    message.warning(`${data}`)
     // throw error
     // return error
     return Promise.reject(error)

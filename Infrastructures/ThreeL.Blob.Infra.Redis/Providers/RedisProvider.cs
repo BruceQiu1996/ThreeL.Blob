@@ -217,6 +217,17 @@ namespace ThreeL.Blob.Infra.Redis.Providers
                 return null;
             }
         }
+
+        public bool StringSet(string cacheKey, string cacheValue, TimeSpan? expiration = null, When when = When.Always)
+        {
+            bool flag = _redisDb.StringSet(cacheKey, cacheValue, expiration, when);
+            return flag;
+        }
+
+        public string StringGet(string cacheKey)
+        {
+            return _redisDb.StringGet(cacheKey);
+        }
         #endregion
     }
 }

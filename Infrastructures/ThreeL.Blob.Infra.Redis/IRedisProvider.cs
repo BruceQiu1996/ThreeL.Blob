@@ -7,7 +7,9 @@ namespace ThreeL.Blob.Infra.Redis
         Task<bool> KeyDelAsync(string key);
         Task<bool> KeyExistsAsync(string cacheKey);
         Task<bool> StringSetAsync(string cacheKey, string cacheValue, TimeSpan? expiration = null, When when = When.Always);
+        bool StringSet(string cacheKey, string cacheValue, TimeSpan? expiration = null, When when = When.Always);
         Task<string> StringGetAsync(string cacheKey);
+        string StringGet(string cacheKey);
         Task<bool> HSetAsync<T>(string cacheKey, string cacheValue, T value, TimeSpan? expiration = null, When when = When.Always);
         Task<bool> HSetAsync(string cacheKey, string cacheValue, long value, TimeSpan? expiration = null, When when = When.Always);
         Task<T> HGetAsync<T>(string cacheKey, string field);

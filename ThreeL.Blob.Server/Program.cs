@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -11,9 +12,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using System.Diagnostics;
 using System.Net;
 using ThreeL.Blob.Application.Extensions;
 using ThreeL.Blob.Application.Middlewares;
+using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
 using ThreeL.Blob.Shared.Application.Contract.Services;
@@ -167,6 +170,7 @@ namespace ThreeL.Blob.Server
             host.MapControllers();
             host.MapGrpcService<GrpcController>();
             host.MapGrpcService<ChatGrpcController>();
+
             await host.RunAsync();
         }
     }

@@ -3,6 +3,7 @@ import Home from "@/views/Home";
 import Login from "@/views/Login";
 const Page_1 = lazy(() => import("@/views/page1"));
 const Page_2 = lazy(() => import("@/views/page2"));
+const Page_UserManage = lazy(() => import("@/views/UserPages/UserManagePage"));
 import { Navigate } from "react-router-dom";
 
 const withLoadingComponent = (Component: JSX.Element) => (
@@ -13,7 +14,7 @@ const withLoadingComponent = (Component: JSX.Element) => (
 const routes = [
     {
         path: "/",
-        element: <Navigate to="/page1" />,
+        element: <Navigate to="/UserManage" />,
     },
     {
         path: "/login",
@@ -24,12 +25,8 @@ const routes = [
         element: <Home />,
         children: [
             {
-                path: "/page1",
-                element: withLoadingComponent(<Page_1 />),
-            },
-            {
-                path: "/page2",
-                element: withLoadingComponent(<Page_2 />),
+                path: "/UserManage",
+                element: withLoadingComponent(<Page_UserManage />),
             }
         ]
     }
