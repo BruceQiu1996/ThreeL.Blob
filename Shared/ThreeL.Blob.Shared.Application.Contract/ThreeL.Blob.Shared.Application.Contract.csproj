@@ -17,6 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\Domain\ThreeL.Blob.Domain\ThreeL.Blob.Domain.csproj" />
 		<ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Core\ThreeL.Blob.Infra.Core.csproj" />
 		<ProjectReference Include="..\..\Infrastructures\ThreeL.Blob.Infra.Repository\ThreeL.Blob.Infra.Repository.csproj" />
 	</ItemGroup>

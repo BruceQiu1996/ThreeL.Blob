@@ -3,12 +3,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Domain.Aggregate.User;
@@ -22,7 +19,7 @@ namespace ThreeL.Blob.Application.Services
 {
     public class UserService : IUserService, IAppService
     {
-        private const string RefreshTokenIdClaimType = "refresh_token_id";
+        private readonly IJwtService _jwtService;
         private readonly IConfiguration _configuration;
         private readonly JwtOptions _jwtOptions;
         private readonly JwtBearerOptions _jwtBearerOptions;
@@ -37,8 +34,10 @@ namespace ThreeL.Blob.Application.Services
                            IOptionsSnapshot<JwtBearerOptions> jwtBearerOptions,
                            IConfiguration configuration,
                            IRedisProvider redisProvider, IOptions<SystemOptions> systemOptions,
-                           IMapper mapper)
+                           IMapper mapper,
+                           IJwtService jwtService)
         {
+            _jwtService = jwtService;
             _mapper = mapper;
             _redisProvider = redisProvider;
             _passwordHelper = passwordHelper;
@@ -63,7 +62,7 @@ namespace ThreeL.Blob.Application.Services
             {
                 user.LastLoginTime = DateTime.Now;
                 await _userBasicRepository.UpdateAsync(user);
-                var token = await CreateTokenAsync(user, userLoginDto.Origin);
+                var token = await _jwtService.CreateTokenAsync(user, userLoginDto.Origin);
                 var respDto = _mapper.Map<UserLoginResponseDto>(user);
                 respDto.RefreshToken = token.refreshToken;
                 respDto.AccessToken = token.accessToken;
@@ -71,53 +70,6 @@ namespace ThreeL.Blob.Application.Services
 
                 return new ServiceResult<UserLoginResponseDto>(respDto);
             }
-        }
-
-        private async Task<(string accessToken, string refreshToken)> CreateTokenAsync(User user, string origin)
-        {
-            var settings = await _redisProvider.HGetAllAsync<JwtSetting>(Const.REDIS_JWT_SECRET_KEY);
-            //拿到一个最晚过期的token
-            var setting = settings.OrderByDescending(x => x.Value.SecretExpireAt).FirstOrDefault(x => x.Key.StartsWith(_systemOptions.Name)
-                && x.Value.Issuer == _systemOptions.Name).Value;
-
-            if (setting == null)
-                throw new Exception("token获取异常");
-
-            var refreshToken = await CreateRefreshTokenAsync(user.Id);
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, user.Id.ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Sid,user.UserName),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim(RefreshTokenIdClaimType,refreshToken.refreshTokenId)
-            };
-
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(setting.SecretKey));
-            var algorithm = SecurityAlgorithms.HmacSha256;
-            var signingCredentials = new SigningCredentials(secretKey, algorithm);
-            var jwtSecurityToken = new JwtSecurityToken(
-                    _systemOptions.Name,             //Issuer
-                    origin,                         //Audience TODO 客户端携带客户端类型头
-                    claims,
-                    null,
-                    DateTime.Now.AddSeconds(_jwtOptions.TokenExpireSeconds),    //expires
-                    signingCredentials               //Credentials
-            );
-
-            return (new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken), refreshToken.refreshToken);
-        }
-
-        private async Task<(string refreshTokenId, string refreshToken)> CreateRefreshTokenAsync(long userId)
-        {
-            var tokenId = Guid.NewGuid().ToString("N");
-            var rnBytes = new byte[32];
-            using var rng = RandomNumberGenerator.Create();
-            rng.GetBytes(rnBytes);
-            var token = Convert.ToBase64String(rnBytes);
-            await _redisProvider.StringSetAsync($"refresh-token:{userId}-{tokenId}", token, TimeSpan.FromSeconds(_jwtOptions.RefreshTokenExpireSeconds));
-
-            return (tokenId, token);
         }
 
         public async Task<UserRefreshTokenDto> RefreshAuthTokenAsync(UserRefreshTokenDto token)
@@ -130,7 +82,7 @@ namespace ThreeL.Blob.Application.Services
 
             var identity = principal.Identities.First();
             var userId = identity.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-            var refreshTokenId = identity.Claims.FirstOrDefault(c => c.Type == RefreshTokenIdClaimType)?.Value;
+            var refreshTokenId = identity.Claims.FirstOrDefault(c => c.Type == Const.CLAIM_REFRESHTOKEN)?.Value;
             var refreshToken = await _redisProvider.StringGetAsync($"refresh-token:{userId}-{refreshTokenId}");
             if (refreshToken != token.RefreshToken)
             {
@@ -144,7 +96,7 @@ namespace ThreeL.Blob.Application.Services
                 return null;
             }
 
-            var result = await CreateTokenAsync(user, token.Origin);
+            var result = await _jwtService.CreateTokenAsync(user, token.Origin);
 
             return new UserRefreshTokenDto()
             {

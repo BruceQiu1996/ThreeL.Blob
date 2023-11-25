@@ -1,3 +1,4 @@
+//dtos
 interface LoginRequestDto {
     username: string;
     password: string;
@@ -9,4 +10,29 @@ interface LoginResponseDto {
     userName: string,
     role: string,
     accessToken: string,
+}
+
+interface QueryUsersResponseDto {
+    count: number,
+    users: Array<UserBriefResponseDto>
+}
+
+interface UserBriefResponseDto {
+    id: number,
+    userName: string,
+    role: string,
+    createdTime: Date,
+    lastLoginTime: Date,
+    isDeleted: boolean,
+}
+
+
+//redux common store
+interface SimpleKeyValueObject {
+    [key: string]: any
+}
+interface CommonStore {
+    state: object;
+    actions: SimpleKeyValueObject;
+    actionNames: SimpleKeyValueObject;
 }

@@ -41,11 +41,10 @@ namespace ThreeL.Blob.Infra.Repository.IRepositories
         /// <summary>
         /// 统计符合条件的实体数量
         /// </summary>
-        /// <param name="whereExpression">查询条件</param>
         /// <param name="writeDb">是否读写库，默认false,可选参数</param>
         /// param name="cancellationToken"><see cref="CancellationToken"/></param>
         /// <returns></returns>
-        Task<int> CountAsync(Expression<Func<TEntity, bool>> whereExpression, bool writeDb = false, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(bool writeDb = false, bool ignoreFilters = false, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据条件查询，返回IQueryable<TEntity>
@@ -53,7 +52,18 @@ namespace ThreeL.Blob.Infra.Repository.IRepositories
         /// <param name="expression">查询条件</param>
         /// <param name="writeDb">是否读写库，默认false,可选参数</param>
         /// <param name="noTracking">是否开启跟踪，默认false,可选参数</param>
+        /// <param name="ignoreFilters">忽略筛选</param>
         /// <returns></returns>
-        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> expression, bool writeDb = false, bool noTracking = true);
+        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> expression, bool writeDb = false, bool noTracking = true, bool ignoreFilters = false);
+
+
+        /// <summary>
+        /// 全部
+        /// </summary>
+        /// <param name="writeDb">是否读写库，默认false,可选参数</param>
+        /// <param name="noTracking">是否开启跟踪，默认false,可选参数</param>
+        /// <param name="ignoreFilters">是否排除筛选</param>
+        /// <returns></returns>
+        IQueryable<TEntity> All(bool writeDb = false, bool noTracking = true, bool ignoreFilters = false);
     }
 }

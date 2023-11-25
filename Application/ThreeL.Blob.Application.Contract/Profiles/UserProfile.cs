@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ThreeL.Blob.Application.Contract.Dtos;
+using ThreeL.Blob.Application.Contract.Dtos.Management;
 using ThreeL.Blob.Domain.Aggregate.User;
 
 namespace ThreeL.Blob.Application.Contract.Profiles
@@ -9,6 +10,18 @@ namespace ThreeL.Blob.Application.Contract.Profiles
         public UserProfile()
         {
             CreateMap<User, UserLoginResponseDto>()
+                .ForMember(x => x.Role, y =>
+                {
+                    y.MapFrom(src => src.Role.ToString());
+                });
+
+            CreateMap<User, MUserLoginResponseDto>()
+                .ForMember(x => x.Role, y =>
+                {
+                    y.MapFrom(src => src.Role.ToString());
+                });
+
+            CreateMap<User, MUserBriefResponseDto>()
                 .ForMember(x => x.Role, y =>
                 {
                     y.MapFrom(src => src.Role.ToString());

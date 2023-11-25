@@ -18,6 +18,16 @@ export const setJwtAuthToken = (token: string) => {
     }
 }
 
+setJwtAuthToken(localStorage.getItem('token')!);
+
+export function post<T>(url: string, data: any): Promise<T> {
+    return instance.post(url, data)
+}
+
+export function get<T>(url: string): Promise<T> {
+    return instance.get(url)
+}
+
 // 请求拦截器
 instance.interceptors.request.use(data => {
     return data
@@ -49,5 +59,3 @@ instance.interceptors.response.use(res => {
     // return error
     return Promise.reject(error)
 })
-
-export default instance

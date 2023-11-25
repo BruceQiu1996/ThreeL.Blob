@@ -1,12 +1,3 @@
-interface SimpleKeyValueObject {
-    [key: string]: any
-}
-interface CommonStore {
-    state: object;
-    actions: SimpleKeyValueObject;
-    actionNames: SimpleKeyValueObject;
-}
-
 const store: CommonStore = {
     state: {
         num: 0

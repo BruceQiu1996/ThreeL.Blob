@@ -33,12 +33,15 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
             return await dbSet.AnyAsync(whereExpression, cancellationToken);
         }
 
-        public virtual async Task<int> CountAsync(Expression<Func<TEntity, bool>> whereExpression, bool writeDb = false, CancellationToken cancellationToken = default)
+        public virtual async Task<int> CountAsync(bool writeDb = false, bool ignoreFilters = false,CancellationToken cancellationToken = default)
         {
             var dbSet = DbContext.Set<TEntity>().AsNoTracking();
             if (writeDb)
                 dbSet = dbSet.TagWith(RepositoryConsts.MAXSCALE_ROUTE_TO_MASTER);
-            return await dbSet.CountAsync(whereExpression, cancellationToken);
+            if(ignoreFilters)
+                dbSet = dbSet.IgnoreQueryFilters();
+
+            return await dbSet.CountAsync(cancellationToken);
         }
 
         public virtual async Task<int> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
@@ -67,9 +70,26 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
             return await DbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> expression, bool writeDb = false, bool noTracking = true)
+        public IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> expression, bool writeDb = false, bool noTracking = true, bool ignoreFilters = false)
         {
-            return GetDbSet(writeDb, noTracking).Where(expression);
+            var query = GetDbSet(writeDb, noTracking);
+            if (ignoreFilters)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return query.Where(expression);
+        }
+
+        public IQueryable<TEntity> All(bool writeDb = false, bool noTracking = true, bool ignoreFilters = false)
+        {
+            var query = GetDbSet(writeDb, noTracking);
+            if (ignoreFilters)
+            {
+                query = query.IgnoreQueryFilters();
+            }
+
+            return query;
         }
     }
 }
