@@ -26,6 +26,10 @@ interface UserBriefResponseDto {
     isDeleted: boolean,
 }
 
+interface UserCreationDto {
+    userName: string;
+    password: string;
+}
 
 //redux common store
 interface SimpleKeyValueObject {

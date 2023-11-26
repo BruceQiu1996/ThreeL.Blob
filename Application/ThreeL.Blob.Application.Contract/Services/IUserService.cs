@@ -7,8 +7,6 @@ namespace ThreeL.Blob.Application.Contract.Services
 {
     public interface IUserService
     {
-        [Uow]
-        Task<ServiceResult> CreateUserAsync(UserCreationDto creationDto, long creator);
         Task<ServiceResult> ModifyUserPasswordAsync(UserModifyPasswordDto modifyPasswordDto, long creator);
         Task<UserRefreshTokenDto> RefreshAuthTokenAsync(UserRefreshTokenDto token);
         Task<ServiceResult<UserLoginResponseDto>> AccountLoginAsync(UserLoginDto userLoginDto);

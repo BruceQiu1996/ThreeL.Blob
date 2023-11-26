@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Contract.Validators.User;
+using ThreeL.Blob.Domain.Aggregate.User;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
 using ThreeL.Blob.Shared.Application.Contract.Interceptors.Attributes;
 using ThreeL.Blob.Shared.Domain.Metadata.User;
@@ -42,13 +43,32 @@ namespace ThreeL.Blob.Server.Controllers
 
         [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
         [HttpGet("users")]
-        public async Task<ActionResult> QueryUsers([FromQuery] int pageIndex)
+        public async Task<ActionResult> QueryUsers([FromQuery] int page)
         {
             try
             {
-                var result = await _adminService.QueryUsersAsync(pageIndex);
+                var result = await _adminService.QueryUsersAsync(page);
 
                 return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
+        [ParamValidate(typeof(UserCreationDtoValidator))]
+        [HttpPost("users")]
+        public async Task<ActionResult> Create(UserCreationDto creationDto)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var sresult = await _adminService.CreateUserAsync(creationDto, userId);
+
+                return sresult.ToActionResult();
             }
             catch (Exception ex)
             {

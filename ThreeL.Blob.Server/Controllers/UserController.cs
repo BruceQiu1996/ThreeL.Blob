@@ -24,25 +24,6 @@ namespace ThreeL.ContextAPI.Controllers
             _logger = logger;
         }
 
-        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
-        [ParamValidate(typeof(UserCreationDtoValidator))]
-        [HttpPost]
-        public async Task<ActionResult> Create(UserCreationDto creationDto)
-        {
-            try
-            {
-                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-                var sresult = await _userService.CreateUserAsync(creationDto, userId);
-
-                return sresult.ToActionResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                return Problem();
-            }
-        }
-
         [AllowAnonymous]
         [HttpPost("refresh/token")]
         public async Task<ActionResult> RefreshToken(UserRefreshTokenDto tokenDto)

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Net;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Dtos.Management;
@@ -19,18 +20,21 @@ namespace ThreeL.Blob.Application.Services.Management
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
         private readonly IJwtService _jwtService;
+        private readonly IConfiguration _configuration;
 
         public AdminService(IEfBasicRepository<User, long> userBasicRepository,
                             PasswordHelper passwordHelper,
                             IRedisProvider redisProvider,
                             IMapper mapper,
-                            IJwtService jwtService)
+                            IJwtService jwtService,
+                            IConfiguration configuration)
         {
             _mapper = mapper;
             _jwtService = jwtService;
             _redisProvider = redisProvider;
             _userBasicRepository = userBasicRepository;
             _passwordHelper = passwordHelper;
+            _configuration = configuration;
         }
 
         public async Task<ServiceResult<MUserLoginResponseDto>> LoginAsync(UserLoginDto userLoginDto)
@@ -58,7 +62,7 @@ namespace ThreeL.Blob.Application.Services.Management
         public async Task<ServiceResult<MQueryUsersResponseDto>> QueryUsersAsync(int page)
         {
             var usersCount = await _userBasicRepository.CountAsync(ignoreFilters: true);
-            var users = await _userBasicRepository.All(ignoreFilters: true).OrderByDescending(x => x.CreateTime).Skip(page * 10).Take(10).ToListAsync();
+            var users = await _userBasicRepository.All(ignoreFilters: true).OrderByDescending(x => x.CreateTime).Skip((page - 1) * 10).Take(10).ToListAsync();
 
             return new ServiceResult<MQueryUsersResponseDto>
             {
@@ -68,6 +72,26 @@ namespace ThreeL.Blob.Application.Services.Management
                     Users = users.Select(x => _mapper.Map<MUserBriefResponseDto>(x))
                 }
             };
+        }
+
+        public async Task<ServiceResult> CreateUserAsync(UserCreationDto creationDto, long creator)
+        {
+            var temp = await _userBasicRepository.FirstOrDefaultAsync(x => x.UserName == creationDto.UserName);
+            if (temp != null)
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "用户名已存在");
+            }
+            var user = creationDto.ToUser(creator);
+            user.Password = _passwordHelper.HashPassword(creationDto.Password);
+            var userLocation = Path.Combine(_configuration.GetSection("FileStorage:RootLocation").Value, user.UserName);
+            if (!Directory.Exists(userLocation))
+            {
+                Directory.CreateDirectory(userLocation);
+            }
+            user.Location = userLocation;
+            await _userBasicRepository.InsertAsync(user);
+
+            return new ServiceResult();
         }
     }
 }

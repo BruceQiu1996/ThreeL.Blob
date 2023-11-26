@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios"
+import {history} from '@/router/history'
 import { message } from "antd"
 
 // 创建axios实例
@@ -50,6 +51,14 @@ instance.interceptors.response.use(res => {
 
     if (error.response.status === 500) {
         message.error('服务器出现错误')
+        return Promise.reject(error)
+    }
+
+    if (error.response.status === 401) {
+        message.error('登录凭证已过期，请重新登录')
+        localStorage.removeItem('token')
+        setJwtAuthToken('')
+        history.push('/login')
         return Promise.reject(error)
     }
 

@@ -105,26 +105,6 @@ namespace ThreeL.Blob.Application.Services
             };
         }
 
-        public async Task<ServiceResult> CreateUserAsync(UserCreationDto creationDto, long creator)
-        {
-            var temp = await _userBasicRepository.FirstOrDefaultAsync(x => x.UserName == creationDto.UserName);
-            if (temp != null) 
-            {
-                return new ServiceResult(HttpStatusCode.BadRequest, "用户名已存在");
-            }
-            var user = creationDto.ToUser(creator);
-            user.Password = _passwordHelper.HashPassword(creationDto.Password);
-            var userLocation = Path.Combine(_configuration.GetSection("FileStorage:RootLocation").Value,user.UserName);
-            if (!Directory.Exists(userLocation)) 
-            {
-                Directory.CreateDirectory(userLocation);
-            }
-            user.Location = userLocation;
-            await _userBasicRepository.InsertAsync(user);
-
-            return new ServiceResult();
-        }
-
         public async Task<ServiceResult> ModifyUserPasswordAsync(UserModifyPasswordDto modifyPasswordDto, long creator)
         {
             var user = await _userBasicRepository.GetAsync(creator);
