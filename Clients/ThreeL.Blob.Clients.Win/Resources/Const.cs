@@ -46,7 +46,8 @@
         public const string StartNewUploadTask = nameof(StartNewUploadTask);
         public const string StartNewDownloadTask = nameof(StartNewDownloadTask);
         public const string AvatarUploaded = nameof(AvatarUploaded);
-        public const string AddFRIENDAPPLYSUCCESS = nameof(AddFRIENDAPPLYSUCCESS);
+        public const string AddFriendApplySuccess = nameof(AddFriendApplySuccess);
+        public const string SendFileObjectToChat = nameof(SendFileObjectToChat);
         public static object UploadRunTaskLock = new object();
         public static object DownloadRunTaskLock = new object();
 

@@ -53,5 +53,24 @@ namespace ThreeL.Blob.Server.Controllers
                 };
             }
         }
+
+        [Authorize]
+        public async override Task<SendFileResponse> SendFile(SendFileRequest request, ServerCallContext context)
+        {
+            try
+            {
+                return await _relationService.SendFileAsync(request, context);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+
+                return new SendFileResponse()
+                {
+                    Success = false,
+                    Message = "服务器错误"
+                };
+            }
+        }
     }
 }

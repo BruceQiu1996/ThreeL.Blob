@@ -18,6 +18,20 @@ namespace ThreeL.Blob.Chat.Application.Contract.Profiles
             {
                 y.MessageType = Shared.Domain.Metadata.Message.MessageType.Text;
             });
+
+            CreateMap<FileMessageDto, ChatRecord>().ForMember(x => x.Id, opt =>
+            {
+                opt.Ignore();
+            }).ForMember(x => x.Message, y =>
+            {
+                y.MapFrom(x => x.FileName);
+            }).ForMember(x => x.FileToken, y =>
+            {
+                y.MapFrom(x => x.Token);
+            }).AfterMap((x, y) =>
+            {
+                y.MessageType = Shared.Domain.Metadata.Message.MessageType.File;
+            });
         }
     }
 }

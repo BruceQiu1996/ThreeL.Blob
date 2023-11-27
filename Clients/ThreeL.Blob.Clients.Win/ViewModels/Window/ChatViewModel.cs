@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -61,6 +62,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         public AsyncRelayCommand SendTextMessageCommandAsync { get; set; }
         public AsyncRelayCommand SearchUsersCommandAsync { get; set; }
         public AsyncRelayCommand RefreshApplysCommandAsync { get; set; }
+        public AsyncRelayCommand<DragEventArgs> DropItemsOnChatCommandAsync { get; set; }
         public ObservableCollection<RelationItemViewModel> Relations { get; set; }
         public ObservableCollection<UnRelationItemViewModel> UnRelations { get; set; }
         private ObservableCollection<ApplyMessageViewModel> _applys;
@@ -92,14 +94,30 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             SendTextMessageCommandAsync = new AsyncRelayCommand(SendTextMessageAsync);
             OpenApplyCommand = new RelayCommand(OpenApplyM);
             RefreshApplysCommandAsync = new AsyncRelayCommand(RefreshApplysAsync);
+            DropItemsOnChatCommandAsync = new AsyncRelayCommand<DragEventArgs>(DropItemsOnChatAsync);
             Relations = new ObservableCollection<RelationItemViewModel>();
             UnRelations = new ObservableCollection<UnRelationItemViewModel>();
             Applys = new ObservableCollection<ApplyMessageViewModel>();
 
             //被通知发送好友申请成功
-            WeakReferenceMessenger.Default.Register<ChatViewModel, string, string>(this, Const.AddFRIENDAPPLYSUCCESS, async (x, y) =>
+            WeakReferenceMessenger.Default.Register<ChatViewModel, string, string>(this, Const.AddFriendApplySuccess, async (x, y) =>
             {
                 await RefreshApplysAsync();
+            });
+
+            WeakReferenceMessenger.Default.Register<ChatViewModel, FileObjItemViewModel, string>(this, Const.SendFileObjectToChat, async (x, y) =>
+            {
+                if (Relations.Count <= 0 || Relation == null) 
+                {
+                    return;
+                }
+
+                var type = y.IsFolder ? "文件夹" : "文件";
+                var result = HandyControl.Controls.MessageBox.Ask($"确认发送{type}【{y.Name}】给好友【{Relation.UserName}】吗？","询问");
+                if (result == MessageBoxResult.OK) 
+                {
+                
+                }
             });
         }
 
@@ -235,6 +253,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     Applys = new ObservableCollection<ApplyMessageViewModel>(applys);
                 }
             }
+        }
+
+        private async Task DropItemsOnChatAsync(DragEventArgs dragEventArgs) 
+        {
+            object data = dragEventArgs.Data.GetData(typeof(object));
         }
 
         private async Task SearchUsersAsync()

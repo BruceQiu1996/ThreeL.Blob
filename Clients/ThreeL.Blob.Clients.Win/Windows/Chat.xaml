@@ -609,9 +609,15 @@
                                      ScrollViewer.CanContentScroll="False"
                                      ScrollViewer.IsDeferredScrollingEnabled="True"
                                      PreviewMouseWheel="ListView_PreviewMouseWheel"
+                                     AllowDrop="True"
                                      ItemTemplateSelector="{StaticResource MessageDataTemplateSelector}"
                                      TextOptions.TextFormattingMode="Display"
                                      BorderThickness="0" Background="Transparent">
+                                <behaviors:Interaction.Triggers>
+                                    <behaviors:EventTrigger EventName="Drop">
+                                        <behaviors:InvokeCommandAction Command="{Binding DropItemsOnChatCommandAsync}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                                    </behaviors:EventTrigger>
+                                </behaviors:Interaction.Triggers>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <VirtualizingStackPanel Orientation="Vertical"></VirtualizingStackPanel>

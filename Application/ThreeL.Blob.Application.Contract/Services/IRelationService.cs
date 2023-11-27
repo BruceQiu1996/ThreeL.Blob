@@ -14,5 +14,6 @@ namespace ThreeL.Blob.Application.Contract.Services
         //grpc
         Task<CommonResponse> AddFriendApplyAsync(AddFriendApplyRequest request, ServerCallContext serverCallContext);
         Task<HandleAddFriendApplyResponse> HandleAddFriendApplyAsync(HandleAddFriendApplyRequest request, ServerCallContext serverCallContext);
+        Task<SendFileResponse> SendFileAsync(SendFileRequest request, ServerCallContext serverCallContext);
     }
 }

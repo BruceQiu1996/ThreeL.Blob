@@ -6,9 +6,10 @@ using System.Security.Claims;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
+using ThreeL.Blob.Domain.Aggregate.FileObject;
 using ThreeL.Blob.Domain.Aggregate.User;
+using ThreeL.Blob.Infra.Core.Utils;
 using ThreeL.Blob.Infra.Redis;
-using ThreeL.Blob.Infra.Redis.Providers;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
@@ -21,12 +22,16 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<FriendApply, long> _friendApplyEfBasicRepository;
         private readonly IEfBasicRepository<FriendRelation, long> _friendRelationEfBasicRepository;
         private readonly IEfBasicRepository<User, long> _userEfBasicRepository;
+        private readonly IEfBasicRepository<FileObject, long> _fileObjectEfBasicRepository;
+        private readonly IEfBasicRepository<FileObjectShareRecord, long> _fileObjectShareRecordEfBasicRepository;
         private readonly IConfiguration _configuration;
         private readonly IRedisProvider _redisProvider;
 
         public RelationService(IEfBasicRepository<FriendRelation, long> friendRelationEfBasicRepository,
                                IEfBasicRepository<FriendApply, long> friendApplyEfBasicRepository,
                                IEfBasicRepository<User, long> userEfBasicRepository,
+                               IEfBasicRepository<FileObject, long> fileObjectEfBasicRepository,
+                               IEfBasicRepository<FileObjectShareRecord, long> fileObjectShareRecordEfBasicRepository,
                                IMapper mapper,
                                IConfiguration configuration,
                                IRedisProvider redisProvider)
@@ -36,6 +41,8 @@ namespace ThreeL.Blob.Application.Services
             _configuration = configuration;
             _friendRelationEfBasicRepository = friendRelationEfBasicRepository;
             _friendApplyEfBasicRepository = friendApplyEfBasicRepository;
+            _fileObjectEfBasicRepository = fileObjectEfBasicRepository;
+            _fileObjectShareRecordEfBasicRepository = fileObjectShareRecordEfBasicRepository;
             _userEfBasicRepository = userEfBasicRepository;
         }
 
@@ -276,6 +283,32 @@ namespace ThreeL.Blob.Application.Services
             }
 
             return new ServiceResult<IEnumerable<RelationBriefDto>>(friendRelationBriefDtos);
+        }
+
+        public async Task<SendFileResponse> SendFileAsync(SendFileRequest request, ServerCallContext serverCallContext)
+        {
+            var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
+            var file = await _fileObjectEfBasicRepository.GetAsync(request.FileId);
+            if (file == null || file.CreateBy != userId || file.Status != Shared.Domain.Metadata.FileObject.FileStatus.Normal)
+            {
+                return new SendFileResponse()
+                {
+                    Success = false,
+                    Message = "文件不存在或文件状态异常"
+                };
+            }
+
+            var token = TokenGenerator.GenerateToken(32);
+            var record = new FileObjectShareRecord(token,file.Id,userId, request.Target);
+            record.CreateTime = DateTime.Now;
+            record.ExpireTime = DateTime.Now.AddDays(3);//TODO配置
+            await _fileObjectShareRecordEfBasicRepository.InsertAsync(record);
+
+            return new SendFileResponse()
+            {
+                Success = true,
+                Token = token
+            };
         }
     }
 }

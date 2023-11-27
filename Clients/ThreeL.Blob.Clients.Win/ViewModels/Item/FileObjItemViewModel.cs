@@ -145,6 +145,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand SelectNoCommand { get; set; }
         public RelayCommand RenameCommand { get; set; }
         public RelayCommand MoveCommand { get; set; }
+        public RelayCommand SendToChatCommand { get; set; }
 
         public FileObjItemViewModel()
         {
@@ -154,6 +155,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             ClickUrlObjectCommand = new RelayCommand(ClickUrlObject);
             DragEnterFileObjectCommand = new RelayCommand(DragEnterFileObject);
             DragLeaveFileObjectCommand = new RelayCommand(DragLeaveFileObject);
+            SendToChatCommand = new RelayCommand(SendToChat);
             DownloadCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDownload); });
             DeleteCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDelete); });
             SelectAllCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectAll); });
@@ -186,6 +188,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             {
                 WeakReferenceMessenger.Default.Send(this, Const.DoubleClickItem);
             }
+        }
+
+        private void SendToChat() 
+        {
+            WeakReferenceMessenger.Default.Send(this, Const.SendFileObjectToChat);
         }
 
         private void RightClickFileObject()

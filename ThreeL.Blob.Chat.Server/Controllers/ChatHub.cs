@@ -30,6 +30,14 @@ namespace ThreeL.Blob.Chat.Server.Controllers
             await _chatService.SendTextMessageAsync(id, messageDto, Clients);
         }
 
+        [HubMethodName(HubConst.SendFileMessage)]
+        [Authorize]
+        public async Task SendFileMessage(FileMessageDto messageDto)
+        {
+            var id = long.Parse(Context.User.Identity.Name);
+            await _chatService.SendFileMessageAsync(id, messageDto, Clients, Context);
+        }
+
         /// <summary>
         /// 发送好友申请
         /// </summary>

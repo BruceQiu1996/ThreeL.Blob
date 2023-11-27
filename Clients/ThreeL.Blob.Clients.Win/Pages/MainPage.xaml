@@ -26,6 +26,8 @@
                       Command="{Binding RenameCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="移动" 
                       Command="{Binding MoveCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="发送到聊天" 
+                      Command="{Binding SendToChatCommand}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
         <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
             <MenuItem Header="新建文件夹" 
@@ -170,6 +172,9 @@
                              ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
                              BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
+                            <behaviors:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                                <behaviors:InvokeCommandAction Command="{Binding FileObjectsChooseDragCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
+                            </behaviors:EventTrigger>
                             <behaviors:EventTrigger EventName="Drop">
                                 <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
                             </behaviors:EventTrigger>

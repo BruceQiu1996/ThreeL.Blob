@@ -9,7 +9,6 @@ using ThreeL.Blob.Chat.Application.Contract.Protos;
 using ThreeL.Blob.Chat.Application.Contract.Services;
 using ThreeL.Blob.Chat.Domain.Entities;
 using ThreeL.Blob.Infra.Redis;
-using ThreeL.Blob.Infra.Redis.Providers;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
@@ -105,23 +104,62 @@ namespace ThreeL.Blob.Chat.Application.Services
             }
         }
 
-        public async Task SendTextMessageAsync(long sender, TextMessageDto textMessageDto, IHubCallerClients clients)
+        public async Task SendFileMessageAsync(long sender, FileMessageDto fileMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
         {
-            if (sender != textMessageDto.From)
+            fileMessageDto.From = sender;
+            var token = hubCallerContext.GetHttpContext().Request.Headers["Authorization"];
+            if (!await IsFriendAsync(fileMessageDto.From, fileMessageDto.To))
             {
-                await clients.User(textMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<TextMessageDto>()
+                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
                 {
                     Success = false,
-                    Message = "用户数据异常",
-                    Data = textMessageDto
+                    Message = "好友关系异常",
+                    Data = fileMessageDto
                 });
 
                 return;
+            };
+
+            fileMessageDto.RemoteSendTime = DateTime.Now;
+            var resp = await _rpcContextAPIServiceClient.SendFileAsync(new SendFileRequest() 
+            {
+                FileId = fileMessageDto.FileObjectId,
+                Target = fileMessageDto.To,
+            }, new Metadata() { { "Authorization", $"{token}" } });
+
+            if (resp.Success)
+            {
+                //记录到数据库
+                await _chatRecordRepository.AddAsync(_mapper.Map<ChatRecord>(fileMessageDto));
+                fileMessageDto.Token = resp.Token;
+                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                {
+                    Success = true,
+                    Data = fileMessageDto
+                });
+
+                await clients.User(fileMessageDto.To.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                {
+                    Success = true,
+                    Data = fileMessageDto
+                });
             }
-            var min = Math.Min(textMessageDto.From, textMessageDto.To);
-            var max = Math.Max(textMessageDto.From, textMessageDto.To);
-            var exist = await _redisProvider.SetIsMemberAsync(Const.REDIS_FRIEND_RELATIONS, $"{min}-{max}");
-            if (!exist)
+            else 
+            {
+                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                {
+                    Success = false,
+                    Message = resp.Message,
+                    Data = fileMessageDto
+                });
+            }
+        }
+
+        public async Task SendTextMessageAsync(long sender, TextMessageDto textMessageDto, IHubCallerClients clients)
+        {
+            textMessageDto.From = sender;
+
+            if (!await IsFriendAsync(textMessageDto.From, textMessageDto.To))
             {
                 await clients.User(textMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<TextMessageDto>()
                 {
@@ -147,6 +185,14 @@ namespace ThreeL.Blob.Chat.Application.Services
                 Success = true,
                 Data = textMessageDto
             });
+        }
+
+        private async Task<bool> IsFriendAsync(long user,long friend) 
+        {
+            var min = Math.Min(user, friend);
+            var max = Math.Max(user, friend);
+
+            return await _redisProvider.SetIsMemberAsync(Const.REDIS_FRIEND_RELATIONS, $"{min}-{max}");
         }
     }
 }

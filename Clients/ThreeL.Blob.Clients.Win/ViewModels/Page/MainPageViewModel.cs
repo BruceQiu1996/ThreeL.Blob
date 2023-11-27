@@ -53,6 +53,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public RelayCommand SelectAllCommand { get; set; }
         public RelayCommand SelectNoCommand { get; set; }
 
+        public RelayCommand<MouseButtonEventArgs> FileObjectsChooseDragCommand { get; set; }
+
         private readonly GrpcService _grpcService;
         private readonly HttpRequest _httpRequest;
         private readonly DatabaseHelper _databaseHelper;
@@ -137,6 +139,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             GridGotFocusCommand = new RelayCommand(GridGotFocus);
             SearchFileByKeywordCommand = new RelayCommand(SearchFileByKeyword);
             DropCommand = new RelayCommand<DragEventArgs>(Drop);
+            FileObjectsChooseDragCommand = new RelayCommand<MouseButtonEventArgs>(FileObjectsChooseDrag);
             FileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             Urls = new ObservableCollection<FileObjItemViewModel>()
@@ -204,10 +207,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 MoveCommand();
             });
             //确认移动
-            WeakReferenceMessenger.Default.Register<MainPageViewModel, TreeViewFolderViewModel, string>(this, Const.ConfirmMove, async (x, y) =>
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, TreeViewFolderViewModel, string>(this, Const.ConfirmMove, (MessageHandler<MainPageViewModel, TreeViewFolderViewModel>)(async (x, y) =>
             {
                 await ConfirmCommandAsync(y);
-            });
+            }));
             #endregion
         }
 
@@ -255,6 +258,47 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 await RefreshAsync();
             }
+        }
+
+        private void FileObjectsChooseDrag(MouseButtonEventArgs eventArgs)
+        {
+            var listbox = FindVisualParent<ListBox>(eventArgs.OriginalSource as DependencyObject);
+            object data = GetDataFromListBox(listbox, eventArgs.GetPosition(listbox));
+
+            if (data != null)
+            {
+                DragDrop.DoDragDrop(listbox, listbox.Items, DragDropEffects.Move);
+            }
+        }
+
+        private  object GetDataFromListBox(ListBox source, Point point)
+        {
+            UIElement element = source.InputHitTest(point) as UIElement;
+            if (element != null)
+            {
+                object data = DependencyProperty.UnsetValue;
+                while (data == DependencyProperty.UnsetValue)
+                {
+                    data = source.ItemContainerGenerator.ItemFromContainer(element);
+
+                    if (data == DependencyProperty.UnsetValue)
+                    {
+                        element = VisualTreeHelper.GetParent(element) as UIElement;
+                    }
+
+                    if (element == source)
+                    {
+                        return null;
+                    }
+                }
+
+                if (data != DependencyProperty.UnsetValue)
+                {
+                    return data;
+                }
+            }
+
+            return null;
         }
 
         #region 操作文件集合
