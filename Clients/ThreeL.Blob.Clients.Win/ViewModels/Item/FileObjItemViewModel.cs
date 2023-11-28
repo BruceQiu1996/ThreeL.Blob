@@ -15,6 +15,7 @@ using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
+using ThreeL.Blob.Clients.Win.ViewModels.Message;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 
@@ -283,6 +284,19 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             Brushes.Black
             );
             return formattedText.WidthIncludingTrailingWhitespace;
+        }
+
+        public FileMessageViewModel ToFileMessageVM(long from,long to) 
+        {
+            return new FileMessageViewModel()
+            {
+                FileId = Id,
+                FileName = Name,
+                Size = Size.Value,
+                Sending = true,
+                From = from,
+                To = to,
+            };
         }
     }
 }

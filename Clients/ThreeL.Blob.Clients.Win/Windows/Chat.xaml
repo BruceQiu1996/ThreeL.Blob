@@ -21,6 +21,23 @@
         <converts:ValueHalfConverter_2 x:Key="ValueHalfConverter_2"></converts:ValueHalfConverter_2>
         <helpers:MessageDataTemplateSelector x:Key="MessageDataTemplateSelector"></helpers:MessageDataTemplateSelector>
         <helpers:ApplyMessageDataTemplateSelector x:Key="ApplyMessageDataTemplateSelector"></helpers:ApplyMessageDataTemplateSelector>
+        <ContextMenu x:Key="chatmessagemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
+            <MenuItem Header="撤回" 
+                      Command="{Binding WithdrawCommandAsync}"
+                      Visibility="{Binding CanWithdraw,Converter={StaticResource Boolean2VisibilityConverter}}"
+                      Padding="5 5" FontSize="14"></MenuItem>
+            <MenuItem Header="下载" Visibility="{Binding CanDownload,Converter={StaticResource Boolean2VisibilityConverter}}"
+                Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>
+            <MenuItem Header="下载并打开" 
+                      Visibility="{Binding CanDownload,Converter={StaticResource Boolean2VisibilityConverter}}"
+                Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>
+            <MenuItem Header="打开文件位置" 
+                      Visibility="{Binding CanOpenLocalLocation,Converter={StaticResource Boolean2VisibilityConverter}}"
+                      Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>
+            <MenuItem Header="转存" 
+                      Visibility="{Binding CanSaveOnline,Converter={StaticResource Boolean2VisibilityConverter}}"
+                      Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>
+        </ContextMenu>
         <DataTemplate x:Key="time">
             <TextBox Text="{Binding Time}"
                      IsReadOnly="True"
@@ -37,8 +54,24 @@
             </TextBox>
         </DataTemplate>
 
+        <DataTemplate x:Key="withdraw">
+            <TextBox Text="{Binding WithdrawMessage,Mode=OneWay}"
+                     IsReadOnly="True"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     VerticalAlignment="Top"
+                     VerticalContentAlignment="Top"
+                     BorderThickness="0"
+                     Foreground="#555"
+                     Opacity="0.8"
+                     Background="#eee"
+                     HorizontalAlignment="Center"
+                     FontSize="12">
+            </TextBox>
+        </DataTemplate>
+
         <DataTemplate x:Key="txtSender">
-            <Grid Name="ctx">
+            <Grid Name="ctx" ContextMenu="{StaticResource chatmessagemenu}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Label Padding="0" Background="Transparent" BorderThickness="0"
                            Visibility="{Binding SendFaild,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}"
@@ -67,9 +100,9 @@
         </DataTemplate>
 
         <DataTemplate x:Key="fileSender">
-            <Grid Name="ctx">
+            <Grid Name="ctx" ContextMenu="{StaticResource chatmessagemenu}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Border MaxWidth="{Binding ElementName=ctx,Path=ActualWidth,Converter={StaticResource ValueHalfConverter_2},UpdateSourceTrigger=PropertyChanged}"
+                    <Border MaxWidth="{Binding ElementName=ctx,Path=ActualWidth,Converter={StaticResource ValueHalfConverter},UpdateSourceTrigger=PropertyChanged}"
                             HorizontalAlignment="Right"
                             Cursor="Hand"
                             ToolTip="{Binding FileName}"
@@ -82,26 +115,28 @@
                         </behaviors:Interaction.Triggers>
                         <Grid Margin="5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"></ColumnDefinition>
                                 <ColumnDefinition Width="50"></ColumnDefinition>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                            <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="2">
                                 <TextBlock Text="{Binding FileName}" 
                                            TextWrapping="Wrap"
-                                           VerticalAlignment="Center" FontSize="13"/>
-                                <TextBlock Text="{Binding FileSizeText}" Foreground="#333" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                           Margin="0 0 0 6"
+                                           VerticalAlignment="Center" FontSize="12"
+                                           Foreground="#555"/>
+                                <TextBlock Text="{Binding SizeText}" Foreground="#888" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Right"/>
                             </StackPanel>
-                            <Image Source="{Binding Icon}" Grid.Column="1">
+                            <Image Source="{Binding Icon}" Grid.Column="0">
                             </Image>
                         </Grid>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#ccc"/>
+                                        <Setter Property="Background" Value="#eee"/>
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="False">
-                                        <Setter Property="Background" Value="#aaa"/>
+                                        <Setter Property="Background" Value="#ddd"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -112,7 +147,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="txtReceiver">
-            <Grid Name="ctx">
+            <Grid Name="ctx" ContextMenu="{StaticResource chatmessagemenu}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
                     <TextBox Text="{Binding Text,UpdateSourceTrigger=PropertyChanged}"
                              MaxWidth="{Binding ElementName=ctx,Path=ActualWidth,Converter={StaticResource ValueHalfConverter},UpdateSourceTrigger=PropertyChanged}"
@@ -132,12 +167,9 @@
         </DataTemplate>
 
         <DataTemplate x:Key="fileReceiver">
-            <Grid Name="ctx">
+            <Grid Name="ctx" ContextMenu="{StaticResource chatmessagemenu}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Left">
-                    <TextBlock Text="{Binding FromName,UpdateSourceTrigger=PropertyChanged}" 
-                               Foreground="#999" FontSize="13" Margin="3 2 10 5" VerticalAlignment="Center"
-                               Visibility="{Binding IsGroup,Converter={StaticResource Boolean2VisibilityConverter}}"></TextBlock>
-                    <Border MaxWidth="{Binding ElementName=ctx,Path=ActualWidth,Converter={StaticResource ValueHalfConverter_2},UpdateSourceTrigger=PropertyChanged}"
+                    <Border MaxWidth="{Binding ElementName=ctx,Path=ActualWidth,Converter={StaticResource ValueHalfConverter},UpdateSourceTrigger=PropertyChanged}"
                             HorizontalAlignment="Left"
                             Cursor="Hand"
                             ToolTip="{Binding FileName}"
@@ -150,24 +182,26 @@
                         </behaviors:Interaction.Triggers>
                         <Grid Margin="5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="50"></ColumnDefinition>
                                 <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="50"></ColumnDefinition>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="5">
-                                <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="13"/>
-                                <TextBlock Text="{Binding FileSizeText}" Foreground="#333" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="5">
+                                <TextBlock Text="{Binding FileName}" Foreground="#555" 
+                                           Margin="0 0 0 6"
+                                           VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12"/>
+                                <TextBlock Text="{Binding SizeText}" Foreground="#888" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Left"/>
                             </StackPanel>
-                            <Image Source="{Binding Icon}" Grid.Column="0">
+                            <Image Source="{Binding Icon}" Grid.Column="1">
                             </Image>
                         </Grid>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Style.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#ccc"/>
+                                        <Setter Property="Background" Value="#eee"/>
                                     </Trigger>
                                     <Trigger Property="IsMouseOver" Value="False">
-                                        <Setter Property="Background" Value="#aaa"/>
+                                        <Setter Property="Background" Value="#ddd"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>

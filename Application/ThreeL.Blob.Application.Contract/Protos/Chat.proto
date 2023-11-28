@@ -31,6 +31,8 @@ message SendFileResponse{
 	bool success = 1;
 	string message = 2;
     string token = 3;
+	string fileName = 4;
+	int64 Size = 5;
 }
 
 service RpcContextAPIService{

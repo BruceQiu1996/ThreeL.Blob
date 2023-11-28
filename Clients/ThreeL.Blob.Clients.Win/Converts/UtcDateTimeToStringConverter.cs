@@ -9,10 +9,7 @@ namespace ThreeL.Blob.Clients.Win.Converts
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var time = (DateTime)value;
-            TimeZoneInfo localTime = TimeZoneInfo.Local;
-            DateTime localDateTime = TimeZoneInfo.ConvertTimeFromUtc(time, localTime);
-
-            return localDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+            return time.ToString("yyyy-MM-dd HH:mm:ss");
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -26,10 +23,7 @@ namespace ThreeL.Blob.Clients.Win.Converts
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             var time = (DateTime)value;
-            TimeZoneInfo localTime = TimeZoneInfo.Local;
-            DateTime localDateTime = TimeZoneInfo.ConvertTimeFromUtc(time, localTime);
-
-            return localDateTime.ToString("yyyy-MM-dd HH:mm");
+            return time.ToString("yyyy-MM-dd HH:mm");
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

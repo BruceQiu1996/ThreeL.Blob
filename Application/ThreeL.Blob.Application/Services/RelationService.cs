@@ -307,7 +307,9 @@ namespace ThreeL.Blob.Application.Services
             return new SendFileResponse()
             {
                 Success = true,
-                Token = token
+                Token = token,
+                FileName = file.Name,
+                Size = file.Size.Value,
             };
         }
     }

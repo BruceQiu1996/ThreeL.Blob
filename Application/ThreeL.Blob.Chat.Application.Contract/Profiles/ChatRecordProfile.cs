@@ -19,7 +19,8 @@ namespace ThreeL.Blob.Chat.Application.Contract.Profiles
                 y.MessageType = Shared.Domain.Metadata.Message.MessageType.Text;
             });
 
-            CreateMap<FileMessageDto, ChatRecord>().ForMember(x => x.Id, opt =>
+            CreateMap<FileMessageDto, FileMessageResponseDto>();
+            CreateMap<FileMessageResponseDto, ChatRecord>().ForMember(x => x.Id, opt =>
             {
                 opt.Ignore();
             }).ForMember(x => x.Message, y =>

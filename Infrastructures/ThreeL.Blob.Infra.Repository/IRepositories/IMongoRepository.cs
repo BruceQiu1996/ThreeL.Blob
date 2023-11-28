@@ -16,6 +16,7 @@ namespace ThreeL.Blob.Infra.Repository.IRepositories
         Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
         Task<long> DeleteManyAsync(FilterDefinition<TEntity> filter, CancellationToken cancellationToken = default);
         Task<TEntity> ReplaceAsync(TEntity entity, CancellationToken cancellationToken = default);
+        Task<TEntity> UpdateAsync(string id, UpdateDefinition<TEntity> updateDefinition, FindOneAndUpdateOptions<TEntity>? options = null, CancellationToken cancellationToken = default);
         Task<PagedModel<TEntity>> PagedAsync(int pageNumber, int pageSize, FilterDefinition<TEntity> filter, Expression<Func<TEntity, object>> orderByExpression, bool ascending = false, CancellationToken cancellationToken = default);
     }
 }

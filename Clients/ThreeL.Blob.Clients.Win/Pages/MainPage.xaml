@@ -172,9 +172,6 @@
                              ItemsSource="{Binding FileObjViewModels,UpdateSourceTrigger=PropertyChanged}"
                              BorderThickness="0" BorderBrush="Transparent">
                         <behaviors:Interaction.Triggers>
-                            <behaviors:EventTrigger EventName="PreviewMouseLeftButtonDown">
-                                <behaviors:InvokeCommandAction Command="{Binding FileObjectsChooseDragCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
-                            </behaviors:EventTrigger>
                             <behaviors:EventTrigger EventName="Drop">
                                 <behaviors:InvokeCommandAction Command="{Binding DropCommand}" PassEventArgsToCommand="True"></behaviors:InvokeCommandAction>
                             </behaviors:EventTrigger>

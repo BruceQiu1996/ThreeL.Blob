@@ -3,6 +3,7 @@ using Grpc.Core;
 using Grpc.Net.Client;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver;
 using ThreeL.Blob.Chat.Application.Contract.Configurations;
 using ThreeL.Blob.Chat.Application.Contract.Dtos;
 using ThreeL.Blob.Chat.Application.Contract.Protos;
@@ -120,37 +121,40 @@ namespace ThreeL.Blob.Chat.Application.Services
                 return;
             };
 
-            fileMessageDto.RemoteSendTime = DateTime.Now;
             var resp = await _rpcContextAPIServiceClient.SendFileAsync(new SendFileRequest() 
             {
                 FileId = fileMessageDto.FileObjectId,
                 Target = fileMessageDto.To,
             }, new Metadata() { { "Authorization", $"{token}" } });
 
+            var fileMessageResponseDto = _mapper.Map<FileMessageResponseDto>(fileMessageDto);
+            fileMessageResponseDto.Token = resp.Token;
+            fileMessageResponseDto.FileName = resp.FileName;
+            fileMessageResponseDto.Size = resp.Size;
             if (resp.Success)
             {
                 //记录到数据库
-                await _chatRecordRepository.AddAsync(_mapper.Map<ChatRecord>(fileMessageDto));
-                fileMessageDto.Token = resp.Token;
-                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                await _chatRecordRepository.AddAsync(_mapper.Map<ChatRecord>(fileMessageResponseDto));
+                fileMessageResponseDto.RemoteSendTime = DateTime.Now;
+                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFileMessage, new HubMessageResponseDto<FileMessageResponseDto>()
                 {
                     Success = true,
-                    Data = fileMessageDto
+                    Data = fileMessageResponseDto
                 });
 
-                await clients.User(fileMessageDto.To.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                await clients.User(fileMessageDto.To.ToString()).SendAsync(HubConst.ReceiveFileMessage, new HubMessageResponseDto<FileMessageResponseDto>()
                 {
                     Success = true,
-                    Data = fileMessageDto
+                    Data = fileMessageResponseDto
                 });
             }
             else 
             {
-                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFileMessage, new HubMessageResponseDto<FileMessageResponseDto>()
                 {
                     Success = false,
                     Message = resp.Message,
-                    Data = fileMessageDto
+                    Data = fileMessageResponseDto
                 });
             }
         }
@@ -185,6 +189,49 @@ namespace ThreeL.Blob.Chat.Application.Services
                 Success = true,
                 Data = textMessageDto
             });
+        }
+
+        public async Task SendWithdrawMessageAsync(long sender, WithdrawMessageDto withdrawMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
+        {
+            var message = await _chatRecordRepository
+                .GetAsync(Builders<ChatRecord>.Filter.And(Builders<ChatRecord>.Filter.Eq(x => x.MessageId, withdrawMessageDto.MessageId),
+                Builders<ChatRecord>.Filter.Eq(x => x.From, sender)));
+
+            var resp = new WithdrawMessageResponseDto()
+            {
+                MessageId = message.MessageId,
+            };
+            if (message == null)
+            {
+                await clients.User(sender.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()
+                {
+                    Success = false,
+                    Message = "撤回消息失败",
+                    Data = resp
+                });
+
+                return;
+            }
+
+            resp.From = message.From;
+            resp.To = message.To;
+            await _chatRecordRepository.UpdateAsync(message.Id, Builders<ChatRecord>.Update.Set(x => x.Withdraw, true)
+                .Set(x => x.WithdrawTime, DateTime.Now));
+
+            {
+                //发送给两个人
+                await clients.User(resp.From.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()
+                {
+                    Success = true,
+                    Data = resp
+                });
+
+                await clients.User(resp.From.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()
+                {
+                    Success = true,
+                    Data = resp
+                });
+            }
         }
 
         private async Task<bool> IsFriendAsync(long user,long friend) 

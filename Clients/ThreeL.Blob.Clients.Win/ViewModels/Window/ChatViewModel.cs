@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -116,7 +115,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                 var result = HandyControl.Controls.MessageBox.Ask($"确认发送{type}【{y.Name}】给好友【{Relation.UserName}】吗？","询问");
                 if (result == MessageBoxResult.OK) 
                 {
-                
+                    await SendFileMessageAsync(y);
                 }
             });
         }
@@ -148,6 +147,41 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                         vm.Sending = false;
                         vm.SendFaild = !msg.Success;
                         relation.AddMessage(vm);
+                    }
+
+                    if (!msg.Success) _growlHelper.Warning(msg.Message);
+                });
+
+                //发送文件消息回调
+                App.HubConnection.On<HubMessageResponseDto<FileMessageResponseDto>>(HubConst.ReceiveFileMessage, msg =>
+                {
+                    var relation = Relations.FirstOrDefault(x => x.Id == msg.Data.From || x.Id == msg.Data.To);
+                    if (relation != null)
+                    {
+                        var vm = new FileMessageViewModel();
+                        vm.FromDto(msg.Data);
+                        vm.Sending = false;
+                        vm.SendFaild = !msg.Success;
+                        relation.AddMessage(vm);
+                    }
+
+                    if (!msg.Success) _growlHelper.Warning(msg.Message);
+                });
+
+                //撤回消息回调
+                App.HubConnection.On<HubMessageResponseDto<WithdrawMessageResponseDto>>(HubConst.ReceiveWithdrawMessage, msg =>
+                {
+                    var relation = Relations.FirstOrDefault(x => x.Id == msg.Data.From || x.Id == msg.Data.To);
+                    if (relation != null)
+                    {
+                        var message = 
+                            relation.Messages.FirstOrDefault(x => x.MessageId == msg.Data.MessageId);
+
+                        if (message != null) 
+                        {
+                            message.Withdraw = true;
+                            relation.UpdateMessage(message);
+                        }
                     }
 
                     if (!msg.Success) _growlHelper.Warning(msg.Message);
@@ -312,6 +346,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 
             await App.HubConnection.SendAsync(HubConst.SendTextMessage, dto);
             TextMessage = null;
+        }
+
+        public async Task SendFileMessageAsync(FileObjItemViewModel fileObjItemViewModel) 
+        {
+            var temp = Relation;
+            if (temp == null)
+                return;
+
+            var viewModel = fileObjItemViewModel.ToFileMessageVM(App.UserProfile.Id,temp.Id);
+            temp.AddMessage(viewModel);
+            var dto = new FileMessageDto();
+            viewModel.ToDto(dto);
+
+            await App.HubConnection.SendAsync(HubConst.SendFileMessage, dto);
         }
 
         private void OpenApplyM()

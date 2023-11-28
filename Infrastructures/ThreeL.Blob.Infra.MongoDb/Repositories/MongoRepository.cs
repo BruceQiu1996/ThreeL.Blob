@@ -158,7 +158,7 @@ namespace ThreeL.Blob.Infra.MongoDb.Repositories
         /// <param name="options">The options.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns></returns>
-        protected async Task<TEntity> UpdateAsync(string id, UpdateDefinition<TEntity> updateDefinition, FindOneAndUpdateOptions<TEntity>? options = null, CancellationToken cancellationToken = default)
+        public async Task<TEntity> UpdateAsync(string id, UpdateDefinition<TEntity> updateDefinition, FindOneAndUpdateOptions<TEntity>? options = null, CancellationToken cancellationToken = default)
         {
             var collection = await GetCollectionAsync(cancellationToken);
             return await collection.FindOneAndUpdateAsync(Filter.IdEq(id), updateDefinition, options, cancellationToken);

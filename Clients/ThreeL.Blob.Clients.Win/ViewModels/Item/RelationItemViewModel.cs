@@ -98,5 +98,15 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 App.ServiceProvider.GetRequiredService<Chat>().chatScrollViewer.ScrollToEnd();
             });
         }
+
+        public void UpdateMessage(MessageViewModel message) 
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var index = Messages.IndexOf(message);
+                Messages.Remove(message);
+                Messages.Insert(index, message);
+            });
+        }
     }
 }

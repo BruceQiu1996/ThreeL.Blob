@@ -38,6 +38,15 @@ namespace ThreeL.Blob.Chat.Server.Controllers
             await _chatService.SendFileMessageAsync(id, messageDto, Clients, Context);
         }
 
+        //TODO 文件和文件夹撤回，需要删除分享记录
+        [HubMethodName(HubConst.SendWithdrawMessage)]
+        [Authorize]
+        public async Task SendWithdrawMessage(WithdrawMessageDto messageDto)
+        {
+            var id = long.Parse(Context.User.Identity.Name);
+            await _chatService.SendWithdrawMessageAsync(id, messageDto, Clients, Context);
+        }
+
         /// <summary>
         /// 发送好友申请
         /// </summary>

@@ -14,9 +14,11 @@ namespace ThreeL.Blob.Clients.Win.Helpers
             DataTemplate dt = null;
             if (obj != null && fe != null)
             {
-                if (obj.MessageType == MessageType.Time)
+                if(obj.Withdraw)
+                    dt = fe.FindResource("withdraw") as DataTemplate;
+                else if (obj.MessageType == MessageType.Time)
                     dt = fe.FindResource("time") as DataTemplate;
-                if (obj.MessageType == MessageType.Tip)
+                else if(obj.MessageType == MessageType.Tip)
                     dt = fe.FindResource("tip") as DataTemplate;
                 else if (obj.MessageType == MessageType.Text && obj.FromSelf)
                     dt = fe.FindResource("txtSender") as DataTemplate;
