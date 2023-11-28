@@ -11,5 +11,7 @@ namespace ThreeL.Blob.Application.Contract.Services
         Task<ServiceResult<MQueryUsersResponseDto>> QueryUsersAsync(int page);
         [Uow]
         Task<ServiceResult> CreateUserAsync(UserCreationDto creationDto, long creator);
+        [Uow]
+        Task<ServiceResult> UpdateUserAsync(long creator, long target, MUserUpdateDto updateDto);
     }
 }

@@ -93,5 +93,10 @@ namespace ThreeL.Blob.Application.Services.Management
 
             return new ServiceResult();
         }
+
+        public async Task<ServiceResult> UpdateUserAsync(long creator, long target, MUserUpdateDto updateDto)
+        {
+            
+        }
     }
 }

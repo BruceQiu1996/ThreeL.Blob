@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Contract.Dtos;
+using ThreeL.Blob.Application.Contract.Dtos.Management;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Contract.Validators.User;
 using ThreeL.Blob.Domain.Aggregate.User;
@@ -69,6 +70,24 @@ namespace ThreeL.Blob.Server.Controllers
                 var sresult = await _adminService.CreateUserAsync(creationDto, userId);
 
                 return sresult.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
+        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
+        [ParamValidate(typeof(MUserUpdateDtoValidator), parameterIndex: 1)]
+        [HttpPut("users/{userId}")]
+        public async Task<ActionResult> Update(long userId, MUserUpdateDto updateDto)
+        {
+            try
+            {
+                //TODO 更新用户
+
+                //return sresult.ToActionResult();
             }
             catch (Exception ex)
             {
