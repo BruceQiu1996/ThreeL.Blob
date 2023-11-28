@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Dtos.Management;
 using ThreeL.Blob.Application.Contract.Services;
@@ -85,9 +86,10 @@ namespace ThreeL.Blob.Server.Controllers
         {
             try
             {
-                //TODO 更新用户
+                long.TryParse(HttpContext.User.Identity?.Name, out var id);
+                var role = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Role)!.Value;
 
-                //return sresult.ToActionResult();
+                return (await _adminService.UpdateUserAsync(id, role, userId, updateDto)).ToActionResult();
             }
             catch (Exception ex)
             {

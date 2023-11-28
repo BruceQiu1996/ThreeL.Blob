@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import {useNavigate} from 'react-router-dom'
 import { Breadcrumb, Layout, theme, Row, Col, MenuProps, Dropdown } from 'antd';
 import { SmileOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Outlet } from 'react-router-dom';
@@ -7,12 +8,12 @@ import { setJwtAuthToken } from '@/request';
 import { history } from '@/router/history';
 
 const { Header, Content, Footer, Sider } = Layout;
-
 const View: React.FC = () => {
     useEffect(() => {
         setuserName(localStorage.getItem("userName") || "");
         setrole(localStorage.getItem("role") || "");
     }, [])
+    const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState(false);
     const [userName, setuserName] = useState<string>("");
     const [role, setrole] = useState<string>("");

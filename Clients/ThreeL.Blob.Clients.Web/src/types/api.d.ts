@@ -31,6 +31,13 @@ interface UserCreationDto {
     password: string;
 }
 
+interface UserEditDto {
+    id: number;
+    userName: string;
+    role: string;
+    size: number?;
+}
+
 //redux common store
 interface SimpleKeyValueObject {
     [key: string]: any

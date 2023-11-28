@@ -6,10 +6,12 @@ using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Dtos.Management;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Domain.Aggregate.User;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Helpers;
 using ThreeL.Blob.Shared.Application.Contract.Services;
+using ThreeL.Blob.Shared.Domain.Metadata.User;
 
 namespace ThreeL.Blob.Application.Services.Management
 {
@@ -94,9 +96,27 @@ namespace ThreeL.Blob.Application.Services.Management
             return new ServiceResult();
         }
 
-        public async Task<ServiceResult> UpdateUserAsync(long creator, long target, MUserUpdateDto updateDto)
+        public async Task<ServiceResult> UpdateUserAsync(long creator, string role, long target, MUserUpdateDto updateDto)
         {
-            
+            var targetUser = await _userBasicRepository.GetAsync(target);
+            if (targetUser == null)
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "用户不存在");
+            }
+
+            var roleEnum = role.ToEnum<Role>();
+            var targetEnum = updateDto.Role.ToEnum<Role>();
+            if (roleEnum <= targetUser.Role || roleEnum <= targetEnum)
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "修改权限的权限不足");
+            }
+
+            targetUser.UserName = updateDto.UserName;
+            targetUser.Role = targetEnum;
+
+            await _userBasicRepository.UpdateAsync(targetUser);
+
+            return new ServiceResult();
         }
     }
 }

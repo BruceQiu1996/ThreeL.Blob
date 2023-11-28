@@ -17,5 +17,10 @@ namespace ThreeL.Blob.Infra.Core.Extensions.System
 
             return regex.IsMatch(userName);
         }
+
+        public static T ToEnum<T>(this string data)
+        {
+            return (T)Enum.Parse(typeof(T), data);
+        }
     }
 }
