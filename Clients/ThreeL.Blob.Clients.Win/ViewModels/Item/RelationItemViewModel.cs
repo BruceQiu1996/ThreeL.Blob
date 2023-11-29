@@ -15,6 +15,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 {
     public class RelationItemViewModel : ObservableObject
     {
+        public bool Loaded = false;
         public long Id { get; set; }
         public string UserName { get; set; }
 

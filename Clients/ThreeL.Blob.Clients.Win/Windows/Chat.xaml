@@ -548,6 +548,11 @@
                                      ItemsSource="{Binding Relations,UpdateSourceTrigger=PropertyChanged}"
                                      SelectedItem="{Binding Relation,UpdateSourceTrigger=PropertyChanged}"
                                      BorderThickness="0" BorderBrush="Transparent">
+                                <behaviors:Interaction.Triggers>
+                                    <behaviors:EventTrigger EventName="SelectionChanged">
+                                        <behaviors:InvokeCommandAction Command="{Binding ChangeRelationCommandAsync}"></behaviors:InvokeCommandAction>
+                                    </behaviors:EventTrigger>
+                                </behaviors:Interaction.Triggers>
                                 <ListBox.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Orientation="Vertical"></StackPanel>

@@ -62,6 +62,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         public AsyncRelayCommand SearchUsersCommandAsync { get; set; }
         public AsyncRelayCommand RefreshApplysCommandAsync { get; set; }
         public AsyncRelayCommand<DragEventArgs> DropItemsOnChatCommandAsync { get; set; }
+        public AsyncRelayCommand ChangeRelationCommandAsync { get; set; }
         public ObservableCollection<RelationItemViewModel> Relations { get; set; }
         public ObservableCollection<UnRelationItemViewModel> UnRelations { get; set; }
         private ObservableCollection<ApplyMessageViewModel> _applys;
@@ -94,6 +95,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             OpenApplyCommand = new RelayCommand(OpenApplyM);
             RefreshApplysCommandAsync = new AsyncRelayCommand(RefreshApplysAsync);
             DropItemsOnChatCommandAsync = new AsyncRelayCommand<DragEventArgs>(DropItemsOnChatAsync);
+            ChangeRelationCommandAsync = new AsyncRelayCommand(ChangeRelationAsync);
             Relations = new ObservableCollection<RelationItemViewModel>();
             UnRelations = new ObservableCollection<UnRelationItemViewModel>();
             Applys = new ObservableCollection<ApplyMessageViewModel>();
@@ -254,6 +256,28 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 
                 //拉取申请
                 await RefreshApplysAsync();
+            }
+        }
+
+        //拉取聊天记录
+        private async Task ChangeRelationAsync() 
+        {
+            if (Relation == null)
+                return;
+
+            if (!Relation.Loaded) 
+            {
+                try
+                {
+                    await App.HubConnection.SendAsync(HubConst.FetchChatRecords, new QueryChatRecordsDto() 
+                    {
+                        Target = Relation.Id
+                    });
+                }
+                catch (Exception ex) 
+                {
+                    _growlHelper.WarningGlobal(ex.Message);
+                }
             }
         }
 

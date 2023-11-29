@@ -144,11 +144,11 @@ namespace ThreeL.Blob.Application.Services
         {
             //获取所有的好友
             var relation = await _friendRelationEfBasicRepository
-                .FirstOrDefaultAsync(x =>(x.Passiver == userId && x.Activer == target) || (x.Activer == userId && x.Passiver == target));
+                .FirstOrDefaultAsync(x => (x.Passiver == userId && x.Activer == target) || (x.Activer == userId && x.Passiver == target));
 
-            if (relation == null) 
+            if (relation == null)
             {
-                return new ServiceResult<RelationBriefDto>(System.Net.HttpStatusCode.BadRequest,"好友关系异常")
+                return new ServiceResult<RelationBriefDto>(System.Net.HttpStatusCode.BadRequest, "好友关系异常")
                 {
                     Value = null
                 };
@@ -211,6 +211,11 @@ namespace ThreeL.Blob.Application.Services
                 };
                 await _friendApplyEfBasicRepository.UpdateAsync(apply);
                 await _friendRelationEfBasicRepository.InsertAsync(relation);
+
+                var min = Math.Min(relation.Activer, relation.Passiver);
+                var max = Math.Max(relation.Activer, relation.Passiver);
+
+                await _redisProvider.SetAddAsync(Const.REDIS_FRIEND_RELATIONS, new string[] { $"{min}-{max}" });
             }
             else
             {
@@ -299,7 +304,7 @@ namespace ThreeL.Blob.Application.Services
             }
 
             var token = TokenGenerator.GenerateToken(32);
-            var record = new FileObjectShareRecord(token,file.Id,userId, request.Target);
+            var record = new FileObjectShareRecord(token, file.Id, userId, request.Target);
             record.CreateTime = DateTime.Now;
             record.ExpireTime = DateTime.Now.AddDays(3);//TODO配置
             await _fileObjectShareRecordEfBasicRepository.InsertAsync(record);

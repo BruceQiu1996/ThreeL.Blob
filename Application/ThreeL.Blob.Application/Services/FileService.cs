@@ -126,7 +126,8 @@ namespace ThreeL.Blob.Application.Services
             var folderName = Guid.NewGuid().ToString();
             var folderLocation = Path.Combine(parentFolderLocation, folderName);
             Directory.CreateDirectory(folderLocation);
-            var exist = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName && x.ParentFolder == folderCreationDto.ParentId);
+            var exist = await _fileBasicRepository
+                .FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName && x.ParentFolder == folderCreationDto.ParentId && x.CreateBy == userId);
             if (exist != null)
             {
                 folderCreationDto.FolderName = $"{folderCreationDto.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";
@@ -405,7 +406,7 @@ namespace ThreeL.Blob.Application.Services
                 var folderLocation = Path.Combine(item.ParentFolderLocation, folderName);
                 Directory.CreateDirectory(folderLocation);
                 var exist = await _fileBasicRepository
-                    .FirstOrDefaultAsync(x => x.IsFolder && x.Name == item.FolderName && x.ParentFolder == item.ParentId);
+                    .FirstOrDefaultAsync(x => x.IsFolder && x.Name == item.FolderName && x.ParentFolder == item.ParentId && x.CreateBy == userId);
                 if (exist != null)
                 {
                     item.FolderName = $"{item.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";

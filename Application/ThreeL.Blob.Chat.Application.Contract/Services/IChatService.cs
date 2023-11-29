@@ -10,5 +10,6 @@ namespace ThreeL.Blob.Chat.Application.Contract.Services
         Task SendWithdrawMessageAsync(long sender, WithdrawMessageDto withdrawMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext);
         Task AddFriendApplyAsync(long target, IHubCallerClients clients, HubCallerContext hubCallerContext);
         Task HandleAddFriendApplyAsync(HandleAddFriendApplyDto handleAddFriendApplyDto, IHubCallerClients clients, HubCallerContext hubCallerContext);
+        Task QueryChatRecordsAsync(QueryChatRecordsDto queryChatRecordsDto, IHubCallerClients clients, HubCallerContext hubCallerContext);
     }
 }

@@ -105,6 +105,41 @@ namespace ThreeL.Blob.Chat.Application.Services
             }
         }
 
+        public async Task QueryChatRecordsAsync(QueryChatRecordsDto queryChatRecordsDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
+        {
+            var id = long.Parse(hubCallerContext.User.Identity.Name);
+            if (!await IsFriendAsync(id, queryChatRecordsDto.Target))
+            {
+                await clients.User(id.ToString()).SendAsync(HubConst.ReceiveChatRecords, new HubMessageResponseDto<QueryChatRecordResponseDto>()
+                {
+                    Success = false,
+                    Message = "好友关系异常",
+                    Data = default
+                });
+
+                return;
+            };
+
+            queryChatRecordsDto.LastTime = queryChatRecordsDto.LastTime == null ? DateTime.Now : queryChatRecordsDto.LastTime;
+            var chatRecords = await _chatRecordRepository.PagedAsync(0, 30,
+                   Builders<ChatRecord>.Filter.And(Builders<ChatRecord>.Filter.Where(x => x.RemoteSendTime < queryChatRecordsDto.LastTime),
+                   Builders<ChatRecord>.Filter.Where(x => (x.From == id && x.To == queryChatRecordsDto.Target) || (x.To == id && x.From == queryChatRecordsDto.Target))),
+                   x => x.RemoteSendTime);
+
+            var respData = new QueryChatRecordResponseDto()
+            {
+                Count = chatRecords.Count,
+                Records = chatRecords.Data.Select(x => _mapper.Map<ChatRecordResponseDto>(x))
+            };
+
+            await clients.User(id.ToString()).SendAsync(HubConst.ReceiveChatRecords, new HubMessageResponseDto<QueryChatRecordResponseDto>()
+            {
+                Success = true,
+                Message = "查询成功",
+                Data = respData
+            });
+        }
+
         public async Task SendFileMessageAsync(long sender, FileMessageDto fileMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
         {
             fileMessageDto.From = sender;
@@ -226,7 +261,7 @@ namespace ThreeL.Blob.Chat.Application.Services
                     Data = resp
                 });
 
-                await clients.User(resp.From.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()
+                await clients.User(resp.To.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()
                 {
                     Success = true,
                     Data = resp

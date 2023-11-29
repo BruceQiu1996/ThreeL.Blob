@@ -39,6 +39,7 @@ namespace ThreeL.Blob.Chat.Server.Controllers
         }
 
         //TODO 文件和文件夹撤回，需要删除分享记录
+        //TODO 服务器报错，统一回复客户端某条消息错误
         [HubMethodName(HubConst.SendWithdrawMessage)]
         [Authorize]
         public async Task SendWithdrawMessage(WithdrawMessageDto messageDto)
@@ -69,6 +70,18 @@ namespace ThreeL.Blob.Chat.Server.Controllers
         public async Task HandleAddFriendApply(HandleAddFriendApplyDto handleAddFriendApplyDto)
         {
             await _chatService.HandleAddFriendApplyAsync(handleAddFriendApplyDto, Clients, Context);
+        }
+
+        /// <summary>
+        /// 拉取某人的聊天记录
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        [HubMethodName(HubConst.FetchChatRecords)]
+        [Authorize]
+        public async Task QueryChatRecords(QueryChatRecordsDto queryChatRecordsDto)
+        {
+            await _chatService.QueryChatRecordsAsync(queryChatRecordsDto, Clients, Context);
         }
     }
 }
