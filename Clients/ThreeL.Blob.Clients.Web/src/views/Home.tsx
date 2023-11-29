@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import {useNavigate} from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Breadcrumb, Layout, theme, Row, Col, MenuProps, Dropdown } from 'antd';
 import { SmileOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Outlet } from 'react-router-dom';
 import MainMenu from '@/components/MainMenu';
+import CustomBreadcrumb from '@/components/CustomBreadcrumb';
 import { setJwtAuthToken } from '@/request';
 import { history } from '@/router/history';
+import styles from './Home.module.scss'
 
 const { Header, Content, Footer, Sider } = Layout;
 const View: React.FC = () => {
@@ -40,7 +42,8 @@ const View: React.FC = () => {
     return (
         <Layout style={{ minHeight: '100vh' }}>
             <Sider collapsible collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
-                <div className="logo-vertical" >
+                <div className='logo-vertical' style={{height:'40px',textAlign:'center',color:'#ccc',fontSize:'20px',lineHeight:'40px',fontFamily:'KaiTi'}}>
+                    头头网盘管理后台
                 </div>
                 <MainMenu />
             </Sider>
@@ -48,10 +51,7 @@ const View: React.FC = () => {
                 <Header style={{ padding: 0, background: colorBgContainer, paddingLeft: '16px' }} >
                     <Row>
                         <Col flex="auto">
-                            <Breadcrumb style={{ margin: '16px 0' }}>
-                                <Breadcrumb.Item>User</Breadcrumb.Item>
-                                <Breadcrumb.Item>Bill</Breadcrumb.Item>
-                            </Breadcrumb>
+                            <CustomBreadcrumb />
                         </Col>
                         <Col flex="160px" style={{ fontSize: '16px' }}>
                             <Dropdown menu={{ items }}>

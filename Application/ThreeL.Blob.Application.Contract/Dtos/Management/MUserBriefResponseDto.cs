@@ -8,5 +8,6 @@
         public DateTime CreateTime { get; set; }
         public DateTime? LastLoginTime { get; set; }
         public bool IsDeleted { get; set; }
+        public long? MaxSpaceSize { get; set; }
     }
 }

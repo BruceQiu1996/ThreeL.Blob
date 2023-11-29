@@ -11,9 +11,9 @@ namespace ThreeL.Blob.Infra.Repository.IRepositories
 
         Task<int> RemoveRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
-        Task<TEntity?> GetAsync(TKey keyValue, Expression<Func<TEntity, dynamic>>? navigationPropertyPath = null, bool writeDb = false, CancellationToken cancellationToken = default);
+        Task<TEntity?> GetAsync(TKey keyValue, Expression<Func<TEntity, dynamic>>? navigationPropertyPath = null, bool writeDb = false, bool ignoreFilters = false,CancellationToken cancellationToken = default);
 
-        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, bool writeDb = false, CancellationToken cancellationToken = default);
+        Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, bool writeDb = false, bool ignoreFilters = false, CancellationToken cancellationToken = default);
         Task<IEnumerable<TEntity>> QuerySqlAsync(string sql, bool writeDb = false, CancellationToken cancellationToken = default);
         Task<IEnumerable<TEntity>> AllAsync();
     }

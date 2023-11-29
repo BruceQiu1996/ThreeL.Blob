@@ -18,14 +18,30 @@ namespace ThreeL.Blob.Infra.Repository.EfCore.Repositories
             return await DbContext.Set<TEntity>().ToListAsync();
         }
 
-        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity,bool>> filter, bool writeDb = false, CancellationToken cancellationToken = default)
+        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter, bool writeDb = false, bool ignoreFilters = false, CancellationToken cancellationToken = default)
         {
-            return await GetDbSet(writeDb, false).FirstOrDefaultAsync(filter);
+            if (ignoreFilters)
+            {
+                return await GetDbSet(writeDb, false).IgnoreQueryFilters().FirstOrDefaultAsync(filter);
+            }
+            else
+            {
+                return await GetDbSet(writeDb, false).FirstOrDefaultAsync(filter);
+            }
         }
 
-        public async Task<TEntity?> GetAsync(TKey keyValue, Expression<Func<TEntity, dynamic>>? navigationPropertyPath = null, bool writeDb = false, CancellationToken cancellationToken = default)
+        public async Task<TEntity?> GetAsync(TKey keyValue, Expression<Func<TEntity, dynamic>>? navigationPropertyPath = null, bool writeDb = false, bool ignoreFilters = false, CancellationToken cancellationToken = default)
         {
-            var query = GetDbSet(writeDb, false).Where(t => t.Id.Equals(keyValue));
+            IQueryable<TEntity> query;
+            if (ignoreFilters)
+            {
+                query = GetDbSet(writeDb, false).IgnoreQueryFilters().Where(t => t.Id.Equals(keyValue));
+            }
+            else
+            {
+                query = GetDbSet(writeDb, false).Where(t => t.Id.Equals(keyValue));
+            }
+
             if (navigationPropertyPath is null)
                 return await query.FirstOrDefaultAsync(cancellationToken);
             else

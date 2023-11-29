@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Button, Row, Col, Table, Space, Switch, Modal, message, Input, InputNumber, Select } from 'antd';
 import type { ColumnsType, TablePaginationConfig } from 'antd/es/table';
-import { queryUsersAPI, createUsersAPI } from "@/request/api.ts"
+import { queryUsersAPI, createUsersAPI, editUsersAPI } from "@/request/api.ts"
 import NewUser from './components/CreateNewUser';
+import { SwitchChangeEventHandler } from 'antd/es/switch';
 
 const UserManagePage: React.FC = () => {
     const [data, setData] = useState<UserBriefResponseDto[]>();
@@ -11,6 +12,7 @@ const UserManagePage: React.FC = () => {
     const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
     const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState<UserEditDto>({} as UserEditDto);
+    const [currentPage, setCurrentPage] = useState<number>(1);
     useEffect(() => {
         const init = async () => {
             var resp = await queryUsersAPI(1);
@@ -35,6 +37,11 @@ const UserManagePage: React.FC = () => {
             dataIndex: 'role',
         },
         {
+            title: '存储空间（字节）',
+            dataIndex: 'maxSpaceSize',
+            render: (data: number | undefined) => data === null ? '∞' : <>{data} B</>,
+        },
+        {
             title: '创建日期',
             dataIndex: 'createTime',
             render: (text: string) => <>{new Date(text).toLocaleString()}</>,
@@ -47,7 +54,7 @@ const UserManagePage: React.FC = () => {
         {
             title: '是否启用',
             dataIndex: 'isDeleted',
-            render: (data: boolean) => <Switch checked={!data} />
+            render: (_, key: UserBriefResponseDto) => <Switch defaultChecked={!key.isDeleted} onChange={async (checked: boolean) => await toggleEnable(checked, key)} />
         },
         {
             title: '操作',
@@ -58,7 +65,17 @@ const UserManagePage: React.FC = () => {
 
     const OpenEdit = (row: UserBriefResponseDto) => {
         setIsEditUserModalOpen(true);
-        setCurrentUser({ id: row.id, userName: row.userName, role: row.role, size: 0 });
+        setCurrentUser({ id: row.id, userName: row.userName, role: row.role, size: row.maxSpaceSize, isDeleted: row.isDeleted });
+    }
+
+    const toggleEnable = async (checked: boolean, row: UserBriefResponseDto) => {
+        var resp: UserBriefResponseDto = await editUsersAPI({ ...row, isDeleted: !checked, size: row.maxSpaceSize });
+        var index = data?.findIndex(item => item.id == resp.id)
+        if (index !== undefined && data != undefined) {
+            data[index] = resp;
+            let newData = [...data];
+            setData(newData);
+        }
     }
 
     const userName = useSelector((state: RootState) => state.createNewUserReducer.userName);
@@ -68,6 +85,12 @@ const UserManagePage: React.FC = () => {
     const showModal = () => {
         setIsCreateUserModalOpen(true);
     };
+
+    const refresh = async () => {
+        var resp = await queryUsersAPI(currentPage);
+        setData(resp.users);
+        setTotalDataCounts(resp.count);
+    }
 
     const handleOk = async () => {
         if (userName === "" || password === "" || confirmPassword === "") {
@@ -88,17 +111,19 @@ const UserManagePage: React.FC = () => {
     };
 
     const handleEditOk = async () => {
-        if (userName === "" || password === "" || confirmPassword === "") {
-            message.warning("用户名或密码不能为空");
-            return;
-        }
-        if (password !== confirmPassword) {
-            message.warning("两次输入的密码不一致");
+        if (currentUser.userName === "" || currentUser.role === "") {
+            message.warning("用户名或角色不能为空");
             return;
         }
 
-        await createUsersAPI({ userName: userName, password: password });
+        var resp: UserBriefResponseDto = await editUsersAPI(currentUser);
         setIsEditUserModalOpen(false);
+        var index = data?.findIndex(item => item.id == resp.id)
+        if (index !== undefined && data != undefined) {
+            data[index] = resp;
+            let newData = [...data];
+            setData(newData);
+        }
     };
 
     const handleEditCancel = () => {
@@ -117,10 +142,10 @@ const UserManagePage: React.FC = () => {
         <>
             <Row gutter={[5, 10]} style={{ marginTop: '10px' }}>
                 <Col flex="auto"></Col>
-                <Col flex="200px">
+                <Col flex="170px">
                     <Space>
                         <Button type="primary" onClick={showModal}>新建用户</Button>
-                        <Button danger>禁用用户</Button>
+                        <Button onClick={refresh}>刷新</Button>
                     </Space>
                 </Col>
                 <Col span={24}>
@@ -128,8 +153,9 @@ const UserManagePage: React.FC = () => {
                         rowKey={(record) => record.id}
                         dataSource={data}
                         pagination={{
-                            pageSize: 10, total: totalDataCounts, onChange: async (page, pageSize) => {
+                            pageSize: 10, current: currentPage, total: totalDataCounts, onChange: async (page, pageSize) => {
                                 var resp = await queryUsersAPI(page);
+                                setCurrentPage(page);
                                 setData(resp.users);
                                 setTotalDataCounts(resp.count);
                             }
@@ -156,7 +182,9 @@ const UserManagePage: React.FC = () => {
                                         { value: 'SuperAdmin', label: 'SuperAdmin' }
                                     ]} />
                                 <Space>
-                                    <InputNumber style={{ width: '100% ' }} min={1} max={1000} placeholder="存储空间大小" />
+                                    <InputNumber style={{ width: '100% ' }}
+                                        onChange={(value: number | null) => { setCurrentUser({ ...currentUser, size: value }) }}
+                                        min={0} max={1024 * 1024 * 1024 * 1024} placeholder="存储空间大小" />
                                     <label>B（字节）</label>
                                 </Space>
                             </Space>

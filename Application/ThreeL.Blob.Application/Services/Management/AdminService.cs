@@ -96,27 +96,46 @@ namespace ThreeL.Blob.Application.Services.Management
             return new ServiceResult();
         }
 
-        public async Task<ServiceResult> UpdateUserAsync(long creator, string role, long target, MUserUpdateDto updateDto)
+        public async Task<ServiceResult<MUserBriefResponseDto>> UpdateUserAsync(long creator, string role, long target, MUserUpdateDto updateDto)
         {
-            var targetUser = await _userBasicRepository.GetAsync(target);
+            var targetUser = await _userBasicRepository.GetAsync(target, ignoreFilters: true);
             if (targetUser == null)
             {
-                return new ServiceResult(HttpStatusCode.BadRequest, "用户不存在");
+                return new ServiceResult<MUserBriefResponseDto>(HttpStatusCode.BadRequest, "用户不存在");
             }
 
+            if (updateDto.UserName != targetUser.UserName)
+            {
+                var exist = await _userBasicRepository.FirstOrDefaultAsync(x => x.UserName == updateDto.UserName, ignoreFilters: true);
+                if (exist != null)
+                {
+                    return new ServiceResult<MUserBriefResponseDto>(HttpStatusCode.BadRequest, "用户名已存在");
+                }
+
+                targetUser.UserName = updateDto.UserName;
+            }
             var roleEnum = role.ToEnum<Role>();
             var targetEnum = updateDto.Role.ToEnum<Role>();
             if (roleEnum <= targetUser.Role || roleEnum <= targetEnum)
             {
-                return new ServiceResult(HttpStatusCode.BadRequest, "修改权限的权限不足");
+                return new ServiceResult<MUserBriefResponseDto>(HttpStatusCode.BadRequest, "修改权限的权限不足");
             }
 
-            targetUser.UserName = updateDto.UserName;
             targetUser.Role = targetEnum;
+            targetUser.MaxSpaceSize = updateDto.Size;
+            targetUser.IsDeleted = updateDto.IsDeleted;
 
             await _userBasicRepository.UpdateAsync(targetUser);
+            if (targetUser.IsDeleted)
+            {
+                //TODO 增加黑名单以及通知客户端下线
+            }
+            else
+            {
+                //TODO 移除黑名单
+            }
 
-            return new ServiceResult();
+            return new ServiceResult<MUserBriefResponseDto>(_mapper.Map<MUserBriefResponseDto>(targetUser));
         }
     }
 }

@@ -24,6 +24,7 @@ interface UserBriefResponseDto {
     createdTime: Date,
     lastLoginTime: Date,
     isDeleted: boolean,
+    maxSpaceSize: number?
 }
 
 interface UserCreationDto {
@@ -36,6 +37,7 @@ interface UserEditDto {
     userName: string;
     role: string;
     size: number?;
+    isDeleted: boolean
 }
 
 //redux common store

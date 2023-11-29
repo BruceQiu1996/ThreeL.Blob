@@ -1,20 +1,20 @@
 import axios, { AxiosError } from "axios"
-import {history} from '@/router/history'
+import { history } from '@/router/history'
 import { message } from "antd"
 
-// 创建axios实例
+// 鍒涘缓axios瀹炰緥
 const instance = axios.create({
-    // 基本请求路径的抽取
+    // 鍩烘湰璇锋眰璺緞鐨勬娊鍙�
     baseURL: "http://127.0.0.1:5824",
     timeout: 20000,
 })
 
 export const setJwtAuthToken = (token: string) => {
     if (token) {
-        // token存在设置header,因为后续每个请求都需要
+        // token瀛樺湪璁剧疆header,鍥犱负鍚庣画姣忎釜璇锋眰閮介渶瑕�
         instance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-        // 没有token就移除
+        // 娌℃湁token灏辩Щ闄�
         delete instance.defaults.headers.common['Authorization'];
     }
 }
@@ -29,33 +29,37 @@ export function get<T>(url: string): Promise<T> {
     return instance.get(url)
 }
 
-// 请求拦截器
+export function put<T>(url: string, data: any): Promise<T> {
+    return instance.put(url, data)
+}
+
+// 璇锋眰鎷︽埅鍣�
 instance.interceptors.request.use(data => {
     return data
 }, err => {
     return Promise.reject(err)
 });
 
-// 响应拦截器
+// 鍝嶅簲鎷︽埅鍣�
 instance.interceptors.response.use(res => {
     return res.data
 }, error => {
     if (error === undefined || error.code === 'ECONNABORTED') {
-        message.warning('服务请求超时')
+        message.warning('鏈嶅姟璇锋眰瓒呮椂')
         return Promise.reject(error)
     }
     if (error.response === undefined) {
-        message.error('远程服务器未响应')
+        message.error('杩滅▼鏈嶅姟鍣ㄦ湭鍝嶅簲')
         return Promise.reject(error)
     }
 
     if (error.response.status === 500) {
-        message.error('服务器出现错误')
+        message.error('鏈嶅姟鍣ㄥ嚭鐜伴敊璇�')
         return Promise.reject(error)
     }
 
     if (error.response.status === 401) {
-        message.error('登录凭证已过期，请重新登录')
+        message.error('鐧诲綍鍑瘉宸茶繃鏈燂紝璇烽噸鏂扮櫥褰�')
         localStorage.removeItem('token')
         setJwtAuthToken('')
         history.push('/login')

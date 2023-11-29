@@ -12,6 +12,6 @@ namespace ThreeL.Blob.Application.Contract.Services
         [Uow]
         Task<ServiceResult> CreateUserAsync(UserCreationDto creationDto, long creator);
         [Uow]
-        Task<ServiceResult> UpdateUserAsync(long creator, string role, long target, MUserUpdateDto updateDto);
+        Task<ServiceResult<MUserBriefResponseDto>> UpdateUserAsync(long creator, string role, long target, MUserUpdateDto updateDto);
     }
 }
