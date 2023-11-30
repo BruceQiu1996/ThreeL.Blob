@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
     public class RelationItemViewModel : ObservableObject
     {
         public bool Loaded = false;
+        public DateTime? LoadTime;
         public long Id { get; set; }
         public string UserName { get; set; }
 
@@ -64,7 +66,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             var _ = Task.Run(async () =>
             {
-                var avatarResp = await App.ServiceProvider!.GetRequiredService<HttpRequest>().GetAsync(string.Format(Const.GET_AVATAR_IMAGE, avatar.Replace("\\", "/")));
+                var avatarResp = await App.ServiceProvider!.GetRequiredService<ApiHttpRequest>().GetAsync(string.Format(Const.GET_AVATAR_IMAGE, avatar.Replace("\\", "/")));
                 if (avatarResp != null)
                 {
                     Icon = App.ServiceProvider!.GetRequiredService<FileHelper>().BytesToImage(await avatarResp.Content.ReadAsByteArrayAsync());

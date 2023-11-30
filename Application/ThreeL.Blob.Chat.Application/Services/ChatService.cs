@@ -105,25 +105,16 @@ namespace ThreeL.Blob.Chat.Application.Services
             }
         }
 
-        public async Task QueryChatRecordsAsync(QueryChatRecordsDto queryChatRecordsDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
+        public async Task<ServiceResult<QueryChatRecordResponseDto>> QueryChatRecordsAsync(long userId, long target, DateTime time)
         {
-            var id = long.Parse(hubCallerContext.User.Identity.Name);
-            if (!await IsFriendAsync(id, queryChatRecordsDto.Target))
+            if (!await IsFriendAsync(userId, target))
             {
-                await clients.User(id.ToString()).SendAsync(HubConst.ReceiveChatRecords, new HubMessageResponseDto<QueryChatRecordResponseDto>()
-                {
-                    Success = false,
-                    Message = "好友关系异常",
-                    Data = default
-                });
-
-                return;
+                return new ServiceResult<QueryChatRecordResponseDto>(System.Net.HttpStatusCode.BadRequest, "好友关系异常");
             };
 
-            queryChatRecordsDto.LastTime = queryChatRecordsDto.LastTime == null ? DateTime.Now : queryChatRecordsDto.LastTime;
             var chatRecords = await _chatRecordRepository.PagedAsync(0, 30,
-                   Builders<ChatRecord>.Filter.And(Builders<ChatRecord>.Filter.Where(x => x.RemoteSendTime < queryChatRecordsDto.LastTime),
-                   Builders<ChatRecord>.Filter.Where(x => (x.From == id && x.To == queryChatRecordsDto.Target) || (x.To == id && x.From == queryChatRecordsDto.Target))),
+                   Builders<ChatRecord>.Filter.And(Builders<ChatRecord>.Filter.Where(x => x.RemoteSendTime < time),
+                   Builders<ChatRecord>.Filter.Where(x => (x.From == userId && x.To == target) || (x.To == userId && x.From == target))),
                    x => x.RemoteSendTime);
 
             var respData = new QueryChatRecordResponseDto()
@@ -132,12 +123,7 @@ namespace ThreeL.Blob.Chat.Application.Services
                 Records = chatRecords.Data.Select(x => _mapper.Map<ChatRecordResponseDto>(x))
             };
 
-            await clients.User(id.ToString()).SendAsync(HubConst.ReceiveChatRecords, new HubMessageResponseDto<QueryChatRecordResponseDto>()
-            {
-                Success = true,
-                Message = "查询成功",
-                Data = respData
-            });
+            return new ServiceResult<QueryChatRecordResponseDto>() { Value = respData };
         }
 
         public async Task SendFileMessageAsync(long sender, FileMessageDto fileMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
@@ -156,7 +142,7 @@ namespace ThreeL.Blob.Chat.Application.Services
                 return;
             };
 
-            var resp = await _rpcContextAPIServiceClient.SendFileAsync(new SendFileRequest() 
+            var resp = await _rpcContextAPIServiceClient.SendFileAsync(new SendFileRequest()
             {
                 FileId = fileMessageDto.FileObjectId,
                 Target = fileMessageDto.To,
@@ -168,9 +154,9 @@ namespace ThreeL.Blob.Chat.Application.Services
             fileMessageResponseDto.Size = resp.Size;
             if (resp.Success)
             {
+                fileMessageResponseDto.RemoteSendTime = DateTime.Now;
                 //记录到数据库
                 await _chatRecordRepository.AddAsync(_mapper.Map<ChatRecord>(fileMessageResponseDto));
-                fileMessageResponseDto.RemoteSendTime = DateTime.Now;
                 await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFileMessage, new HubMessageResponseDto<FileMessageResponseDto>()
                 {
                     Success = true,
@@ -183,7 +169,7 @@ namespace ThreeL.Blob.Chat.Application.Services
                     Data = fileMessageResponseDto
                 });
             }
-            else 
+            else
             {
                 await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFileMessage, new HubMessageResponseDto<FileMessageResponseDto>()
                 {
@@ -269,7 +255,7 @@ namespace ThreeL.Blob.Chat.Application.Services
             }
         }
 
-        private async Task<bool> IsFriendAsync(long user,long friend) 
+        private async Task<bool> IsFriendAsync(long user, long friend)
         {
             var min = Math.Min(user, friend);
             var max = Math.Max(user, friend);

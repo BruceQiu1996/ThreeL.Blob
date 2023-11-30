@@ -25,7 +25,7 @@ namespace ThreeL.Blob.Clients.Win.Request
 
         public Task Initialize()
         {
-            var channel = GrpcChannel.ForAddress($"http://{_remoteOptions.Host}:{_remoteOptions.GrpcPort}", new GrpcChannelOptions()
+            var channel = GrpcChannel.ForAddress($"http://{_remoteOptions.APIHost}:{_remoteOptions.APIGrpcPort}", new GrpcChannelOptions()
             {
                 HttpHandler = new HttpClientHandler()
                 {

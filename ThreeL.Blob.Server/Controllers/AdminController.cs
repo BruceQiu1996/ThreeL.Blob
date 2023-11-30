@@ -6,7 +6,6 @@ using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Dtos.Management;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Application.Contract.Validators.User;
-using ThreeL.Blob.Domain.Aggregate.User;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
 using ThreeL.Blob.Shared.Application.Contract.Interceptors.Attributes;
 using ThreeL.Blob.Shared.Domain.Metadata.User;

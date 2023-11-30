@@ -24,5 +24,15 @@
                 return $"{size * 1.0 / (1024 * 1024 * 1024):0.00}GB";
             }
         }
+
+        public static DateTime ToDateTime(this long time)
+        {
+            return new DateTime(1970, 1, 1).AddMilliseconds(time);
+        }
+
+        public static long ToLong(this DateTime time)
+        {
+            return (long)(time - new DateTime(1970, 1, 1)).TotalMilliseconds;
+        }
     }
 }

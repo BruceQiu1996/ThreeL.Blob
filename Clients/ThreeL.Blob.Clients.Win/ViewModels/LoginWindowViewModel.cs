@@ -26,20 +26,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         public AsyncRelayCommand<PasswordBox> LoginCommandAsync { get; set; }
         public AsyncRelayCommand<PasswordBox> LoadedCommandAsync { get; set; }
 
-        private readonly HttpRequest _httpRequest;
+        private readonly ApiHttpRequest _httpRequest;
+        private readonly ChatHttpRequest _chatHttpRequest;
         private readonly GrpcService _grpcService;
         private readonly GrowlHelper _growlHelper;
         private readonly IMapper _mapper;
         private readonly IniSettings _iniSettings;
         private readonly EncryptHelper _encryptHelper;
-        public LoginWindowViewModel(HttpRequest httpRequest, GrowlHelper growlHelper, IMapper mapper, GrpcService grpcService, IniSettings iniSettings, EncryptHelper encryptHelper)
+        public LoginWindowViewModel(ApiHttpRequest httpRequest, ChatHttpRequest chatHttpRequest, GrowlHelper growlHelper, IMapper mapper, GrpcService grpcService, IniSettings iniSettings, EncryptHelper encryptHelper)
         {
             _httpRequest = httpRequest;
+            _chatHttpRequest = chatHttpRequest;
             _growlHelper = growlHelper;
             _mapper = mapper;
             httpRequest.ExcuteWhileBadRequest += _growlHelper.Warning;
             httpRequest.ExcuteWhileInternalServerError += _growlHelper.Warning;
             httpRequest.TryRefreshToken = RefreshTokenAsync;
+            chatHttpRequest.TryRefreshToken = RefreshTokenAsync;
             LoginCommandAsync = new AsyncRelayCommand<PasswordBox>(LoginAsync);
             LoadedCommandAsync = new AsyncRelayCommand<PasswordBox>(LoadedAsync);
             _grpcService = grpcService;
@@ -65,6 +68,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
                     SystemTextJsonSerializer.GetDefaultOptions());
                 _httpRequest.SetToken(data.AccessToken);
                 _grpcService.SetToken(data.AccessToken);
+                _chatHttpRequest.SetToken(data.AccessToken);
                 App.UserProfile = _mapper.Map<UserProfile>(data);
                 App.ServiceProvider.GetRequiredService<LoginWindow>().Hide();
                 App.ServiceProvider.GetRequiredService<MainWindow>().Show();
@@ -111,6 +115,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
 
             _httpRequest.SetToken(token.AccessToken);
             _grpcService.SetToken(token.AccessToken);
+            _chatHttpRequest.SetToken(token.AccessToken);
             App.UserProfile.RefreshToken = token.RefreshToken;
             App.UserProfile.AccessToken = token.AccessToken;
 

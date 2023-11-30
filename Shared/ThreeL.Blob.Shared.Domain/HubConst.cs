@@ -11,15 +11,11 @@
         public const string ReceiveAddFriendApply = "S-C_ReceiveAddFriendApply";
         public const string AddFriendApplyResult = "S-C_AddFriendApplyResult";
 
-        public const string ReceiveChatRecords = "S-C_FetchChatRecords";
-
         public const string SendTextMessage = "C-S_SendTextMessage";
         public const string SendFileMessage = "C-S_SendFileMessage";
         public const string SendFolderMessage = "C-S_SendFolderMessage";
         public const string SendWithdrawMessage = "C-S_SendWithdrawMessage";
         public const string SendAddFriendApply = "C-S_SendAddFriendApply";
         public const string HandleAddFriendApply = "C-S_HandleAddFriendApply";
-
-        public const string FetchChatRecords = "C-S_FetchChatRecords";
     }
 }

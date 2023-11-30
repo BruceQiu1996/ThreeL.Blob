@@ -71,17 +71,5 @@ namespace ThreeL.Blob.Chat.Server.Controllers
         {
             await _chatService.HandleAddFriendApplyAsync(handleAddFriendApplyDto, Clients, Context);
         }
-
-        /// <summary>
-        /// 拉取某人的聊天记录
-        /// </summary>
-        /// <param name="target"></param>
-        /// <returns></returns>
-        [HubMethodName(HubConst.FetchChatRecords)]
-        [Authorize]
-        public async Task QueryChatRecords(QueryChatRecordsDto queryChatRecordsDto)
-        {
-            await _chatService.QueryChatRecordsAsync(queryChatRecordsDto, Clients, Context);
-        }
     }
 }

@@ -21,6 +21,7 @@ using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Apply;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Message;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain;
 
@@ -79,15 +80,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             get => _relation;
             set => SetProperty(ref _relation, value);
         }
-        private readonly HttpRequest _httpRequest;
+        private readonly ApiHttpRequest _httpRequest;
+        private readonly ChatHttpRequest _chatHttpRequest;
         private readonly RemoteOptions _remoteOptions;
         private readonly GrowlHelper _growlHelper;
         private readonly IMapper _mapper;
-        public ChatViewModel(HttpRequest httpRequest, IOptions<RemoteOptions> remoteOptions, GrowlHelper growlHelper, IMapper mapper)
+        public ChatViewModel(ApiHttpRequest httpRequest, ChatHttpRequest chatHttpRequest, IOptions<RemoteOptions> remoteOptions, GrowlHelper growlHelper, IMapper mapper)
         {
             _mapper = mapper;
             _httpRequest = httpRequest;
             _remoteOptions = remoteOptions.Value;
+            _chatHttpRequest = chatHttpRequest;
             _growlHelper = growlHelper;
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             SearchUsersCommandAsync = new AsyncRelayCommand(SearchUsersAsync);
@@ -126,7 +129,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         {
             if (!_loaded)
             {
-                App.HubConnection = new HubConnectionBuilder().WithUrl($"http://{_remoteOptions.Host}:{_remoteOptions.ChatPort}/Chat", option =>
+                App.HubConnection = new HubConnectionBuilder().WithUrl($"http://{_remoteOptions.ChatHost}:{_remoteOptions.ChatPort}/Chat", option =>
                 {
                     option.CloseTimeout = TimeSpan.FromSeconds(60);
                     option.AccessTokenProvider = () => Task.FromResult(_httpRequest._token)!;
@@ -265,16 +268,26 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             if (Relation == null)
                 return;
 
-            if (!Relation.Loaded) 
+            if (!Relation.Loaded)
             {
                 try
                 {
-                    await App.HubConnection.SendAsync(HubConst.FetchChatRecords, new QueryChatRecordsDto() 
+                    var time = Relation.LoadTime == null ? DateTime.Now : Relation.LoadTime.Value;
+                    var resp = await _chatHttpRequest.GetAsync(string.Format(Const.CHAT_RECORDS, Relation.Id,
+                        time.ToLong()));
+                    if (resp != null)
                     {
-                        Target = Relation.Id
-                    });
+                        var result = JsonSerializer
+                            .Deserialize<QueryChatRecordResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+
+                        if (result.Records.Count() > 0)
+                        {
+                            Relation.LoadTime = result.Records.Min(x => x.RemoteSendTime);
+                        }
+                        Relation.Loaded = true;
+                    }
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
                     _growlHelper.WarningGlobal(ex.Message);
                 }

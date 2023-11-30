@@ -74,16 +74,14 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private readonly MainPage _mainPage;
         private readonly TransferPage _transferPage;
         private readonly SettingsPage _settingsPage;
-        private readonly HttpRequest _httpRequest;
-        private readonly RemoteOptions _remoteOptions;
+        private readonly ApiHttpRequest _httpRequest;
         private readonly GrowlHelper _growlHelper;
         private readonly FileHelper _fileHelper;
         private readonly Chat _chat;
         public MainWindowViewModel(MainPage mainPage, 
                                    TransferPage transferPage, 
-                                   SettingsPage settingsPage, 
-                                   HttpRequest httpRequest,
-                                   IOptions<RemoteOptions> remoteOptions,
+                                   SettingsPage settingsPage,
+                                   ApiHttpRequest httpRequest,
                                    GrowlHelper growlHelper,
                                    FileHelper fileHelper,
                                    Chat chat)
@@ -95,7 +93,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             _httpRequest = httpRequest;
             _growlHelper = growlHelper;
             _fileHelper = fileHelper;
-            _remoteOptions = remoteOptions.Value;
             _chat = chat;
             ShiftSettingsPageCommand = new RelayCommand(OpenSettingsPage);
             ShiftMainPageCommand = new RelayCommand(OpenMainPage);

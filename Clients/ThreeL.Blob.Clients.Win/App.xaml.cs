@@ -69,7 +69,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<TransferComplete>();
                 service.AddSingleton<TransferCompletePageViewModel>();
 
-                service.AddSingleton<HttpRequest>();
+                service.AddSingleton<ApiHttpRequest>();
+                service.AddSingleton<ChatHttpRequest>();
                 service.AddSingleton<GrpcService>();
                 service.AddSingleton<GrowlHelper>();
                 service.AddSingleton<FileHelper>();

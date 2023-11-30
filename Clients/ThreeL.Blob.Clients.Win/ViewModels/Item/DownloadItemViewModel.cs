@@ -88,12 +88,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public AsyncRelayCommand CancelCommandAsync { get; set; }
 
         private readonly GrpcService _grpcService;
-        private readonly HttpRequest _httpRequest;
+        private readonly ApiHttpRequest _httpRequest;
         private readonly DatabaseHelper _databaseHelper;
         private readonly IMapper _mapper;
         private readonly IniSettings _iniSettings;
-        public DownloadItemViewModel(GrpcService grpcService, 
-                                     HttpRequest httpRequest,
+        public DownloadItemViewModel(GrpcService grpcService,
+                                     ApiHttpRequest httpRequest,
                                      IMapper mapper,
                                      DatabaseHelper databaseHelper,
                                      IniSettings iniSettings)

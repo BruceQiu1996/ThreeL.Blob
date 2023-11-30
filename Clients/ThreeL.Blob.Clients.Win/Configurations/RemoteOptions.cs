@@ -2,10 +2,11 @@
 {
     public class  RemoteOptions
     {
-        public string Host { get; set; }
-        public int APIPort { get; set; }
-        public int GrpcPort { get; set; }
-        public int ChatPort { get; set; }
+        public string APIHost { get; set; }
+        public ushort APIPort { get; set; }
+        public ushort APIGrpcPort { get; set; }
+        public string ChatHost { get; set; }
+        public ushort ChatPort { get; set; }
         public int MaxRetryAttempts { get; set; }
     }
 }

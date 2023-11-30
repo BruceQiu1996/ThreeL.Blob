@@ -169,7 +169,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             var _ = Task.Run(async () =>
             {
-                var resp = await App.ServiceProvider!.GetRequiredService<HttpRequest>()
+                var resp = await App.ServiceProvider!.GetRequiredService<ApiHttpRequest>()
                     .GetAsync(string.Format(Const.GET_THUMBNAIL_IMAGE, App.UserProfile.Id, thumbnailImage));
 
                 if (resp != null && resp.IsSuccessStatusCode)
@@ -240,7 +240,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             if (IsFolder && Id == 0)
             {
-                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>().PostAsync(Const.CREATE_FOLDER, new FolderCreationDto()
+                var resp = await App.ServiceProvider.GetRequiredService<ApiHttpRequest>().PostAsync(Const.CREATE_FOLDER, new FolderCreationDto()
                 {
                     FolderName = Name,
                     ParentId = ParentFolder
@@ -259,7 +259,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             else 
             {
                 string name = Name;
-                var resp = await App.ServiceProvider.GetRequiredService<HttpRequest>().PostAsync(Const.UPDATE_NAME, new UpdateFileObjectNameDto()
+                var resp = await App.ServiceProvider.GetRequiredService<ApiHttpRequest>().PostAsync(Const.UPDATE_NAME, new UpdateFileObjectNameDto()
                 {
                     Name = name,
                     FileId = Id

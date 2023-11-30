@@ -28,6 +28,9 @@
         public const string QUERYAPPLYS = "relations/applys";
         public const string HANDLEAPPLY = "relations/handleFriendApply/{0}/{1}";
 
+        //chat api
+        public const string CHAT_RECORDS = "chat/{0}/{1}";
+
         //message key
         public const string AddUploadRecord = nameof(AddUploadRecord);
         public const string AddDownloadRecord = nameof(AddDownloadRecord);

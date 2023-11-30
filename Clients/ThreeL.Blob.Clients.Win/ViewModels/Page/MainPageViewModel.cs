@@ -56,7 +56,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public RelayCommand<MouseButtonEventArgs> FileObjectsChooseDragCommand { get; set; }
 
         private readonly GrpcService _grpcService;
-        private readonly HttpRequest _httpRequest;
+        private readonly ApiHttpRequest _httpRequest;
         private readonly DatabaseHelper _databaseHelper;
         private readonly GrowlHelper _growlHelper;
         private readonly FileHelper _fileHelper;
@@ -123,7 +123,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             set => SetProperty(ref _isListView, value);
         }
 
-        public MainPageViewModel(GrpcService grpcService, HttpRequest httpRequest,
+        public MainPageViewModel(GrpcService grpcService, ApiHttpRequest httpRequest,
                                  DatabaseHelper databaseHelper,
                                  GrowlHelper growlHelper, IMapper mapper, FileHelper fileHelper, IniSettings iniSettings)
         {

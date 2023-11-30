@@ -1,27 +1,28 @@
-﻿using Microsoft.Extensions.Options;
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
-using ThreeL.Blob.Clients.Win.Configurations;
 using ThreeL.Blob.Clients.Win.Dtos;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Infra.Core.Serializers;
 
 namespace ThreeL.Blob.Clients.Win.Request
 {
-    public class HttpRequest
+    public abstract class HttpRequest
     {
         internal string _token;
         private readonly HttpClient _httpClient;
-        private readonly RemoteOptions _remoteOptions;
         private readonly JsonSerializerOptions _jsonOptions = SystemTextJsonSerializer.GetDefaultOptions();
 
-        public HttpRequest(IOptions<RemoteOptions> remoteOptions)
+        private readonly string _host;
+        private readonly ushort _port;
+
+        public HttpRequest(string host, ushort port)
         {
-            _remoteOptions = remoteOptions.Value;
+            _host = host;
+            _port = port;
             _httpClient = new HttpClient();
             BuildHttpClient(_httpClient);
         }
@@ -79,7 +80,7 @@ namespace ThreeL.Blob.Clients.Win.Request
             return default;
         }
 
-        public async Task<HttpResponseMessage> PostAvatarAsync(string filename,byte[] bytes, bool excuted = false)
+        public async Task<HttpResponseMessage> PostAvatarAsync(string filename, byte[] bytes, bool excuted = false)
         {
             using (var client = new HttpClient())
             {
@@ -226,12 +227,9 @@ namespace ThreeL.Blob.Clients.Win.Request
         public event Action<string> ExcuteWhileBadRequest;//400
         public event Action<string> ExcuteWhileInternalServerError;//500
 
-        private void BuildHttpClient(HttpClient httpClient, bool api = true)
+        public void BuildHttpClient(HttpClient httpClient)
         {
-            if (api)
-            {
-                httpClient.BaseAddress = new Uri($"http://{_remoteOptions.Host}:{_remoteOptions.APIPort}/api/");
-            }
+            httpClient.BaseAddress = new Uri($"http://{_host}:{_port}/api/");
             httpClient.Timeout = TimeSpan.FromSeconds(600); //Test
             httpClient.DefaultRequestVersion = HttpVersion.Version10;
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));

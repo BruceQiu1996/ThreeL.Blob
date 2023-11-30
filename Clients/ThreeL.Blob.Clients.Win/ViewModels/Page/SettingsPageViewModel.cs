@@ -96,8 +96,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private readonly IniSettings _iniSettings;
         private readonly GrowlHelper _growlHelper;
-        private readonly HttpRequest _httpRequest;
-        public SettingsPageViewModel(IniSettings iniSettings, GrowlHelper growlHelper, HttpRequest httpRequest)
+        private readonly ApiHttpRequest _httpRequest;
+        public SettingsPageViewModel(IniSettings iniSettings, GrowlHelper growlHelper, ApiHttpRequest httpRequest)
         {
             _iniSettings = iniSettings;
             _growlHelper = growlHelper;

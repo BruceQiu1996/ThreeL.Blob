@@ -30,9 +30,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         }
 
         private TreeViewFolderViewModel _current;
-        private readonly HttpRequest _httpRequest;
+        private readonly ApiHttpRequest _httpRequest;
         private readonly GrowlHelper _growlHelper;
-        public MoveViewModel(HttpRequest httpRequest, GrowlHelper growlHelper)
+        public MoveViewModel(ApiHttpRequest httpRequest, GrowlHelper growlHelper)
         {
             _httpRequest = httpRequest;
             _growlHelper = growlHelper;

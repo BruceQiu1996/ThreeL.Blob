@@ -64,7 +64,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         {
             var _ = Task.Run(async () =>
             {
-                var avatarResp = await App.ServiceProvider!.GetRequiredService<HttpRequest>().GetAsync(string.Format(Const.GET_AVATAR_IMAGE, avatar.Replace("\\", "/")));
+                var avatarResp = await App.ServiceProvider!.GetRequiredService<ApiHttpRequest>().GetAsync(string.Format(Const.GET_AVATAR_IMAGE, avatar.Replace("\\", "/")));
                 if (avatarResp != null)
                 {
                     Icon = App.ServiceProvider!.GetRequiredService<FileHelper>().BytesToImage(await avatarResp.Content.ReadAsByteArrayAsync());
