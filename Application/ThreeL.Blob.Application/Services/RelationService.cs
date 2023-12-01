@@ -6,7 +6,7 @@ using System.Security.Claims;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Protos;
 using ThreeL.Blob.Application.Contract.Services;
-using ThreeL.Blob.Domain.Aggregate.FileObject;
+using ThreeL.Blob.Domain.Aggregate.(string, FileObject[]);
 using ThreeL.Blob.Domain.Aggregate.User;
 using ThreeL.Blob.Infra.Core.Utils;
 using ThreeL.Blob.Infra.Redis;
@@ -22,16 +22,16 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<FriendApply, long> _friendApplyEfBasicRepository;
         private readonly IEfBasicRepository<FriendRelation, long> _friendRelationEfBasicRepository;
         private readonly IEfBasicRepository<User, long> _userEfBasicRepository;
-        private readonly IEfBasicRepository<FileObject, long> _fileObjectEfBasicRepository;
-        private readonly IEfBasicRepository<FileObjectShareRecord, long> _fileObjectShareRecordEfBasicRepository;
+        private readonly IEfBasicRepository<(string, FileObject[]), long> _(string, FileObject[])EfBasicRepository;
+        private readonly IEfBasicRepository<(string, FileObject[])ShareRecord, long> _(string, FileObject[])ShareRecordEfBasicRepository;
         private readonly IConfiguration _configuration;
         private readonly IRedisProvider _redisProvider;
 
         public RelationService(IEfBasicRepository<FriendRelation, long> friendRelationEfBasicRepository,
                                IEfBasicRepository<FriendApply, long> friendApplyEfBasicRepository,
                                IEfBasicRepository<User, long> userEfBasicRepository,
-                               IEfBasicRepository<FileObject, long> fileObjectEfBasicRepository,
-                               IEfBasicRepository<FileObjectShareRecord, long> fileObjectShareRecordEfBasicRepository,
+                               IEfBasicRepository<(string, FileObject[]), long> (string, FileObject[])EfBasicRepository,
+                               IEfBasicRepository<(string, FileObject[])ShareRecord, long> (string, FileObject[])ShareRecordEfBasicRepository,
                                IMapper mapper,
                                IConfiguration configuration,
                                IRedisProvider redisProvider)
@@ -41,8 +41,8 @@ namespace ThreeL.Blob.Application.Services
             _configuration = configuration;
             _friendRelationEfBasicRepository = friendRelationEfBasicRepository;
             _friendApplyEfBasicRepository = friendApplyEfBasicRepository;
-            _fileObjectEfBasicRepository = fileObjectEfBasicRepository;
-            _fileObjectShareRecordEfBasicRepository = fileObjectShareRecordEfBasicRepository;
+            _(string, FileObject[])EfBasicRepository = (string, FileObject[])EfBasicRepository;
+            _(string, FileObject[])ShareRecordEfBasicRepository = (string, FileObject[])ShareRecordEfBasicRepository;
             _userEfBasicRepository = userEfBasicRepository;
         }
 
@@ -293,8 +293,8 @@ namespace ThreeL.Blob.Application.Services
         public async Task<SendFileResponse> SendFileAsync(SendFileRequest request, ServerCallContext serverCallContext)
         {
             var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
-            var file = await _fileObjectEfBasicRepository.GetAsync(request.FileId);
-            if (file == null || file.CreateBy != userId || file.Status != Shared.Domain.Metadata.FileObject.FileStatus.Normal)
+            var file = await _(string, FileObject[])EfBasicRepository.GetAsync(request.FileId);
+            if (file == null || file.CreateBy != userId || file.Status != Shared.Domain.Metadata.(string, FileObject[]).FileStatus.Normal)
             {
                 return new SendFileResponse()
                 {
@@ -304,10 +304,10 @@ namespace ThreeL.Blob.Application.Services
             }
 
             var token = TokenGenerator.GenerateToken(32);
-            var record = new FileObjectShareRecord(token, file.Id, userId, request.Target);
+            var record = new (string, FileObject[])ShareRecord(token, file.Id, userId, request.Target);
             record.CreateTime = DateTime.Now;
             record.ExpireTime = DateTime.Now.AddDays(3);//TODO配置
-            await _fileObjectShareRecordEfBasicRepository.InsertAsync(record);
+            await _(string, FileObject[])ShareRecordEfBasicRepository.InsertAsync(record);
 
             return new SendFileResponse()
             {
@@ -321,8 +321,8 @@ namespace ThreeL.Blob.Application.Services
         public async Task<SendFolderResponse> SendFolderAsync(SendFolderRequest request, ServerCallContext serverCallContext)
         {
             var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
-            var file = await _fileObjectEfBasicRepository.GetAsync(request.FileId);
-            if (file == null || file.CreateBy != userId || file.Status != Shared.Domain.Metadata.FileObject.FileStatus.Normal)
+            var file = await _(string, FileObject[])EfBasicRepository.GetAsync(request.FileId);
+            if (file == null || file.CreateBy != userId || file.Status != Shared.Domain.Metadata.(string, FileObject[]).FileStatus.Normal)
             {
                 return new SendFolderResponse()
                 {
@@ -332,10 +332,10 @@ namespace ThreeL.Blob.Application.Services
             }
 
             var token = TokenGenerator.GenerateToken(32);
-            var record = new FileObjectShareRecord(token, file.Id, userId, request.Target);
+            var record = new (string, FileObject[])ShareRecord(token, file.Id, userId, request.Target);
             record.CreateTime = DateTime.Now;
             record.ExpireTime = DateTime.Now.AddDays(3);//TODO配置
-            await _fileObjectShareRecordEfBasicRepository.InsertAsync(record);
+            await _(string, FileObject[])ShareRecordEfBasicRepository.InsertAsync(record);
 
             return new SendFolderResponse()
             {

@@ -269,5 +269,23 @@ namespace ThreeL.Blob.Server.Controllers
                 return Problem();
             }
         }
+
+        [HttpPost("zip")]
+        [Authorize]
+        public async Task<ActionResult> CompressFileObjectsAsync(CompressFileObjectsDto compressFileObjectsDto)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.DeleteItemsAsync(deleteFileObjects.FileIds, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
     }
 }
