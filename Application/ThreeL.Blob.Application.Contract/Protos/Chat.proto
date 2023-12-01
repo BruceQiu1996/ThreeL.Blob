@@ -35,8 +35,21 @@ message SendFileResponse{
 	int64 Size = 5;
 }
 
+message SendFolderRequest{
+	int64 fileId = 1;
+	int64 target = 2;
+}
+
+message SendFolderResponse{
+	bool success = 1;
+	string message = 2;
+    string token = 3;
+	string fileName = 4;
+}
+
 service RpcContextAPIService{
 	rpc AddFriendApply(AddFriendApplyRequest) returns (CommonResponse);
 	rpc HandleAddFriendApply(HandleAddFriendApplyRequest) returns (HandleAddFriendApplyResponse);
 	rpc SendFile(SendFileRequest) returns (SendFileResponse);
+	rpc SendFolder(SendFolderRequest) returns (SendFolderResponse);
 }

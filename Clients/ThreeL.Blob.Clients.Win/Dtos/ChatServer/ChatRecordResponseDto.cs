@@ -1,4 +1,5 @@
 ﻿using System;
+using ThreeL.Blob.Clients.Win.ViewModels.Message;
 using ThreeL.Blob.Shared.Domain.Metadata.Message;
 
 namespace ThreeL.Blob.Clients.Win.Dtos.ChatServer
@@ -15,5 +16,22 @@ namespace ThreeL.Blob.Clients.Win.Dtos.ChatServer
         public DateTime RemoteSendTime { get; set; }
         public MessageType MessageType { get; set; }
         public bool Withdraw { get; set; }
+
+        public MessageViewModel ToViewModel() 
+        {
+            MessageViewModel result = null;
+            if (MessageType == MessageType.Text)
+            {
+                result = new TextMessageViewModel();
+                result.FromChatRecord(this);
+            }
+            else if (MessageType == MessageType.File) 
+            {
+                result = new FileMessageViewModel();
+                result.FromChatRecord(this);
+            }
+
+            return result;
+        }
     }
 }

@@ -129,14 +129,15 @@ namespace ThreeL.Blob.Chat.Application.Services
         public async Task SendFileMessageAsync(long sender, FileMessageDto fileMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
         {
             fileMessageDto.From = sender;
+            var fileMessageResponseDto = _mapper.Map<FileMessageResponseDto>(fileMessageDto);
             var token = hubCallerContext.GetHttpContext().Request.Headers["Authorization"];
             if (!await IsFriendAsync(fileMessageDto.From, fileMessageDto.To))
             {
-                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveTextMessage, new HubMessageResponseDto<FileMessageDto>()
+                await clients.User(fileMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFileMessage, new HubMessageResponseDto<FileMessageResponseDto>()
                 {
                     Success = false,
                     Message = "好友关系异常",
-                    Data = fileMessageDto
+                    Data = fileMessageResponseDto
                 });
 
                 return;
@@ -148,7 +149,6 @@ namespace ThreeL.Blob.Chat.Application.Services
                 Target = fileMessageDto.To,
             }, new Metadata() { { "Authorization", $"{token}" } });
 
-            var fileMessageResponseDto = _mapper.Map<FileMessageResponseDto>(fileMessageDto);
             fileMessageResponseDto.Token = resp.Token;
             fileMessageResponseDto.FileName = resp.FileName;
             fileMessageResponseDto.Size = resp.Size;
@@ -176,6 +176,59 @@ namespace ThreeL.Blob.Chat.Application.Services
                     Success = false,
                     Message = resp.Message,
                     Data = fileMessageResponseDto
+                });
+            }
+        }
+
+        public async Task SendFolderMessageAsync(long sender, FolderMessageDto folderMessageDto, IHubCallerClients clients, HubCallerContext hubCallerContext)
+        {
+            folderMessageDto.From = sender;
+            var folderMessageResponseDto = _mapper.Map<FolderMessageResponseDto>(folderMessageDto);
+            var token = hubCallerContext.GetHttpContext().Request.Headers["Authorization"];
+            if (!await IsFriendAsync(folderMessageDto.From, folderMessageDto.To))
+            {
+                await clients.User(folderMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFolderMessage, new HubMessageResponseDto<FolderMessageResponseDto>()
+                {
+                    Success = false,
+                    Message = "好友关系异常",
+                    Data = folderMessageResponseDto
+                });
+
+                return;
+            };
+
+            var resp = await _rpcContextAPIServiceClient.SendFolderAsync(new SendFolderRequest()
+            {
+                FileId = folderMessageDto.FileObjectId,
+                Target = folderMessageDto.To,
+            }, new Metadata() { { "Authorization", $"{token}" } });
+
+            folderMessageResponseDto.Token = resp.Token;
+            folderMessageResponseDto.FileName = resp.FileName;
+            if (resp.Success)
+            {
+                folderMessageResponseDto.RemoteSendTime = DateTime.Now;
+                //记录到数据库
+                await _chatRecordRepository.AddAsync(_mapper.Map<ChatRecord>(folderMessageResponseDto));
+                await clients.User(folderMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFolderMessage, new HubMessageResponseDto<FolderMessageResponseDto>()
+                {
+                    Success = true,
+                    Data = folderMessageResponseDto
+                });
+
+                await clients.User(folderMessageDto.To.ToString()).SendAsync(HubConst.ReceiveFolderMessage, new HubMessageResponseDto<FolderMessageResponseDto>()
+                {
+                    Success = true,
+                    Data = folderMessageResponseDto
+                });
+            }
+            else
+            {
+                await clients.User(folderMessageDto.From.ToString()).SendAsync(HubConst.ReceiveFolderMessage, new HubMessageResponseDto<FolderMessageResponseDto>()
+                {
+                    Success = false,
+                    Message = resp.Message,
+                    Data = folderMessageResponseDto
                 });
             }
         }
@@ -228,6 +281,18 @@ namespace ThreeL.Blob.Chat.Application.Services
                 {
                     Success = false,
                     Message = "撤回消息失败",
+                    Data = resp
+                });
+
+                return;
+            }
+
+            if (message.RemoteSendTime.AddMinutes(2) < DateTime.Now)
+            {
+                await clients.User(sender.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()
+                {
+                    Success = false,
+                    Message = "消息超过两分钟，无法撤回",
                     Data = resp
                 });
 

@@ -298,5 +298,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                 To = to,
             };
         }
+
+        public FolderMessageViewModel ToFolderMessageVM(long from, long to)
+        {
+            return new FolderMessageViewModel()
+            {
+                FileId = Id,
+                FileName = Name,
+                Sending = true,
+                From = from,
+                To = to,
+            };
+        }
     }
 }

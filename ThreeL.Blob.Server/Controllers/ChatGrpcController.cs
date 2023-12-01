@@ -72,5 +72,24 @@ namespace ThreeL.Blob.Server.Controllers
                 };
             }
         }
+
+        [Authorize]
+        public async override Task<SendFolderResponse> SendFolder(SendFolderRequest request, ServerCallContext context)
+        {
+            try
+            {
+                return await _relationService.SendFolderAsync(request, context);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+
+                return new SendFolderResponse()
+                {
+                    Success = false,
+                    Message = "服务器错误"
+                };
+            }
+        }
     }
 }

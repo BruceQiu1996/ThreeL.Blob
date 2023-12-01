@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading.Tasks;
+using ThreeL.Blob.Clients.Win.Dtos.ChatServer;
 using ThreeL.Blob.Clients.Win.Dtos.Message;
 using ThreeL.Blob.Shared.Domain;
 using ThreeL.Blob.Shared.Domain.Metadata.Message;
@@ -67,6 +68,15 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Message
             RemoteSendTime = messageDto.RemoteSendTime;
             From = messageDto.From;
             To = messageDto.To;
+        }
+
+        public virtual void FromChatRecord(ChatRecordResponseDto chatRecordResponse) 
+        {
+            MessageId = chatRecordResponse.MessageId;
+            RemoteSendTime = chatRecordResponse.RemoteSendTime;
+            From = chatRecordResponse.From;
+            To = chatRecordResponse.To;
+            withdraw = chatRecordResponse.Withdraw;
         }
 
         public async Task WithdrawAsync()

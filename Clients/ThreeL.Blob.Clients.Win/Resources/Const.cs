@@ -51,6 +51,7 @@
         public const string AvatarUploaded = nameof(AvatarUploaded);
         public const string AddFriendApplySuccess = nameof(AddFriendApplySuccess);
         public const string SendFileObjectToChat = nameof(SendFileObjectToChat);
+        public const string FetchHistoryChatRecords = nameof(FetchHistoryChatRecords);
         public static object UploadRunTaskLock = new object();
         public static object DownloadRunTaskLock = new object();
 

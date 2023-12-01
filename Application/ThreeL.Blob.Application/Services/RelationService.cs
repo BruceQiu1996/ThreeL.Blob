@@ -317,5 +317,32 @@ namespace ThreeL.Blob.Application.Services
                 Size = file.Size.Value,
             };
         }
+
+        public async Task<SendFolderResponse> SendFolderAsync(SendFolderRequest request, ServerCallContext serverCallContext)
+        {
+            var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
+            var file = await _fileObjectEfBasicRepository.GetAsync(request.FileId);
+            if (file == null || file.CreateBy != userId || file.Status != Shared.Domain.Metadata.FileObject.FileStatus.Normal)
+            {
+                return new SendFolderResponse()
+                {
+                    Success = false,
+                    Message = "文件夹不存在或文件状态异常"
+                };
+            }
+
+            var token = TokenGenerator.GenerateToken(32);
+            var record = new FileObjectShareRecord(token, file.Id, userId, request.Target);
+            record.CreateTime = DateTime.Now;
+            record.ExpireTime = DateTime.Now.AddDays(3);//TODO配置
+            await _fileObjectShareRecordEfBasicRepository.InsertAsync(record);
+
+            return new SendFolderResponse()
+            {
+                Success = true,
+                Token = token,
+                FileName = file.Name,
+            };
+        }
     }
 }

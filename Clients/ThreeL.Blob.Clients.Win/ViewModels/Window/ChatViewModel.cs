@@ -21,7 +21,6 @@ using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Apply;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Message;
-using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain;
 
@@ -97,7 +96,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             SendTextMessageCommandAsync = new AsyncRelayCommand(SendTextMessageAsync);
             OpenApplyCommand = new RelayCommand(OpenApplyM);
             RefreshApplysCommandAsync = new AsyncRelayCommand(RefreshApplysAsync);
-            DropItemsOnChatCommandAsync = new AsyncRelayCommand<DragEventArgs>(DropItemsOnChatAsync);
             ChangeRelationCommandAsync = new AsyncRelayCommand(ChangeRelationAsync);
             Relations = new ObservableCollection<RelationItemViewModel>();
             UnRelations = new ObservableCollection<UnRelationItemViewModel>();
@@ -111,17 +109,26 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
 
             WeakReferenceMessenger.Default.Register<ChatViewModel, FileObjItemViewModel, string>(this, Const.SendFileObjectToChat, async (x, y) =>
             {
-                if (Relations.Count <= 0 || Relation == null) 
+                if (Relations.Count <= 0 || Relation == null)
                 {
                     return;
                 }
 
                 var type = y.IsFolder ? "文件夹" : "文件";
-                var result = HandyControl.Controls.MessageBox.Ask($"确认发送{type}【{y.Name}】给好友【{Relation.UserName}】吗？","询问");
-                if (result == MessageBoxResult.OK) 
+                var result = HandyControl.Controls.MessageBox.Ask($"确认发送{type}【{y.Name}】给好友【{Relation.UserName}】吗？", "询问");
+                if (result == MessageBoxResult.OK)
                 {
-                    await SendFileMessageAsync(y);
+                    if (y.IsFolder)
+                        await SendFolderMessageAsync(y);
+                    else
+                        await SendFileMessageAsync(y);
                 }
+            });
+
+            //加载历史记录
+            WeakReferenceMessenger.Default.Register<ChatViewModel, string, string>(this, Const.FetchHistoryChatRecords, async (x, y) =>
+            {
+                await FetcRelationhHistoryChatRecordsAsync(Relation);
             });
         }
 
@@ -138,7 +145,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                 //登录成功回调
                 App.HubConnection.On(HubConst.LoginSuccess, () =>
                 {
-                    _growlHelper.Success("登录聊天系统成功");
+                    _growlHelper.SuccessGlobal("登录聊天系统成功");
                 });
 
                 //发送文本消息回调
@@ -154,7 +161,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                         relation.AddMessage(vm);
                     }
 
-                    if (!msg.Success) _growlHelper.Warning(msg.Message);
+                    if (!msg.Success) _growlHelper.WarningGlobal(msg.Message);
                 });
 
                 //发送文件消息回调
@@ -170,7 +177,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                         relation.AddMessage(vm);
                     }
 
-                    if (!msg.Success) _growlHelper.Warning(msg.Message);
+                    if (!msg.Success) _growlHelper.WarningGlobal(msg.Message);
+                });
+
+                //发送文件夹消息回调
+                App.HubConnection.On<HubMessageResponseDto<FolderMessageResponseDto>>(HubConst.ReceiveFolderMessage, msg =>
+                {
+                    var relation = Relations.FirstOrDefault(x => x.Id == msg.Data.From || x.Id == msg.Data.To);
+                    if (relation != null)
+                    {
+                        var vm = new FolderMessageViewModel();
+                        vm.FromDto(msg.Data);
+                        vm.Sending = false;
+                        vm.SendFaild = !msg.Success;
+                        relation.AddMessage(vm);
+                    }
+
+                    if (!msg.Success) _growlHelper.WarningGlobal(msg.Message);
                 });
 
                 //撤回消息回调
@@ -179,17 +202,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     var relation = Relations.FirstOrDefault(x => x.Id == msg.Data.From || x.Id == msg.Data.To);
                     if (relation != null)
                     {
-                        var message = 
-                            relation.Messages.FirstOrDefault(x => x.MessageId == msg.Data.MessageId);
-
-                        if (message != null) 
-                        {
-                            message.Withdraw = true;
-                            relation.UpdateMessage(message);
-                        }
+                        relation.Withdraw(msg.Data.MessageId);
                     }
 
-                    if (!msg.Success) _growlHelper.Warning(msg.Message);
+                    if (!msg.Success) _growlHelper.WarningGlobal(msg.Message);
                 });
 
                 //收到好友请求回调
@@ -263,7 +279,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         }
 
         //拉取聊天记录
-        private async Task ChangeRelationAsync() 
+        private async Task ChangeRelationAsync()
         {
             if (Relation == null)
                 return;
@@ -272,26 +288,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             {
                 try
                 {
-                    var time = Relation.LoadTime == null ? DateTime.Now : Relation.LoadTime.Value;
-                    var resp = await _chatHttpRequest.GetAsync(string.Format(Const.CHAT_RECORDS, Relation.Id,
-                        time.ToLong()));
-                    if (resp != null)
-                    {
-                        var result = JsonSerializer
-                            .Deserialize<QueryChatRecordResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
-
-                        if (result.Records.Count() > 0)
-                        {
-                            Relation.LoadTime = result.Records.Min(x => x.RemoteSendTime);
-                        }
-                        Relation.Loaded = true;
-                    }
+                    await FetcRelationhHistoryChatRecordsAsync(Relation);
                 }
                 catch (Exception ex)
                 {
                     _growlHelper.WarningGlobal(ex.Message);
                 }
             }
+        }
+
+        private async Task FetcRelationhHistoryChatRecordsAsync(RelationItemViewModel relation)
+        {
+            await relation.FetchHistoryChatRecordsAsync();
         }
 
         private async Task RefreshApplysAsync()
@@ -324,11 +332,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     Applys = new ObservableCollection<ApplyMessageViewModel>(applys);
                 }
             }
-        }
-
-        private async Task DropItemsOnChatAsync(DragEventArgs dragEventArgs) 
-        {
-            object data = dragEventArgs.Data.GetData(typeof(object));
         }
 
         private async Task SearchUsersAsync()
@@ -397,6 +400,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             viewModel.ToDto(dto);
 
             await App.HubConnection.SendAsync(HubConst.SendFileMessage, dto);
+        }
+
+        public async Task SendFolderMessageAsync(FileObjItemViewModel fileObjItemViewModel) 
+        {
+            var temp = Relation;
+            if (temp == null)
+                return;
+
+            var viewModel = fileObjItemViewModel.ToFolderMessageVM(App.UserProfile.Id, temp.Id);
+            temp.AddMessage(viewModel);
+            var dto = new FolderMessageDto();
+            viewModel.ToDto(dto);
+
+            await App.HubConnection.SendAsync(HubConst.SendFolderMessage, dto);
         }
 
         private void OpenApplyM()

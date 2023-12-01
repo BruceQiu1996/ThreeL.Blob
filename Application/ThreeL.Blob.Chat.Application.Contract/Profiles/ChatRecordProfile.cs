@@ -34,6 +34,7 @@ namespace ThreeL.Blob.Chat.Application.Contract.Profiles
                 y.MessageType = Shared.Domain.Metadata.Message.MessageType.File;
             });
 
+            CreateMap<FolderMessageDto, FolderMessageResponseDto>();
             CreateMap<ChatRecord, ChatRecordResponseDto>();
         }
     }

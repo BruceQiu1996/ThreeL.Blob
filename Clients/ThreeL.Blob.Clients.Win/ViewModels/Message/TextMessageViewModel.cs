@@ -1,4 +1,5 @@
-﻿using ThreeL.Blob.Clients.Win.Dtos.Message;
+﻿using ThreeL.Blob.Clients.Win.Dtos.ChatServer;
+using ThreeL.Blob.Clients.Win.Dtos.Message;
 using ThreeL.Blob.Shared.Domain.Metadata.Message;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Message
@@ -21,6 +22,12 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Message
         {
             base.FromDto(messageDto);
             Text = (messageDto as TextMessageDto)!.Text;
+        }
+
+        public override void FromChatRecord(ChatRecordResponseDto chatRecordResponse)
+        {
+            base.FromChatRecord(chatRecordResponse);
+            Text = chatRecordResponse.Message;
         }
     }
 }

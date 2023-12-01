@@ -1,4 +1,5 @@
-﻿using ThreeL.Blob.Infra.Repository.Entities.Mongo;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using ThreeL.Blob.Infra.Repository.Entities.Mongo;
 using ThreeL.Blob.Shared.Domain.Metadata.Message;
 
 namespace ThreeL.Blob.Chat.Domain.Entities
@@ -12,10 +13,13 @@ namespace ThreeL.Blob.Chat.Domain.Entities
         public string? FileToken { get; set; }
         public long? Size { get; set; }
         public long? FileObjectId { get; set; }
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime LocalSendTime { get; set; }
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime RemoteSendTime { get; set; }
         public MessageType MessageType { get; set; }
         public bool Withdraw { get; set; }
+        [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime? WithdrawTime { get; set; }
     }
 }

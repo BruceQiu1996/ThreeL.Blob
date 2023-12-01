@@ -8,6 +8,7 @@
 
         Time = 99,
         Tip = 100,
-        Withdraw = 101
+        Withdraw = 101,
+        LoadRecords = 102
     }
 }
