@@ -148,6 +148,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand MoveCommand { get; set; }
         public RelayCommand SendToChatCommand { get; set; }
 
+        public bool CanSendToChatCommand => !IsFolder; //TODO 是否支持发送文件夹？
         public FileObjItemViewModel()
         {
             RenameTextSubmitCommandAsync = new AsyncRelayCommand(RenameTextSubmitAsync);

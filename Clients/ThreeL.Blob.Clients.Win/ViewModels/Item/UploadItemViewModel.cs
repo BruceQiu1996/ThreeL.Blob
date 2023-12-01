@@ -255,10 +255,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                     transferRecord.Description = TransferProfile.GetDescriptionByUploadStatus(fileStatus);
                     transferRecord.Success = fileStatus == FileUploadingStatus.UploadingComplete;
                     transferRecord.Reason = Message;
+                    transferRecord.UserId = App.UserProfile.Id;
 
                     //context.TransferCompleteRecords.Add(transferRecord);
-                    sqls.Add(("INSERT INTO TransferCompleteRecords (Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason)" +
-                        "VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason)", transferRecord));
+                    sqls.Add(("INSERT INTO TransferCompleteRecords (Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason,UserId)" +
+                        "VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason,@UserId)", transferRecord));
 
                     WeakReferenceMessenger.Default.Send(new Tuple<UploadItemViewModel, TransferCompleteRecord>(this, transferRecord), Const.UploadFinish);
                 }

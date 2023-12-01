@@ -20,6 +20,7 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<User, long> _userBasicRepository;
         private readonly IEfBasicRepository<FileObject, long> _fileBasicRepository;
         private readonly IEfBasicRepository<DownloadFileTask, string> _downloadTaskBasicRepository;
+        private readonly IEfBasicRepository<FileObjectShareRecord, long> _fileObjectShareRecordEfBasicRepository;
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
@@ -27,6 +28,7 @@ namespace ThreeL.Blob.Application.Services
         public FileService(IEfBasicRepository<User, long> userBasicRepository,
                            IEfBasicRepository<FileObject, long> fileBasicRepository,
                            IEfBasicRepository<DownloadFileTask, string> downloadTaskBasicRepository,
+                           IEfBasicRepository<FileObjectShareRecord, long> fileObjectShareRecordEfBasicRepository,
                            IRedisProvider redisProvider,
                            IMapper mapper,
                            IConfiguration configuration,
@@ -35,6 +37,7 @@ namespace ThreeL.Blob.Application.Services
             _mapper = mapper;
             _redisProvider = redisProvider;
             _downloadTaskBasicRepository = downloadTaskBasicRepository;
+            _fileObjectShareRecordEfBasicRepository = fileObjectShareRecordEfBasicRepository;
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
             _configuration = configuration;
@@ -433,6 +436,39 @@ namespace ThreeL.Blob.Application.Services
                     innerItem.ParentFolderLocation = fileObject.Location;
                 }
             }
+        }
+
+        public async Task<ServiceResult<DownloadFileResponseDto>> DownloadSharedAsync(string token, long userId)
+        {
+            var record = await _fileObjectShareRecordEfBasicRepository.FirstOrDefaultAsync(x => x.Token == token);
+            if (record == null || record.ExpireTime < DateTime.Now || (record.Target != null && record.Target != userId && record.CreateBy != userId))
+            {
+                return new ServiceResult<DownloadFileResponseDto>(HttpStatusCode.BadRequest, "文件分享已过期或者分享码错误");
+            }
+
+            var file = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == record.FileObjectId);
+            if (file == null || file.IsFolder || !File.Exists(file.Location) || file.Status != FileStatus.Normal)
+                return new ServiceResult<DownloadFileResponseDto>(HttpStatusCode.BadRequest, "文件状态异常或文件已被分享者删除");
+
+            var task = new DownloadFileTask()
+            {
+                CreateTime = DateTime.Now,
+                FileId = file.Id,
+                CreateBy = userId,
+                Status = DownloadTaskStatus.Wait,
+            };
+
+            await _downloadTaskBasicRepository.InsertAsync(task);
+            await _redisProvider.HSetAsync($"{Const.REDIS_DOWNLOADTASK_CACHE_KEY}{userId}", task.Id, (long)0, TimeSpan.FromDays(3));
+
+            return new ServiceResult<DownloadFileResponseDto>(new DownloadFileResponseDto()
+            {
+                FileId = file.Id,
+                Code = file.Code,
+                TaskId = task.Id,
+                Size = file.Size!.Value,
+                FileName = file.Name
+            });
         }
     }
 }

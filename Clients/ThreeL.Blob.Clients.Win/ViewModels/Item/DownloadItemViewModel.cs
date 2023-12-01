@@ -2,18 +2,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using System.Windows.Media.Imaging;
 using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Helpers;
@@ -198,10 +194,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
                     transferRecord.Success = fileStatus == FileDownloadingStatus.DownloadingComplete;
                     transferRecord.Reason = Message;
                     transferRecord.FileLocation = fileLocation;
+                    transferRecord.UserId = App.UserProfile.Id;
 
                     //context.TransferCompleteRecords.Add(transferRecord);
-                    sqls.Add(("INSERT INTO TransferCompleteRecords(Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason)" +
-                        " VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason)", transferRecord));
+                    sqls.Add(("INSERT INTO TransferCompleteRecords(Id,TaskId,FileId,FileName,FileLocation,BeginTime,FinishTime,Description,IsUpload,Success,Reason,UserId)" +
+                        " VALUES(@Id,@TaskId,@FileId,@FileName,@FileLocation,@BeginTime,@FinishTime,@Description,@IsUpload,@Success,@Reason,@UserId)", transferRecord));
 
                     WeakReferenceMessenger.Default.Send(new Tuple<DownloadItemViewModel, TransferCompleteRecord>(this, transferRecord), Const.DownloadFinish);
                 }

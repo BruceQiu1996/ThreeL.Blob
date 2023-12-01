@@ -9,6 +9,7 @@
         public const string Get_FOLDERS = "file/folders";
         public const string DELETE_FILE = "file/delete";
         public const string DOWNLOAD_FILE = "file/download/{0}";
+        public const string DOWNLOAD_SHARED_FILE = "file/download-shared/{0}";
         public const string CREATE_FOLDER = "file/folder";
         public const string CREATE_MULTI_FOLDER = "file/folders";
         public const string UPLOADING_STATUS = "file/upload-status/{0}";
@@ -52,6 +53,8 @@
         public const string AddFriendApplySuccess = nameof(AddFriendApplySuccess);
         public const string SendFileObjectToChat = nameof(SendFileObjectToChat);
         public const string FetchHistoryChatRecords = nameof(FetchHistoryChatRecords);
+        public const string DownloadSharedFile = nameof(DownloadSharedFile);
+        public const string DownloadSharedFileAndOpen = nameof(DownloadSharedFileAndOpen);
         public static object UploadRunTaskLock = new object();
         public static object DownloadRunTaskLock = new object();
 

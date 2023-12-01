@@ -21,6 +21,8 @@ namespace ThreeL.Blob.Application.Contract.Services
         Task<ServiceResult> CancelDownloadingAsync(string taskId, long userId);
         [Uow]
         Task<ServiceResult<DownloadFileResponseDto>> DownloadAsync(long fileId, long userId);
+        [Uow]
+        Task<ServiceResult<DownloadFileResponseDto>> DownloadSharedAsync(string token, long userId);
         Task<ServiceResult<PreDownloadFolderResponseDto>> PreDownloadFolderAsync(long folderId);
     }
 }

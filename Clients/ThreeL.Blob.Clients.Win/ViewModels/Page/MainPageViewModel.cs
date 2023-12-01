@@ -26,6 +26,7 @@ using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
+using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -168,6 +169,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.DoubleClickItem, async (x, y) =>
             {
                 await DoubleClickAsync(y);
+            });
+
+            //下载分享文件
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, string, string>(this, Const.DownloadSharedFile, async (x, y) =>
+            {
+                await DownloadSharedFileAsync(y, _iniSettings.DownloadLocation, false);
+            });
+
+            //下载分享文件并且打开
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, string, string>(this, Const.DownloadSharedFileAndOpen, async (x, y) =>
+            {
+                await DownloadSharedFileAsync(y, _iniSettings.DownloadLocation, true);
             });
 
             #region 菜单
@@ -782,27 +795,57 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 var result = JsonSerializer.
                            Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
 
-                var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
-                File.Create(tempFileName).Close();
-                var record = new DownloadFileRecord()
-                {
-                    UserId = App.UserProfile.Id,
-                    FileId = result.FileId,
-                    TaskId = result.TaskId,
-                    TempFileLocation = tempFileName,
-                    FileName = result.FileName,
-                    TransferBytes = 0,
-                    Status = FileDownloadingStatus.Wait,
-                    Size = result.Size,
-                    Code = result.Code
-                };
-
-                _databaseHelper.Excute("INSERT INTO DownloadFileRecords (Id,TaskId,FileId,FileName,TempFileLocation,Location,Size,TransferBytes,CreateTime,DownloadFinishTime,Code,Status,UserId)" +
-                    "VALUES(@Id,@TaskId,@FileId,@FileName,@TempFileLocation,@Location,@Size,@TransferBytes,@CreateTime,@DownloadFinishTime,@Code,@Status,@UserId)", record);
-
-                //发送添加下载任务事件
-                WeakReferenceMessenger.Default.Send(new Tuple<DownloadFileRecord, bool>(record, openWhenFinished), Const.AddDownloadRecord);
+                await GenerateDownloadTaskAsync(result, location, openWhenFinished);
             }
+        }
+
+        /// <summary>
+        /// 下载分享的文件
+        /// </summary>
+        /// <param name="fileId">分享token</param>
+        /// <param name="location">下载位置</param>
+        /// <returns></returns>
+        private async Task DownloadSharedFileAsync(string token, string location, bool openWhenFinished = false)
+        {
+            var resp = await _httpRequest.PostAsync(string.Format(Const.DOWNLOAD_SHARED_FILE, token), null);
+            if (resp != null)
+            {
+                var result = JsonSerializer.
+                           Deserialize<DownloadFileResponseDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+
+                await GenerateDownloadTaskAsync(result, location, openWhenFinished);
+            }
+        }
+
+        /// <summary>
+        /// 根据请求远端生成的task创建本地的下载任务
+        /// </summary>
+        /// <param name="result">请求数据</param>
+        /// <param name="location">文件下载位置</param>
+        /// <param name="openWhenFinished">下载后是否打开</param>
+        /// <returns></returns>
+        private async Task GenerateDownloadTaskAsync(DownloadFileResponseDto result, string location, bool openWhenFinished = false)
+        {
+            var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
+            File.Create(tempFileName).Close();
+            var record = new DownloadFileRecord()
+            {
+                UserId = App.UserProfile.Id,
+                FileId = result.FileId,
+                TaskId = result.TaskId,
+                TempFileLocation = tempFileName,
+                FileName = result.FileName,
+                TransferBytes = 0,
+                Status = FileDownloadingStatus.Wait,
+                Size = result.Size,
+                Code = result.Code
+            };
+
+            _databaseHelper.Excute("INSERT INTO DownloadFileRecords (Id,TaskId,FileId,FileName,TempFileLocation,Location,Size,TransferBytes,CreateTime,DownloadFinishTime,Code,Status,UserId)" +
+                "VALUES(@Id,@TaskId,@FileId,@FileName,@TempFileLocation,@Location,@Size,@TransferBytes,@CreateTime,@DownloadFinishTime,@Code,@Status,@UserId)", record);
+
+            //发送添加下载任务事件
+            WeakReferenceMessenger.Default.Send(new Tuple<DownloadFileRecord, bool>(record, openWhenFinished), Const.AddDownloadRecord);
         }
     }
 }

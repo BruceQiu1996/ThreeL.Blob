@@ -27,10 +27,10 @@
                       Visibility="{Binding CanWithdraw,Converter={StaticResource Boolean2VisibilityConverter}}"
                       Padding="5 5" FontSize="14"></MenuItem>
             <MenuItem Header="下载" Visibility="{Binding CanDownload,Converter={StaticResource Boolean2VisibilityConverter}}"
-                Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>
+                Command="{Binding DownloadCommand}" Padding="5 5" FontSize="14"></MenuItem>
             <MenuItem Header="下载并打开" 
                       Visibility="{Binding CanDownload,Converter={StaticResource Boolean2VisibilityConverter}}"
-                Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>
+                Command="{Binding DownloadAndOpenCommand}" Padding="5 5" FontSize="14"></MenuItem>
             <MenuItem Header="打开文件位置" 
                       Visibility="{Binding CanOpenLocalLocation,Converter={StaticResource Boolean2VisibilityConverter}}"
                       Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="14"></MenuItem>

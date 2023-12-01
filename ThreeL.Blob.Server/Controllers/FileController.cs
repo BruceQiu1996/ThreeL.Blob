@@ -72,6 +72,24 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpPost("download-shared/{token}")]
+        [Authorize]
+        public async Task<ActionResult> DownloadFileAsync(string token)
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.DownloadSharedAsync(token, userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpGet("upload-status/{fileId}")]
         [Authorize]
         public async Task<ActionResult> UploadingStatusAsync(long fileId)

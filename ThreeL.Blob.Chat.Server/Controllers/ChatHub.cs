@@ -38,13 +38,13 @@ namespace ThreeL.Blob.Chat.Server.Controllers
             await _chatService.SendFileMessageAsync(id, messageDto, Clients, Context);
         }
 
-        [HubMethodName(HubConst.SendFolderMessage)]
-        [Authorize]
-        public async Task SendFolderMessage(FolderMessageDto messageDto)
-        {
-            var id = long.Parse(Context.User.Identity.Name);
-            await _chatService.SendFolderMessageAsync(id, messageDto, Clients, Context);
-        }
+        //[HubMethodName(HubConst.SendFolderMessage)]
+        //[Authorize]
+        //public async Task SendFolderMessage(FolderMessageDto messageDto)
+        //{
+        //    var id = long.Parse(Context.User.Identity.Name);
+        //    await _chatService.SendFolderMessageAsync(id, messageDto, Clients, Context);
+        //}
 
         //TODO 文件和文件夹撤回，需要删除分享记录
         //TODO 服务器报错，统一回复客户端某条消息错误
