@@ -41,6 +41,8 @@
                       Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="全不选" 
                       Command="{Binding SelectNoCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="压缩选中文件/文件夹" 
+                      Command="{Binding CompressItemsCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
     </Page.Resources>
     <behaviors:Interaction.Triggers>

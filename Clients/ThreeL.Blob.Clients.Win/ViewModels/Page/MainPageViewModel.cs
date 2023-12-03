@@ -27,6 +27,7 @@ using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -53,6 +54,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand NewFolderCommandAsync { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
         public RelayCommand SelectNoCommand { get; set; }
+        public AsyncRelayCommand CompressItemsCommandAsync { get; set; }
 
         public RelayCommand<MouseButtonEventArgs> FileObjectsChooseDragCommand { get; set; }
 
@@ -188,6 +190,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             NewFolderCommandAsync = new AsyncRelayCommand(NewFolderAsync);
             SelectAllCommand = new RelayCommand(SelectAll);
             SelectNoCommand = new RelayCommand(SelectNo);
+            CompressItemsCommandAsync = new AsyncRelayCommand(CompressItemsAsync);
 
             //下载
             WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuDownload, async (x, y) =>
@@ -349,6 +352,28 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 item.IsSelected = false;
             }
         }
+
+        /// <summary>
+        /// 压缩文件/文件夹
+        /// </summary>
+        private async Task CompressItemsAsync()
+        {
+            var items = FileObjViewModels.Where(x => x.IsSelected).Select(x => x.Id).ToArray();
+            if (items.Count() <= 0)
+                return;
+
+            var resp = await _httpRequest.PostAsync(Const.COMPRESS, new CompressFileObjectsDto()
+            {
+                ZipName = "测试压缩",
+                Items = items
+            });
+
+            if (resp != null)
+            {
+                _growlHelper.Success("服务器压缩中,请等待...");
+            }
+        }
+
         #endregion
         //拖拽上传文件
         private async void Drop(DragEventArgs e)

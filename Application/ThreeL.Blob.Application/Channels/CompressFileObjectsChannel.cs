@@ -1,26 +1,29 @@
-﻿using ICSharpCode.SharpZipLib.Zip;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 using System.Threading.Channels;
 using ThreeL.Blob.Domain.Aggregate.FileObject;
+using ThreeL.Blob.Infra.Core.Extensions.System;
+using ThreeL.Blob.Infra.Repository.IRepositories;
+using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 
 namespace ThreeL.Blob.Application.Channels
 {
     public class CompressFileObjectsChannel
     {
-        private readonly ChannelWriter<(string, FileObject[])> _writeChannel;
-        private readonly ChannelReader<(string, FileObject[])> _readChannel;
+        private readonly ChannelWriter<(string, string, long, long, FileObject[])> _writeChannel;
+        private readonly ChannelReader<(string, string, long, long, FileObject[])> _readChannel;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly IServiceProvider _provider;
 
         public CompressFileObjectsChannel(IServiceProvider provider)
         {
             _provider = provider;
-            var channel = Channel.CreateUnbounded<(string, FileObject[])>();
+            var channel = Channel.CreateUnbounded<(string, string, long, long, FileObject[])>();
             _writeChannel = channel.Writer;
             _readChannel = channel.Reader;
-            MessageCustomer readOperateLogService = new MessageCustomer(_readChannel, _provider.GetRequiredService<ILogger<MessageCustomer>>());
+            MessageCustomer readOperateLogService = new MessageCustomer(_readChannel,
+                _provider.GetRequiredService<ILogger<MessageCustomer>>(), _provider.GetRequiredService<IEfBasicRepository<FileObject, long>>());
 
             Task.Run(async () => await readOperateLogService.StartAsync(_cancellationTokenSource.Token));
         }
@@ -31,21 +34,24 @@ namespace ThreeL.Blob.Application.Channels
             _cancellationTokenSource.Dispose();
         }
 
-        public async Task WriteMessageAsync((string, FileObject[]) task)
+        public async Task WriteMessageAsync((string, string, long, long, FileObject[]) task)
         {
             await _writeChannel.WriteAsync(task);
         }
 
         public class MessageCustomer
         {
-            private readonly ChannelReader<(string, FileObject[])> _readChannel;
+            private readonly ChannelReader<(string, string, long, long, FileObject[])> _readChannel;
             private readonly ILogger<MessageCustomer> _logger;
+            private readonly IEfBasicRepository<FileObject, long> _efBasicRepository;
 
-            public MessageCustomer(ChannelReader<(string, FileObject[])> readChannel,
-                                   ILogger<MessageCustomer> logger)
+            public MessageCustomer(ChannelReader<(string, string, long, long, FileObject[])> readChannel,
+                                   ILogger<MessageCustomer> logger,
+                                   IEfBasicRepository<FileObject, long> efBasicRepository)
             {
                 _logger = logger;
                 _readChannel = readChannel;
+                _efBasicRepository = efBasicRepository;
             }
 
             public async Task StartAsync(CancellationToken cancellationToken)
@@ -54,29 +60,43 @@ namespace ThreeL.Blob.Application.Channels
                 {
                     while (_readChannel.TryRead(out var temp))
                     {
+                        var folderLocation = Path.Combine(temp.Item2, Guid.NewGuid().ToString());
+                        if (!Directory.Exists(folderLocation))
+                            Directory.CreateDirectory(folderLocation);
                         try
                         {
-                            Directory.CreateDirectory(temp.Item1);
-                            foreach (var item in temp.Item2)
+
+                            foreach (var item in temp.Item5)
                             {
-                                if (item.IsFolder && Directory.Exists(item.Location)) 
+                                if (item.IsFolder && Directory.Exists(item.Location))
                                 {
-                                    Directory.Move(item.Location,Path.Combine(temp.Item1,Path.GetDirectoryName(item.Location)));
+                                    CopyFolder(folderLocation, new DirectoryInfo(item.Location));
                                 }
-                                else if(!item.IsFolder && File.Exists(item.Location))
+                                else if (!item.IsFolder && File.Exists(item.Location))
                                 {
-                                    File.Move(item.Location,Path.Combine(temp.Item1,Path.GetFileName(item.Location)));
+                                    File.Copy(item.Location, Path.Combine(folderLocation, item.Name));
                                 }
                             }
 
-                            using (FileStream zipFile = File.Create(zipedFile))
+                            var target = Path.Combine(temp.Item2, $"{Guid.NewGuid()}.zip");
+                            ZipFile.CreateFromDirectory(folderLocation, target);
+                            //创建新的文件数据
+                            var fileObj = new FileObject();
+                            fileObj.CreateBy = temp.Item4;
+                            fileObj.CreateTime = DateTime.Now;
+                            fileObj.UploadFinishTime = DateTime.Now;
+                            fileObj.LastUpdateTime = DateTime.Now;
+                            fileObj.Status = FileStatus.Normal;
+                            fileObj.Location = target;
+                            fileObj.ParentFolder = temp.Item3;
+                            using (var fs = new FileStream(target, FileMode.Open))
                             {
-                                using (ZipOutputStream s = new ZipOutputStream(ZipFile))
-                                {
-                                    s.SetLevel(9);
-                                    ZipSetp(temp.Item1, s, "");
-                                }
+                                fileObj.Code = fs.ToSHA256();
+                                fileObj.Size = fs.Length;
+                                fileObj.Name = fs.Name;
                             }
+
+                            await _efBasicRepository.InsertAsync(fileObj);
 
                         }
                         catch (Exception ex)
@@ -84,53 +104,46 @@ namespace ThreeL.Blob.Application.Channels
                             _logger.LogError(ex.ToString());
                             continue;
                         }
+                        finally
+                        {
+                            if (Directory.Exists(folderLocation))
+                                Directory.Delete(folderLocation, true);
+                        }
                     }
 
                     if (cancellationToken.IsCancellationRequested) break;
                 }
             }
 
-            private  void ZipSetp(string strDirectory, ZipOutputStream s, string parentPath, List<string> files = null)
+            /// <summary>
+            /// 复制文件夹
+            /// </summary>
+            /// <param name="parentLocationFolder"></param>
+            /// <param name="directoryInfo"></param>
+            private void CopyFolder(string parentLocationFolder, DirectoryInfo directoryInfo)
             {
-                if (strDirectory[strDirectory.Length - 1] != Path.DirectorySeparatorChar)
-                {
-                    strDirectory += Path.DirectorySeparatorChar;
-                }
+                var location = Path.Combine(parentLocationFolder, directoryInfo.Name);
+                if (!Directory.Exists(location))
+                    Directory.CreateDirectory(location);
 
-                string[] filenames = Directory.GetFileSystemEntries(strDirectory);
-
-                byte[] buffer = new byte[4096];
-                foreach (string file in filenames)
+                foreach (var file in directoryInfo.GetFiles())
                 {
-                    if (files != null && !files.Contains(file))
+                    try
                     {
+                        file.CopyTo(Path.Combine(location, file.Name));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex.ToString());
                         continue;
                     }
-                    if (Directory.Exists(file))
-                    {
-                        string pPath = Path.Combine(parentPath, Path.GetFileName(file));
-                        ZipSetp(file, s, pPath, files);
-                    }
-                    else
-                    {
-                        string fileName = parentPath + Path.GetFileName(file);
-                        ZipEntry entry = new ZipEntry(fileName);
-                        entry.DateTime = DateTime.Now;
-                        s.PutNextEntry(entry);
-                        using (FileStream fs = File.OpenRead(file))
-                        {
-                            int sourceBytes;
-                            do
-                            {
-                                sourceBytes = fs.Read(buffer, 0, buffer.Length);
-                                s.Write(buffer, 0, sourceBytes);
-                            } while (sourceBytes > 0);
+                }
 
-                        }
-                    }
+                foreach (var directory in directoryInfo.GetDirectories())
+                {
+                    CopyFolder(directoryInfo.FullName, directory);
                 }
             }
-
 
             public Task StopAsync(CancellationToken cancellationToken)
             {

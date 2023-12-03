@@ -25,6 +25,7 @@ namespace ThreeL.Blob.Application.Extensions
             services.AddSingleton<GenerateThumbnailChannel>();
             services.AddSingleton<CallChatGrpcChannel>();
             services.AddSingleton<DeleteFilesChannel>();
+            services.AddSingleton<CompressFileObjectsChannel>();
             services.Configure<JwtOptions>(services.GetConfiguration().GetSection("Jwt"));
             services.Configure<SystemOptions>(services.GetConfiguration().GetSection("System"));
             ApplicationDependencyRegistrar applicationDependencyRegistrar = new ApplicationDependencyRegistrar(_applicationAssemblyInfo, services);

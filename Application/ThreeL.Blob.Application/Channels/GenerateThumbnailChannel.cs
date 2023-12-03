@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using System.Threading.Channels;
-using ThreeL.Blob.Domain.Aggregate.(string, FileObject[]);
+using ThreeL.Blob.Domain.Aggregate.FileObject;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using Image = SixLabors.ImageSharp.Image;
 
@@ -25,7 +25,7 @@ namespace ThreeL.Blob.Application.Channels
             _writeChannel = channel.Writer;
             _readChannel = channel.Reader;
             MessageCustomer readOperateLogService = new MessageCustomer(_readChannel,
-                _provider.GetRequiredService<IEfBasicRepository<(string, FileObject[]), long>>(), _provider.GetRequiredService<ILogger<MessageCustomer>>(), _configuration);
+                _provider.GetRequiredService<IEfBasicRepository<FileObject, long>>(), _provider.GetRequiredService<ILogger<MessageCustomer>>(), _configuration);
 
             Task.Run(async () => await readOperateLogService.StartAsync(_cancellationTokenSource.Token));
         }
@@ -44,12 +44,12 @@ namespace ThreeL.Blob.Application.Channels
         public class MessageCustomer
         {
             private readonly ChannelReader<(long, long)> _readChannel;
-            private readonly IEfBasicRepository<(string, FileObject[]), long> _fileBasicRepository;
+            private readonly IEfBasicRepository<FileObject, long> _fileBasicRepository;
             private readonly ILogger<MessageCustomer> _logger;
             private readonly IConfiguration _configuration;
 
             public MessageCustomer(ChannelReader<(long, long)> readChannel,
-                                   IEfBasicRepository<(string, FileObject[]), long> fileBasicRepository,
+                                   IEfBasicRepository<FileObject, long> fileBasicRepository,
                                    ILogger<MessageCustomer> logger,
                                    IConfiguration configuration)
             {

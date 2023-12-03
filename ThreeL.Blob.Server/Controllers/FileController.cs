@@ -277,7 +277,7 @@ namespace ThreeL.Blob.Server.Controllers
             try
             {
                 long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-                var result = await _fileService.DeleteItemsAsync(deleteFileObjects.FileIds, userId);
+                var result = await _fileService.CompressFileObjectsAsync(userId, compressFileObjectsDto);
 
                 return result.ToActionResult();
             }

@@ -22,6 +22,7 @@
         public const string PRE_DOWNLOAD_FOLDER = "file/preDownloadFolder/{0}";
         public const string UPDATE_NAME = "file/update-name";
         public const string UPDATE_LOCATION = "file/update-location";
+        public const string COMPRESS = "file/zip";
         public const string UPLOAD_AVATAR = "user/upload-avatar";
         public const string RELATIONS = "relations";
         public const string RELATION_SOMEONE = "relations/{0}";

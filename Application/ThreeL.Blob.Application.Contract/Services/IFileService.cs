@@ -24,6 +24,6 @@ namespace ThreeL.Blob.Application.Contract.Services
         [Uow]
         Task<ServiceResult<DownloadFileResponseDto>> DownloadSharedAsync(string token, long userId);
         Task<ServiceResult<PreDownloadFolderResponseDto>> PreDownloadFolderAsync(long folderId);
-        Task<ServiceResult> CompressFileObjectsAsync(long[] ids);
+        Task<ServiceResult> CompressFileObjectsAsync(long sender, CompressFileObjectsDto compressFileObjectsDto);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Threading.Channels;
-using ThreeL.Blob.Domain.Aggregate.(string, FileObject[]);
+using ThreeL.Blob.Domain.Aggregate.FileObject;
 
 namespace ThreeL.Blob.Application.Channels
 {
@@ -10,18 +10,18 @@ namespace ThreeL.Blob.Application.Channels
     /// </summary>
     public class DeleteFilesChannel
     {
-        private readonly ChannelWriter<(string, FileObject[])> _writeChannel;
-        private readonly ChannelReader<(string, FileObject[])> _readChannel;
+        private readonly ChannelWriter<FileObject> _writeChannel;
+        private readonly ChannelReader<FileObject> _readChannel;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly IServiceProvider _provider;
 
         public DeleteFilesChannel(IServiceProvider provider)
         {
             _provider = provider;
-            var channel = Channel.CreateUnbounded<(string, FileObject[])>();
+            var channel = Channel.CreateUnbounded<FileObject>();
             _writeChannel = channel.Writer;
             _readChannel = channel.Reader;
-            MessageCustomer readOperateLogService = new MessageCustomer(_readChannel,_provider.GetRequiredService<ILogger<MessageCustomer>>());
+            MessageCustomer readOperateLogService = new MessageCustomer(_readChannel, _provider.GetRequiredService<ILogger<MessageCustomer>>());
 
             Task.Run(async () => await readOperateLogService.StartAsync(_cancellationTokenSource.Token));
         }
@@ -32,7 +32,7 @@ namespace ThreeL.Blob.Application.Channels
             _cancellationTokenSource.Dispose();
         }
 
-        public async Task WriteMessageAsync(IEnumerable<(string, FileObject[])> files)
+        public async Task WriteMessageAsync(IEnumerable<FileObject> files)
         {
             foreach (var file in files.Where(x => !x.IsFolder)) //先删除文件
             {
@@ -47,10 +47,10 @@ namespace ThreeL.Blob.Application.Channels
 
         public class MessageCustomer
         {
-            private readonly ChannelReader<(string, FileObject[])> _readChannel;
+            private readonly ChannelReader<FileObject> _readChannel;
             private readonly ILogger<MessageCustomer> _logger;
 
-            public MessageCustomer(ChannelReader<(string, FileObject[])> readChannel,
+            public MessageCustomer(ChannelReader<FileObject> readChannel,
                                    ILogger<MessageCustomer> logger)
             {
                 _logger = logger;
@@ -58,32 +58,32 @@ namespace ThreeL.Blob.Application.Channels
             }
 
             public async Task StartAsync(CancellationToken cancellationToken)
-            { 
+            {
                 while (await _readChannel.WaitToReadAsync(cancellationToken))
                 {
-                    while (_readChannel.TryRead(out var (string, FileObject[])))
+                    while (_readChannel.TryRead(out var FileObject))
                     {
                         try
                         {
-                            if (File.Exists((string, FileObject[]).Location)) 
+                            if (File.Exists(FileObject.Location))
                             {
-                                File.Delete((string, FileObject[]).Location);
-                                _logger.LogInformation($"用户{(string, FileObject[]).CreateBy},删除文件成功:{(string, FileObject[]).Location}");
+                                File.Delete(FileObject.Location);
+                                _logger.LogInformation($"用户{FileObject.CreateBy},删除文件成功:{FileObject.Location}");
                             }
 
-                            if (File.Exists((string, FileObject[]).TempFileLocation))
+                            if (File.Exists(FileObject.TempFileLocation))
                             {
-                                File.Delete((string, FileObject[]).TempFileLocation);
-                                _logger.LogInformation($"用户{(string, FileObject[]).CreateBy},删除临时文件成功:{(string, FileObject[]).Location}");
+                                File.Delete(FileObject.TempFileLocation);
+                                _logger.LogInformation($"用户{FileObject.CreateBy},删除临时文件成功:{FileObject.Location}");
                             }
 
-                            if (File.Exists((string, FileObject[]).ThumbnailImageLocation))
+                            if (File.Exists(FileObject.ThumbnailImageLocation))
                             {
-                                File.Delete((string, FileObject[]).ThumbnailImageLocation);
-                                _logger.LogInformation($"用户{(string, FileObject[]).CreateBy},删除缩略图成功:{(string, FileObject[]).Location}");
+                                File.Delete(FileObject.ThumbnailImageLocation);
+                                _logger.LogInformation($"用户{FileObject.CreateBy},删除缩略图成功:{FileObject.Location}");
                             }
                         }
-                        catch (Exception ex) 
+                        catch (Exception ex)
                         {
                             _logger.LogError(ex.ToString());
                             continue;
