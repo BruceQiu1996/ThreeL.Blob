@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
+using ThreeL.Blob.Application.Contract.Validators.FileObject;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Interceptors.Attributes;
 
 namespace ThreeL.Blob.Server.Controllers
 {
@@ -20,6 +22,7 @@ namespace ThreeL.Blob.Server.Controllers
         }
 
         [HttpPost]
+        [ParamValidate(typeof(UploadFileDtoValidator))]
         [Authorize]
         public async Task<ActionResult> UploadFileAsync(UploadFileDto uploadFileDto)
         {
@@ -109,6 +112,7 @@ namespace ThreeL.Blob.Server.Controllers
         }
 
         [HttpPost("folder")]
+        [ParamValidate(typeof(FolderCreationDtoValidator))]
         [Authorize]
         public async Task<ActionResult> CreateFolderAsync(FolderCreationDto folderCreationDto)
         {
@@ -271,6 +275,7 @@ namespace ThreeL.Blob.Server.Controllers
         }
 
         [HttpPost("zip")]
+        [ParamValidate(typeof(CompressFileObjectsDtoValidator))]
         [Authorize]
         public async Task<ActionResult> CompressFileObjectsAsync(CompressFileObjectsDto compressFileObjectsDto)
         {

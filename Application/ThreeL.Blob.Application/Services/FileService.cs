@@ -1,6 +1,8 @@
-﻿using AutoMapper;
+﻿using Amazon.Runtime.Internal.Util;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using ThreeL.Blob.Application.Channels;
 using ThreeL.Blob.Application.Contract.Dtos;
@@ -26,6 +28,7 @@ namespace ThreeL.Blob.Application.Services
         private readonly IConfiguration _configuration;
         private readonly DeleteFilesChannel _deleteFilesChannel;
         private readonly CompressFileObjectsChannel _compressFileObjectsChannel;
+        private readonly ILogger<FileService> _logger;
         public FileService(IEfBasicRepository<User, long> userBasicRepository,
                            IEfBasicRepository<FileObject, long> fileBasicRepository,
                            IEfBasicRepository<DownloadFileTask, string> downloadTaskBasicRepository,
@@ -34,8 +37,10 @@ namespace ThreeL.Blob.Application.Services
                            IMapper mapper,
                            IConfiguration configuration,
                            DeleteFilesChannel deleteFilesChannel,
-                           CompressFileObjectsChannel compressFileObjectsChannel)
+                           CompressFileObjectsChannel compressFileObjectsChannel,
+                           ILogger<FileService> logger)
         {
+            _logger = logger;
             _mapper = mapper;
             _redisProvider = redisProvider;
             _downloadTaskBasicRepository = downloadTaskBasicRepository;
@@ -129,15 +134,28 @@ namespace ThreeL.Blob.Application.Services
                 parentFolderLocation = user.Location;
             }
 
-            var folderName = Guid.NewGuid().ToString();
-            var folderLocation = Path.Combine(parentFolderLocation, folderName);
-            Directory.CreateDirectory(folderLocation);
             var exist = await _fileBasicRepository
                 .FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName && x.ParentFolder == folderCreationDto.ParentId && x.CreateBy == userId);
             if (exist != null)
             {
                 folderCreationDto.FolderName = $"{folderCreationDto.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";
             }
+
+            var folderLocation = Path.Combine(parentFolderLocation, folderCreationDto.FolderName);
+
+            try
+            {
+                Directory.CreateDirectory(folderLocation);
+            }
+            catch (ArgumentException ex)
+            {
+                return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "非法的文件夹名");
+            }
+            catch (Exception ex)
+            {
+                return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "服务器异常");
+            }
+
             var FileObject = new FileObject()
             {
                 CreateBy = userId,
@@ -408,9 +426,6 @@ namespace ThreeL.Blob.Application.Services
         {
             foreach (var item in creationDtos)
             {
-                var folderName = Guid.NewGuid().ToString();
-                var folderLocation = Path.Combine(item.ParentFolderLocation, folderName);
-                Directory.CreateDirectory(folderLocation);
                 var exist = await _fileBasicRepository
                     .FirstOrDefaultAsync(x => x.IsFolder && x.Name == item.FolderName && x.ParentFolder == item.ParentId && x.CreateBy == userId);
                 if (exist != null)
@@ -418,25 +433,36 @@ namespace ThreeL.Blob.Application.Services
                     item.FolderName = $"{item.FolderName}_{DateTime.Now.ToString("yyyyMMddhhmmssfff")}";
                 }
 
-                var FileObject = new FileObject()
+                try
                 {
-                    CreateBy = userId,
-                    CreateTime = DateTime.Now,
-                    LastUpdateTime = DateTime.Now,
-                    UploadFinishTime = DateTime.Now,
-                    IsFolder = true,
-                    Name = item.FolderName,
-                    ParentFolder = item.ParentId,
-                    Location = folderLocation,
-                    Status = FileStatus.Normal
-                };
+                    var folderLocation = Path.Combine(item.ParentFolderLocation, item.FolderName);
+                    Directory.CreateDirectory(folderLocation);
 
-                await _fileBasicRepository.InsertAsync(FileObject);
-                item.RemoteId = FileObject.Id;
-                foreach (var innerItem in creationDtos.Where(x => x.ParentClientId == item.ClientId))
+                    var FileObject = new FileObject()
+                    {
+                        CreateBy = userId,
+                        CreateTime = DateTime.Now,
+                        LastUpdateTime = DateTime.Now,
+                        UploadFinishTime = DateTime.Now,
+                        IsFolder = true,
+                        Name = item.FolderName,
+                        ParentFolder = item.ParentId,
+                        Location = folderLocation,
+                        Status = FileStatus.Normal
+                    };
+
+                    await _fileBasicRepository.InsertAsync(FileObject);
+                    item.RemoteId = FileObject.Id;
+                    foreach (var innerItem in creationDtos.Where(x => x.ParentClientId == item.ClientId))
+                    {
+                        innerItem.ParentId = FileObject.Id;
+                        innerItem.ParentFolderLocation = FileObject.Location;
+                    }
+                }
+                catch (Exception ex) 
                 {
-                    innerItem.ParentId = FileObject.Id;
-                    innerItem.ParentFolderLocation = FileObject.Location;
+                    _logger.LogError(ex.ToString());
+                    continue;
                 }
             }
         }
@@ -476,10 +502,16 @@ namespace ThreeL.Blob.Application.Services
 
         public async Task<ServiceResult> CompressFileObjectsAsync(long sender, CompressFileObjectsDto compressFileObjectsDto)
         {
-            var files = await _fileBasicRepository.Where(x => compressFileObjectsDto.Items.Contains(x.Id)).ToListAsync();
+            var files = await _fileBasicRepository
+                .Where(x => compressFileObjectsDto.Items.Contains(x.Id) && x.Status == FileStatus.Normal).ToListAsync();
             if (files.GroupBy(x => x.ParentFolder).Count() > 1)
             {
                 return new ServiceResult(HttpStatusCode.BadRequest, "只能压缩同一目录下的文件");
+            }
+
+            if (files.Count != compressFileObjectsDto.Items.Count())
+            {
+                return new ServiceResult(HttpStatusCode.BadRequest, "文件状态异常");
             }
 
             string rootLocaiton = string.Empty;

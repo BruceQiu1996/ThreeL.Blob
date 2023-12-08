@@ -53,6 +53,7 @@
         public const string AvatarUploaded = nameof(AvatarUploaded);
         public const string AddFriendApplySuccess = nameof(AddFriendApplySuccess);
         public const string SendFileObjectToChat = nameof(SendFileObjectToChat);
+        public const string CompressFileObjects = nameof(CompressFileObjects);
         public const string FetchHistoryChatRecords = nameof(FetchHistoryChatRecords);
         public const string DownloadSharedFile = nameof(DownloadSharedFile);
         public const string DownloadSharedFileAndOpen = nameof(DownloadSharedFileAndOpen);

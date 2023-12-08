@@ -54,8 +54,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand NewFolderCommandAsync { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
         public RelayCommand SelectNoCommand { get; set; }
-        public AsyncRelayCommand CompressItemsCommandAsync { get; set; }
-
         public RelayCommand<MouseButtonEventArgs> FileObjectsChooseDragCommand { get; set; }
 
         private readonly GrpcService _grpcService;
@@ -190,7 +188,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             NewFolderCommandAsync = new AsyncRelayCommand(NewFolderAsync);
             SelectAllCommand = new RelayCommand(SelectAll);
             SelectNoCommand = new RelayCommand(SelectNo);
-            CompressItemsCommandAsync = new AsyncRelayCommand(CompressItemsAsync);
 
             //下载
             WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.MenuDownload, async (x, y) =>
@@ -227,6 +224,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 await ConfirmCommandAsync(y);
             }));
+            //压缩
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.CompressFileObjects, async (x, y) =>
+            {
+                await CompressItemsAsync();
+            });
             #endregion
         }
 
@@ -358,19 +360,33 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         /// </summary>
         private async Task CompressItemsAsync()
         {
-            var items = FileObjViewModels.Where(x => x.IsSelected).Select(x => x.Id).ToArray();
-            if (items.Count() <= 0)
+            var dialog = App.ServiceProvider!.GetRequiredService<ZipFileObjectsEnsure>();
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            dialog.Owner = App.ServiceProvider!.GetRequiredService<MainWindow>();
+            (dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipFileObjectsEnsure = dialog;
+            var result = dialog.ShowDialog();
+            if (string.IsNullOrEmpty((dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipName)) 
+            {
+                _growlHelper.Warning("名字不能为空");
                 return;
-
-            var resp = await _httpRequest.PostAsync(Const.COMPRESS, new CompressFileObjectsDto()
+            }
+            if (result != null && result.Value)
             {
-                ZipName = "测试压缩",
-                Items = items
-            });
+                var items = FileObjViewModels.Where(x => x.IsSelected)
+                    .Select(x => x.Id).ToArray();
+                if (items.Count() <= 0)
+                    return;
 
-            if (resp != null)
-            {
-                _growlHelper.Success("服务器压缩中,请等待...");
+                var resp = await _httpRequest.PostAsync(Const.COMPRESS, new CompressFileObjectsDto()
+                {
+                    ZipName = (dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipName,
+                    Items = items
+                });
+
+                if (resp != null)
+                {
+                    _growlHelper.Success("服务器压缩中,请等待...");
+                }
             }
         }
 

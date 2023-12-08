@@ -53,7 +53,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public RelayCommand ConfirmDownloadCommand { get; set; }
         public RelayCommand CancelDownloadCommand { get; set; }
-
         public DownloadEnsure DownloadEnsure { get; set; }
 
         private readonly FileHelper _fileHelper;

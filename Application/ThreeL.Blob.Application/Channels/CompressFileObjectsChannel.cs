@@ -1,25 +1,24 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 using System.Threading.Channels;
 using ThreeL.Blob.Domain.Aggregate.FileObject;
-using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Repository.IRepositories;
-using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 
 namespace ThreeL.Blob.Application.Channels
 {
     public class CompressFileObjectsChannel
     {
-        private readonly ChannelWriter<(string, string, long, long, FileObject[])> _writeChannel;
-        private readonly ChannelReader<(string, string, long, long, FileObject[])> _readChannel;
+        private readonly ChannelWriter<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> _writeChannel;
+        private readonly ChannelReader<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> _readChannel;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly IServiceProvider _provider;
 
         public CompressFileObjectsChannel(IServiceProvider provider)
         {
             _provider = provider;
-            var channel = Channel.CreateUnbounded<(string, string, long, long, FileObject[])>();
+            var channel = Channel.CreateUnbounded<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)>();
             _writeChannel = channel.Writer;
             _readChannel = channel.Reader;
             MessageCustomer readOperateLogService = new MessageCustomer(_readChannel,
@@ -34,18 +33,18 @@ namespace ThreeL.Blob.Application.Channels
             _cancellationTokenSource.Dispose();
         }
 
-        public async Task WriteMessageAsync((string, string, long, long, FileObject[]) task)
+        public async Task WriteMessageAsync((string zipName, string rootLocation, long rootId, long userId, FileObject[] items) task)
         {
             await _writeChannel.WriteAsync(task);
         }
 
         public class MessageCustomer
         {
-            private readonly ChannelReader<(string, string, long, long, FileObject[])> _readChannel;
+            private readonly ChannelReader<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> _readChannel;
             private readonly ILogger<MessageCustomer> _logger;
             private readonly IEfBasicRepository<FileObject, long> _efBasicRepository;
 
-            public MessageCustomer(ChannelReader<(string, string, long, long, FileObject[])> readChannel,
+            public MessageCustomer(ChannelReader<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> readChannel,
                                    ILogger<MessageCustomer> logger,
                                    IEfBasicRepository<FileObject, long> efBasicRepository)
             {
@@ -60,58 +59,37 @@ namespace ThreeL.Blob.Application.Channels
                 {
                     while (_readChannel.TryRead(out var temp))
                     {
-                        var folderLocation = Path.Combine(temp.Item2, Guid.NewGuid().ToString());
-                        if (!Directory.Exists(folderLocation))
-                            Directory.CreateDirectory(folderLocation);
-                        try
+                        var newFolder = Path.Combine(temp.rootLocation, Guid.NewGuid().ToString());
+                        Directory.CreateDirectory(newFolder);
+                        foreach (var item in temp.items)
                         {
-
-                            foreach (var item in temp.Item5)
-                            {
-                                if (item.IsFolder && Directory.Exists(item.Location))
-                                {
-                                    CopyFolder(folderLocation, new DirectoryInfo(item.Location));
-                                }
-                                else if (!item.IsFolder && File.Exists(item.Location))
-                                {
-                                    File.Copy(item.Location, Path.Combine(folderLocation, item.Name));
-                                }
-                            }
-
-                            var target = Path.Combine(temp.Item2, $"{Guid.NewGuid()}.zip");
-                            ZipFile.CreateFromDirectory(folderLocation, target);
-                            //创建新的文件数据
-                            var fileObj = new FileObject();
-                            fileObj.CreateBy = temp.Item4;
-                            fileObj.CreateTime = DateTime.Now;
-                            fileObj.UploadFinishTime = DateTime.Now;
-                            fileObj.LastUpdateTime = DateTime.Now;
-                            fileObj.Status = FileStatus.Normal;
-                            fileObj.Location = target;
-                            fileObj.ParentFolder = temp.Item3;
-                            using (var fs = new FileStream(target, FileMode.Open))
-                            {
-                                fileObj.Code = fs.ToSHA256();
-                                fileObj.Size = fs.Length;
-                                fileObj.Name = fs.Name;
-                            }
-
-                            await _efBasicRepository.InsertAsync(fileObj);
-
+                            await CopyFileObjectsToFolderAsync(newFolder, item, temp.userId);
                         }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex.ToString());
-                            continue;
-                        }
-                        finally
-                        {
-                            if (Directory.Exists(folderLocation))
-                                Directory.Delete(folderLocation, true);
-                        }
+
+                        ZipFile.CreateFromDirectory(newFolder, Path.Combine(temp.rootLocation, $"{temp.zipName}.zip"));
                     }
 
                     if (cancellationToken.IsCancellationRequested) break;
+                }
+            }
+
+            public async ValueTask CopyFileObjectsToFolderAsync(string parentLocation, FileObject file, long userId)
+            {
+                if (!file.IsFolder && File.Exists(file.Location))
+                {
+                    File.Copy(file.Location, Path.Combine(parentLocation, file.Name), true);
+                }
+                else if (file.IsFolder && Directory.Exists(file.Location))
+                {
+                    var newFolderLocation = Path.Combine(parentLocation, file.Name);
+                    Directory.CreateDirectory(newFolderLocation);
+                    var items = await _efBasicRepository
+                        .Where(x => x.ParentFolder == file.Id && x.CreateBy == userId).ToListAsync();
+
+                    foreach (var item in items)
+                    {
+                        await CopyFileObjectsToFolderAsync(newFolderLocation, item, userId);
+                    }
                 }
             }
 
@@ -150,6 +128,5 @@ namespace ThreeL.Blob.Application.Channels
                 return Task.CompletedTask;
             }
         }
-
     }
 }
