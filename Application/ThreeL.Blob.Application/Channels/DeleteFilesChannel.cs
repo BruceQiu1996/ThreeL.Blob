@@ -65,22 +65,32 @@ namespace ThreeL.Blob.Application.Channels
                     {
                         try
                         {
-                            if (File.Exists(FileObject.Location))
+                            if (!FileObject.IsFolder)
                             {
-                                File.Delete(FileObject.Location);
-                                _logger.LogInformation($"用户{FileObject.CreateBy},删除文件成功:{FileObject.Location}");
-                            }
+                                if (File.Exists(FileObject.Location))
+                                {
+                                    File.Delete(FileObject.Location);
+                                    _logger.LogInformation($"用户{FileObject.CreateBy},删除文件成功:{FileObject.Location}");
+                                }
 
-                            if (File.Exists(FileObject.TempFileLocation))
-                            {
-                                File.Delete(FileObject.TempFileLocation);
-                                _logger.LogInformation($"用户{FileObject.CreateBy},删除临时文件成功:{FileObject.Location}");
-                            }
+                                if (File.Exists(FileObject.TempFileLocation))
+                                {
+                                    File.Delete(FileObject.TempFileLocation);
+                                    _logger.LogInformation($"用户{FileObject.CreateBy},删除临时文件成功:{FileObject.Location}");
+                                }
 
-                            if (File.Exists(FileObject.ThumbnailImageLocation))
+                                if (File.Exists(FileObject.ThumbnailImageLocation))
+                                {
+                                    File.Delete(FileObject.ThumbnailImageLocation);
+                                    _logger.LogInformation($"用户{FileObject.CreateBy},删除缩略图成功:{FileObject.Location}");
+                                }
+                            }
+                            else
                             {
-                                File.Delete(FileObject.ThumbnailImageLocation);
-                                _logger.LogInformation($"用户{FileObject.CreateBy},删除缩略图成功:{FileObject.Location}");
+                                if (Directory.Exists(FileObject.Location))
+                                {
+                                    Directory.Delete(FileObject.Location, true);
+                                }
                             }
                         }
                         catch (Exception ex)

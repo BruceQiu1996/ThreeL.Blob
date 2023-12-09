@@ -26,8 +26,6 @@ using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
-using static Google.Protobuf.Reflection.SourceCodeInfo.Types;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -121,7 +119,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public bool IsListView
         {
             get => _isListView;
-            set => SetProperty(ref _isListView, value);
+            set
+            {
+                SetProperty(ref _isListView, value);
+                _iniSettings.WriteListMode(value).GetAwaiter().GetResult();
+            }
         }
 
         public MainPageViewModel(GrpcService grpcService, ApiHttpRequest httpRequest,
@@ -235,6 +237,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task LoadAsync()
         {
             await RefreshByParentAsync(_currentParent);
+            IsListView = _iniSettings.ListMode;
         }
 
         private async Task RefreshAsync()

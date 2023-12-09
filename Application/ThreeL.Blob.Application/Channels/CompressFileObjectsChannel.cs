@@ -89,7 +89,14 @@ namespace ThreeL.Blob.Application.Channels
                         {
                             if (Directory.Exists(newFolder))
                             {
-                                Directory.Delete(newFolder, true);
+                                try
+                                {
+                                    Directory.Delete(newFolder, true);
+                                }
+                                catch (Exception ex) 
+                                {
+                                    _logger.LogError(ex.ToString());
+                                }
                             }
                         }
                     }

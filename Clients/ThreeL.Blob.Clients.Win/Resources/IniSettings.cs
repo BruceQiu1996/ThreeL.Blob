@@ -19,6 +19,7 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public const string UserNameKey = "UserNameKey";
         public const string PasswordKey = "PasswordKey";
         public const string LoginTimeKey = "LoginTimeKey";
+        public const string ListModelKey = "ListModelKey";
         #endregion
 
         #region 配置项
@@ -31,6 +32,7 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public string UserName { get; set; }
         public string Password { get; set; }
         public string LoginTime { get; set; }
+        public bool ListMode { get; set; } //true列表显示，false warp显示
         #endregion
 
         private readonly IniHelper _iniHelper;
@@ -71,6 +73,7 @@ namespace ThreeL.Blob.Clients.Win.Resources
             Password = await _iniHelper.ReadAsync(ApplicationSectionKey, PasswordKey);
             UserName = await _iniHelper.ReadAsync(ApplicationSectionKey, UserNameKey);
             LoginTime = await _iniHelper.ReadAsync(ApplicationSectionKey, LoginTimeKey);
+            ListMode = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, ListModelKey), out var tempListModel) ? tempListModel : false;
         }
 
         /// <summary>
@@ -125,6 +128,12 @@ namespace ThreeL.Blob.Clients.Win.Resources
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, MaxDownloadThreadsKey, value.ToString());
             MaxDownloadThreads = value;
+        }
+
+        public async Task WriteListMode(bool mode)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, ListModelKey, mode.ToString());
+            ListMode = mode;
         }
 
         public async Task WriteUserInfo(string userName,string password,string loginTime)
