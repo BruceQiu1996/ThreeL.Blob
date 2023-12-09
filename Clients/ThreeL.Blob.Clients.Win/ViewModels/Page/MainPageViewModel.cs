@@ -385,7 +385,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
                 if (resp != null)
                 {
-                    _growlHelper.Success("服务器压缩中,请等待...");
+                    _growlHelper.Success("服务器压缩中,请稍后刷新查看...");
                 }
             }
         }

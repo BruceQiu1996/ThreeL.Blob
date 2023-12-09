@@ -19,6 +19,7 @@ using ThreeL.Blob.Application.Middlewares;
 using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Server.Controllers;
 using ThreeL.Blob.Shared.Application.Contract.Extensions;
+using ThreeL.Blob.Shared.Application.Contract.Helpers;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 
 namespace ThreeL.Blob.Server

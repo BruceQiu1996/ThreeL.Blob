@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System.IO.Compression;
 using System.Threading.Channels;
 using ThreeL.Blob.Domain.Aggregate.FileObject;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 
 namespace ThreeL.Blob.Application.Channels
@@ -18,7 +19,8 @@ namespace ThreeL.Blob.Application.Channels
         public CompressFileObjectsChannel(IServiceProvider provider)
         {
             _provider = provider;
-            var channel = Channel.CreateUnbounded<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)>();
+            var channel = Channel
+                .CreateUnbounded<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)>();
             _writeChannel = channel.Writer;
             _readChannel = channel.Reader;
             MessageCustomer readOperateLogService = new MessageCustomer(_readChannel,
@@ -60,13 +62,36 @@ namespace ThreeL.Blob.Application.Channels
                     while (_readChannel.TryRead(out var temp))
                     {
                         var newFolder = Path.Combine(temp.rootLocation, Guid.NewGuid().ToString());
-                        Directory.CreateDirectory(newFolder);
-                        foreach (var item in temp.items)
+                        try
                         {
-                            await CopyFileObjectsToFolderAsync(newFolder, item, temp.userId);
-                        }
+                            Directory.CreateDirectory(newFolder);
+                            foreach (var item in temp.items)
+                            {
+                                await CopyFileObjectsToFolderAsync(newFolder, item, temp.userId);
+                            }
 
-                        ZipFile.CreateFromDirectory(newFolder, Path.Combine(temp.rootLocation, $"{temp.zipName}.zip"));
+                            var newLocation = $"{temp.zipName}.zip".GetAvailableFileLocation(temp.rootLocation);
+                            ZipFile.CreateFromDirectory(newFolder, newLocation);
+                            using (var fs = File.OpenRead(newLocation))
+                            {
+                                //创建文件
+                                var fileObj =
+                                    new FileObject(Path.GetFileName(newLocation), newLocation, fs.ToSHA256(), temp.rootId, temp.userId, DateTime.Now, fs.Length);
+                                await _efBasicRepository.InsertAsync(fileObj);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex.ToString());
+                            continue;
+                        }
+                        finally
+                        {
+                            if (Directory.Exists(newFolder))
+                            {
+                                Directory.Delete(newFolder, true);
+                            }
+                        }
                     }
 
                     if (cancellationToken.IsCancellationRequested) break;
