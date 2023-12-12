@@ -93,7 +93,17 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-
+        private bool _hiddenChatWindow;
+        public bool HiddenChatWindow
+        {
+            get => _hiddenChatWindow;
+            set
+            {
+                SetProperty(ref _hiddenChatWindow, value);
+                _iniSettings.WriteHiddenChatWindow(value).GetAwaiter().GetResult();
+                WeakReferenceMessenger.Default.Send(value ? "close" : "open", Const.HiddenChatWindow);
+            }
+        }
         private readonly IniSettings _iniSettings;
         private readonly GrowlHelper _growlHelper;
         private readonly ApiHttpRequest _httpRequest;

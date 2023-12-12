@@ -57,6 +57,7 @@
         public const string FetchHistoryChatRecords = nameof(FetchHistoryChatRecords);
         public const string DownloadSharedFile = nameof(DownloadSharedFile);
         public const string DownloadSharedFileAndOpen = nameof(DownloadSharedFileAndOpen);
+        public const string HiddenChatWindow = nameof(HiddenChatWindow);
         public static object UploadRunTaskLock = new object();
         public static object DownloadRunTaskLock = new object();
 

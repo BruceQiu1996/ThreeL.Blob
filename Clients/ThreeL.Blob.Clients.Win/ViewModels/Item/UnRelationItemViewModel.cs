@@ -50,7 +50,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             set => SetProperty(ref _icon, value);
         }
 
-
+        public bool MySelf => App.UserProfile.Id == Id;
         public bool IsGroup { get; set; }
         public AsyncRelayCommand AddRelationCommandAsync { get; set; }
         public AsyncRelayCommand RejectRelationCommandAsync { get; set; }

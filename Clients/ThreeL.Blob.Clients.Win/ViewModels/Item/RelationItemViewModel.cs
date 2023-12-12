@@ -1,9 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.AspNetCore.SignalR.Protocol;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -12,6 +14,7 @@ using ThreeL.Blob.Clients.Win.Helpers;
 using ThreeL.Blob.Clients.Win.Request;
 using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Message;
+using ThreeL.Blob.Clients.Win.ViewModels.Window;
 using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
@@ -69,6 +72,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
         public bool IsGroup { get; set; }
 
+        private int _unReadCount;
+        public int UnReadCount 
+        {
+            get { return _unReadCount; }
+            set => SetProperty(ref _unReadCount, value);
+        }
+
+        private string _unReadCountText;
+        public string UnReadCountText
+        {
+            get { return _unReadCountText; }
+            set => SetProperty(ref _unReadCountText, value);
+        }
+
         public RelationItemViewModel()
         {
             Messages = new ObservableCollection<MessageViewModel>
@@ -113,7 +130,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
 
                 Messages.Add(message);
                 LastMessage = message;
-                App.ServiceProvider.GetRequiredService<Chat>().chatScrollViewer.ScrollToEnd();
+                if (LastMessage.From == App.UserProfile.Id) //自己发送的则滚动条到最下面
+                {
+                    App.ServiceProvider.GetRequiredService<Chat>().chatScrollViewer.ScrollToEnd();
+                }
+                //收到消息，并且当前界面不是该人
+                if (LastMessage.From != App.UserProfile.Id && App.ServiceProvider.GetRequiredService<ChatViewModel>().Relation != this)
+                {
+                    UnReadCount++;
+                    if (UnReadCount <= 0)
+                    {
+                        UnReadCountText = null;
+                    }
+                    else
+                    {
+                        UnReadCountText = UnReadCount >= 100 ? "99+" : UnReadCount.ToString();
+                    }
+                }
             });
         }
 

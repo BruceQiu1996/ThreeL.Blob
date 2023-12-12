@@ -222,7 +222,7 @@
                             </Label>
                         </ListBoxItem>
 
-                        <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0" Visibility="{Binding IsAdmin,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <ListBoxItem Height="50" Width="55" Margin="-1 20 0 0">
                             <ListBoxItem.Style>
                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource ListBoxItemBaseStyle}">
                                     <Style.Triggers>
@@ -239,17 +239,17 @@
                             </ListBoxItem.Style>
                             <behaviors:Interaction.Triggers>
                                 <behaviors:EventTrigger EventName="PreviewMouseLeftButtonUp">
-                                    <behaviors:InvokeCommandAction Command="{Binding ShiftSettingsPageCommand}"></behaviors:InvokeCommandAction>
+                                    <behaviors:InvokeCommandAction Command="{Binding ShiftSharePageCommand}"></behaviors:InvokeCommandAction>
                                 </behaviors:EventTrigger>
                             </behaviors:Interaction.Triggers>
                             <Label BorderThickness="0"
-                               Cursor="Hand"
-                               ToolTip="管理员"
-                               Background="Transparent"
-                               Height="55" Width="55"
-                               VerticalContentAlignment="Center"
-                               Grid.Column="1">
-                                <Path Data="{StaticResource team}" 
+                                   Cursor="Hand"
+                                   ToolTip="分享"
+                                   Background="Transparent"
+                                   Height="55" Width="55"
+                                   VerticalContentAlignment="Center"
+                                   Grid.Column="1">
+                                <Path Data="{StaticResource share}" 
                                   SnapsToDevicePixels="True"
                                   Height="32" Width="32"
                                   Stroke="{Binding RelativeSource={RelativeSource Mode=FindAncestor,AncestorType=ListBoxItem},Path=Foreground}" Stretch="Uniform" />

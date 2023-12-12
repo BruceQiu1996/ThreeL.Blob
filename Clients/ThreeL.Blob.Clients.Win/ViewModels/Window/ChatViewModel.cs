@@ -51,6 +51,20 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             set => SetProperty(ref _searching, value);
         }
 
+        private bool _hadFriends;
+        public bool HadFriends
+        {
+            get => _hadFriends;
+            set => SetProperty(ref _hadFriends, value);
+        }
+
+        private bool _hadSearchingResult;
+        public bool HadSearchingResult
+        {
+            get => _hadSearchingResult;
+            set => SetProperty(ref _hadSearchingResult, value);
+        }
+
         private bool openApply;
         public bool OpenApply
         {
@@ -84,7 +98,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         private readonly RemoteOptions _remoteOptions;
         private readonly GrowlHelper _growlHelper;
         private readonly IMapper _mapper;
-        public ChatViewModel(ApiHttpRequest httpRequest, ChatHttpRequest chatHttpRequest, IOptions<RemoteOptions> remoteOptions, GrowlHelper growlHelper, IMapper mapper)
+        public ChatViewModel(ApiHttpRequest httpRequest,
+                             ChatHttpRequest chatHttpRequest,
+                             IOptions<RemoteOptions> remoteOptions,
+                             GrowlHelper growlHelper, IMapper mapper)
         {
             _mapper = mapper;
             _httpRequest = httpRequest;
@@ -115,7 +132,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                 }
 
                 var type = y.IsFolder ? "文件夹" : "文件";
-                var result = HandyControl.Controls.MessageBox.Ask($"确认发送{type}【{y.Name}】给好友【{Relation.UserName}】吗？", "询问");
+                var result = HandyControl.Controls.MessageBox.Ask($"确认发送{type}【{y.Name}】给好友【{Relation.UserName}】吗？(分享有效期为3天)", "询问");
                 if (result == MessageBoxResult.OK)
                 {
                     if (y.IsFolder)
@@ -216,7 +233,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                         //刷新好友请求
                         await RefreshApplysAsync();
                     }
-                    else 
+                    else
                     {
                         _growlHelper.WarningGlobal(msg.Message);
                     }
@@ -238,7 +255,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                                     .Deserialize<RelationBriefDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
-                                    Relations.Insert(0, _mapper.Map<RelationItemViewModel>(result));
+                                    AddRealtion(_mapper.Map<RelationItemViewModel>(result), true);
                                 });
 
                                 if (Relation == null) Relation = Relations.First();
@@ -264,7 +281,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     {
                         foreach (var relationBriefDto in result)
                         {
-                            Relations.Add(_mapper.Map<RelationItemViewModel>(relationBriefDto));
+                            AddRealtion(_mapper.Map<RelationItemViewModel>(relationBriefDto));
                         }
 
                         Relation = Relations.First();
@@ -276,6 +293,23 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                 //拉取申请
                 await RefreshApplysAsync();
             }
+        }
+
+        public void AddRealtion(RelationItemViewModel relation, bool first = false)
+        {
+            if (Relations == null)
+                return;
+
+            if (first)
+            {
+                Relations.Insert(0, relation);
+            }
+            else
+            {
+                Relations.Add(relation);
+            }
+
+            HadFriends = Relations.Count > 0;
         }
 
         //拉取聊天记录
@@ -295,6 +329,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                     _growlHelper.WarningGlobal(ex.Message);
                 }
             }
+
+            Relation.UnReadCount = 0;
+            Relation.UnReadCountText = null;
         }
 
         private async Task FetcRelationhHistoryChatRecordsAsync(RelationItemViewModel relation)
@@ -337,6 +374,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
         private async Task SearchUsersAsync()
         {
             UnRelations.Clear();
+            HadSearchingResult = false;
             if (string.IsNullOrEmpty(Keyword))
             {
                 Searching = false;
@@ -357,6 +395,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
                         {
                             UnRelations.Add(_mapper.Map<UnRelationItemViewModel>(relationBriefDto));
                         }
+
+                        HadSearchingResult = true;
                     }
                 }
             }
@@ -388,13 +428,13 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             TextMessage = null;
         }
 
-        public async Task SendFileMessageAsync(FileObjItemViewModel fileObjItemViewModel) 
+        public async Task SendFileMessageAsync(FileObjItemViewModel fileObjItemViewModel)
         {
             var temp = Relation;
             if (temp == null)
                 return;
 
-            var viewModel = fileObjItemViewModel.ToFileMessageVM(App.UserProfile.Id,temp.Id);
+            var viewModel = fileObjItemViewModel.ToFileMessageVM(App.UserProfile.Id, temp.Id);
             temp.AddMessage(viewModel);
             var dto = new FileMessageDto();
             viewModel.ToDto(dto);
@@ -402,18 +442,9 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Window
             await App.HubConnection.SendAsync(HubConst.SendFileMessage, dto);
         }
 
-        public async Task SendFolderMessageAsync(FileObjItemViewModel fileObjItemViewModel) 
+        public async Task SendFolderMessageAsync(FileObjItemViewModel fileObjItemViewModel)
         {
-            var temp = Relation;
-            if (temp == null)
-                return;
-
-            var viewModel = fileObjItemViewModel.ToFolderMessageVM(App.UserProfile.Id, temp.Id);
-            temp.AddMessage(viewModel);
-            var dto = new FolderMessageDto();
-            viewModel.ToDto(dto);
-
-            await App.HubConnection.SendAsync(HubConst.SendFolderMessage, dto);
+            _growlHelper.Warning("暂时不支持直接发送文件夹，请压缩成压缩文件后发送");
         }
 
         private void OpenApplyM()

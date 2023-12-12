@@ -13,7 +13,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
-                WaitTime = 2
+                WaitTime = 3
             });
         }
 
@@ -25,7 +25,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
-                WaitTime = 2
+                WaitTime = 3
             });
         }
 
@@ -37,7 +37,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
-                WaitTime = 2
+                WaitTime = 3
             });
         }
 
@@ -49,7 +49,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
-                WaitTime = 2
+                WaitTime = 3
             });
         }
 
@@ -61,7 +61,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
-                WaitTime = 2
+                WaitTime = 3
             });
         }
 
@@ -73,7 +73,7 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                 ShowDateTime = false,
                 ShowCloseButton = true,
                 StaysOpen = false,
-                WaitTime = 2
+                WaitTime = 3
             });
         }
     }

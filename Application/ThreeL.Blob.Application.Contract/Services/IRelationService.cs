@@ -16,5 +16,6 @@ namespace ThreeL.Blob.Application.Contract.Services
         Task<HandleAddFriendApplyResponse> HandleAddFriendApplyAsync(HandleAddFriendApplyRequest request, ServerCallContext serverCallContext);
         Task<SendFileResponse> SendFileAsync(SendFileRequest request, ServerCallContext serverCallContext);
         Task<SendFolderResponse> SendFolderAsync(SendFolderRequest request, ServerCallContext serverCallContext);
+        Task<CancelSendFileResponse> CancelSendFileAsync(CancelSendFileRequest request, ServerCallContext serverCallContext);
     }
 }

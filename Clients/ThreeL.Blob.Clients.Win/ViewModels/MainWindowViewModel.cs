@@ -25,6 +25,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         public RelayCommand ShiftSettingsPageCommand { get; set; }
         public RelayCommand ShiftMainPageCommand { get; set; }
         public RelayCommand ShiftTransferPageCommand { get; set; }
+        public RelayCommand ShiftSharePageCommand { get; set; }
         public AsyncRelayCommand LoadCommandAsync { get; set; }
         public AsyncRelayCommand ExitCommandAsync { get; set; }
         private string _transferCounts;
@@ -74,6 +75,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private readonly MainPage _mainPage;
         private readonly TransferPage _transferPage;
         private readonly SettingsPage _settingsPage;
+        private readonly Share _sharePage;
         private readonly ApiHttpRequest _httpRequest;
         private readonly GrowlHelper _growlHelper;
         private readonly FileHelper _fileHelper;
@@ -84,7 +86,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
                                    ApiHttpRequest httpRequest,
                                    GrowlHelper growlHelper,
                                    FileHelper fileHelper,
-                                   Chat chat)
+                                   Chat chat,
+                                   Share sharePage)
         {
             IsAdmin = App.UserProfile.Role == Role.Admin.ToString() || App.UserProfile.Role == Role.SuperAdmin.ToString();
             _mainPage = mainPage;
@@ -94,9 +97,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             _growlHelper = growlHelper;
             _fileHelper = fileHelper;
             _chat = chat;
+            _sharePage = sharePage;
             ShiftSettingsPageCommand = new RelayCommand(OpenSettingsPage);
             ShiftMainPageCommand = new RelayCommand(OpenMainPage);
             ShiftTransferPageCommand = new RelayCommand(OpenTransferPage);
+            ShiftSharePageCommand = new RelayCommand(OpenSharedPage);
             LoadCommandAsync = new AsyncRelayCommand(LoadAsync);
             ExitCommandAsync = new AsyncRelayCommand(ExitAsync);
             TransferCounts = null;
@@ -192,6 +197,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private void OpenTransferPage()
         {
             CurrentPage = _transferPage;
+        }
+
+        private void OpenSharedPage() 
+        {
+            CurrentPage = _sharePage;
         }
     }
 }

@@ -86,7 +86,10 @@
                             </behaviors:Interaction.Triggers>
                         </hc:NumericUpDown>
 
-                        <CheckBox IsChecked="{Binding AutoStart}" Content="开机自启" Width="200" HorizontalAlignment="Left" FontSize="14" Margin="0 20 0 5"></CheckBox>
+                        <CheckBox IsChecked="{Binding HiddenChatWindow}" Content="隐藏聊天窗口" 
+                                  Width="200" HorizontalAlignment="Left" 
+                                  FontSize="14" Margin="0 20 0 5"></CheckBox>
+                        <CheckBox IsChecked="{Binding AutoStart}" Content="开机自启" Width="200" HorizontalAlignment="Left" FontSize="14" Margin="0 5 0 5"></CheckBox>
                         <CheckBox IsChecked="{Binding ExitWithoutMin}" Content="关闭后直接退出" Width="200" HorizontalAlignment="Left" FontSize="14" Margin="0 5 0 5"></CheckBox>
                         <Button HorizontalAlignment="Left" 
                                 Margin="0 5"

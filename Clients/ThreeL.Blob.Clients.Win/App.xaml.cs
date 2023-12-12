@@ -61,6 +61,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<TransferPageViewModel>();
                 service.AddSingleton<SettingsPage>();
                 service.AddSingleton<SettingsPageViewModel>();
+                service.AddSingleton<Share>();
+                service.AddSingleton<ShareViewModel>();
 
                 service.AddSingleton<UploadingPage>();
                 service.AddSingleton<UploadingPageViewModel>();

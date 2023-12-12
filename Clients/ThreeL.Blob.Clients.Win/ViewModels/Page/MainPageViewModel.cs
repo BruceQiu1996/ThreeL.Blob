@@ -871,6 +871,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task GenerateDownloadTaskAsync(DownloadFileResponseDto result, string location, bool openWhenFinished = false)
         {
             var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
+            if (!Directory.Exists(location)) 
+            {
+                Directory.CreateDirectory(location);
+            }
             File.Create(tempFileName).Close();
             var record = new DownloadFileRecord()
             {

@@ -75,11 +75,19 @@ namespace ThreeL.Blob.Clients.Win.Helpers
                     key = 10;
                     icon = "txt.png";
                     break;
+                case ".xml":
+                    key = 11;
+                    icon = "xml.png";
+                    break;
+                case ".json":
+                    key = 12;
+                    icon = "json.png";
+                    break;
                 case ".ppt":
                 case ".pptx":
                 case ".potx":
                 case ".pot":
-                    key = 11;
+                    key = 13;
                     icon = "ppt.png";
                     break;
                 default:
