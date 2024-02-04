@@ -59,7 +59,7 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
-        [Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
+        //[Authorize(Roles = $"{nameof(Role.Admin)},{nameof(Role.SuperAdmin)}")]
         [ParamValidate(typeof(UserCreationDtoValidator))]
         [HttpPost("users")]
         public async Task<ActionResult> Create(UserCreationDto creationDto)

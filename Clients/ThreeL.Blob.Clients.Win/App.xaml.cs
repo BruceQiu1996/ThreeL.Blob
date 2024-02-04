@@ -48,6 +48,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<LoginWindowViewModel>();
                 service.AddTransient<DownloadEnsure>();
                 service.AddTransient<DownloadEnsureViewModel>();
+                service.AddTransient<ZipFileObjectsEnsure>();
+                service.AddTransient<ZipFileObjectsEnsureViewModel>();
                 service.AddTransient<Move>();
                 service.AddTransient<MoveViewModel>();
                 service.AddSingleton<Chat>();
@@ -59,6 +61,8 @@ namespace ThreeL.Blob.Clients.Win
                 service.AddSingleton<TransferPageViewModel>();
                 service.AddSingleton<SettingsPage>();
                 service.AddSingleton<SettingsPageViewModel>();
+                service.AddSingleton<Share>();
+                service.AddSingleton<ShareViewModel>();
 
                 service.AddSingleton<UploadingPage>();
                 service.AddSingleton<UploadingPageViewModel>();

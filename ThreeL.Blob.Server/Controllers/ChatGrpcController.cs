@@ -91,5 +91,25 @@ namespace ThreeL.Blob.Server.Controllers
                 };
             }
         }
+
+        [Authorize]
+        public async override Task<CancelSendFileResponse> CancelSendFile(CancelSendFileRequest request, ServerCallContext context)
+        {
+            try
+            {
+                return await _relationService.CancelSendFileAsync(request, context);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+
+                return new CancelSendFileResponse()
+
+                {
+                    Success = false,
+                    Message = "服务器错误"
+                };
+            }
+        }
     }
 }

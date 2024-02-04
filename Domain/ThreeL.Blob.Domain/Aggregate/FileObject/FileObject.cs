@@ -20,5 +20,23 @@ namespace ThreeL.Blob.Domain.Aggregate.FileObject
         public FileStatus? Status { get; set; }
         public string? TempFileLocation { get; set; }
         public string? ThumbnailImageLocation { get; set; }
+
+        public FileObject() { }
+
+        //创建压缩文件
+        public FileObject(string name, string location, string code, long parentFolder, long createBy, DateTime createTime, long size)
+        {
+            Name = name;
+            Location = location;
+            Code = code;
+            ParentFolder = parentFolder;
+            CreateBy = createBy;
+            CreateTime = createTime;
+            UploadFinishTime = createTime;
+            LastUpdateTime = createTime;
+            IsFolder = false;
+            Status = FileStatus.Normal;
+            Size = size;
+        }
     }
 }

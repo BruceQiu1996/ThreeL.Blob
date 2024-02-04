@@ -147,6 +147,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand RenameCommand { get; set; }
         public RelayCommand MoveCommand { get; set; }
         public RelayCommand SendToChatCommand { get; set; }
+        public RelayCommand CompressCommand { get; set; }
 
         public bool CanSendToChatCommand => !IsFolder; //TODO 是否支持发送文件夹？
         public FileObjItemViewModel()
@@ -158,6 +159,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             DragEnterFileObjectCommand = new RelayCommand(DragEnterFileObject);
             DragLeaveFileObjectCommand = new RelayCommand(DragLeaveFileObject);
             SendToChatCommand = new RelayCommand(SendToChat);
+            CompressCommand = new RelayCommand(Compress);
             DownloadCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDownload); });
             DeleteCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDelete); });
             SelectAllCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectAll); });
@@ -195,6 +197,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         private void SendToChat() 
         {
             WeakReferenceMessenger.Default.Send(this, Const.SendFileObjectToChat);
+        }
+
+        private void Compress()
+        {
+            WeakReferenceMessenger.Default.Send(this, Const.CompressFileObjects);
         }
 
         private void RightClickFileObject()

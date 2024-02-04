@@ -23,7 +23,7 @@ namespace ThreeL.Blob.Shared.Application.Contract.Helpers
             var salt = GenerateSalt();
             var hash = HashPassword(password, salt);
             var result = $"{salt}.{hash}";
-            Console.WriteLine("hash result:{0}", result);
+
             return result;
         }
 

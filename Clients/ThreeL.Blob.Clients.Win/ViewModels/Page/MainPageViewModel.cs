@@ -27,6 +27,7 @@ using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
 using ThreeL.Blob.Infra.Core.Extensions.System;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -52,7 +53,8 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand RefreshCommandAsync { get; set; }
         public AsyncRelayCommand NewFolderCommandAsync { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
-        public RelayCommand SelectNoCommand { get; set; }
+        public AsyncRelayCommand CompressItemsCommandAsync { get; set; }
+
 
         public RelayCommand<MouseButtonEventArgs> FileObjectsChooseDragCommand { get; set; }
 
@@ -121,7 +123,11 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public bool IsListView
         {
             get => _isListView;
-            set => SetProperty(ref _isListView, value);
+            set
+            {
+                SetProperty(ref _isListView, value);
+                _iniSettings.WriteListMode(value).GetAwaiter().GetResult();
+            }
         }
 
         public MainPageViewModel(GrpcService grpcService, ApiHttpRequest httpRequest,
@@ -224,12 +230,18 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 await ConfirmCommandAsync(y);
             }));
+            //压缩
+            WeakReferenceMessenger.Default.Register<MainPageViewModel, FileObjItemViewModel, string>(this, Const.CompressFileObjects, async (x, y) =>
+            {
+                await CompressItemsAsync();
+            });
             #endregion
         }
 
         private async Task LoadAsync()
         {
             await RefreshByParentAsync(_currentParent);
+            IsListView = _iniSettings.ListMode;
         }
 
         private async Task RefreshAsync()
@@ -348,6 +360,41 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             {
                 item.IsSelected = false;
             }
+        /// <summary>
+        /// 压缩文件/文件夹
+        /// </summary>
+        private async Task CompressItemsAsync()
+        {
+            var dialog = App.ServiceProvider!.GetRequiredService<ZipFileObjectsEnsure>();
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            dialog.Owner = App.ServiceProvider!.GetRequiredService<MainWindow>();
+            (dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipFileObjectsEnsure = dialog;
+            var result = dialog.ShowDialog();
+            if (string.IsNullOrEmpty((dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipName)) 
+            {
+                _growlHelper.Warning("名字不能为空");
+                return;
+            }
+            if (result != null && result.Value)
+            {
+                var items = FileObjViewModels.Where(x => x.IsSelected)
+                    .Select(x => x.Id).ToArray();
+                if (items.Count() <= 0)
+                    return;
+
+                var resp = await _httpRequest.PostAsync(Const.COMPRESS, new CompressFileObjectsDto()
+                {
+                    ZipName = (dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipName,
+                    Items = items
+                });
+
+                if (resp != null)
+                {
+                    _growlHelper.Success("服务器压缩中,请稍后刷新查看...");
+                }
+            }
+        }
+
         }
 
         #endregion
@@ -828,6 +875,10 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         private async Task GenerateDownloadTaskAsync(DownloadFileResponseDto result, string location, bool openWhenFinished = false)
         {
             var tempFileName = Path.Combine(location, $"{Path.GetRandomFileName()}.tmp");
+            if (!Directory.Exists(location)) 
+            {
+                Directory.CreateDirectory(location);
+            }
             File.Create(tempFileName).Close();
             var record = new DownloadFileRecord()
             {

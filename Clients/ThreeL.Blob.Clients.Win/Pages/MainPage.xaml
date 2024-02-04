@@ -13,7 +13,7 @@
       Title="MainPage">
     <Page.Resources>
         <convert:UtcDateTimeToStringConverter x:Key="UtcDateTimeToStringConverter"></convert:UtcDateTimeToStringConverter>
-        <ContextMenu x:Key="fileitemmenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
+        <ContextMenu x:Key="fileitemmenu" BorderThickness="0" Width="180" Padding="0" Cursor="Hand">
             <MenuItem Header="下载" 
                       Command="{Binding DownloadCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="全选" 
@@ -27,8 +27,9 @@
             <MenuItem Header="移动" 
                       Command="{Binding MoveCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="发送到聊天" 
-                      Visibility="{Binding CanSendToChatCommand,Converter={StaticResource Boolean2VisibilityConverter}}"
                       Command="{Binding SendToChatCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="压缩文件/文件夹" 
+                      Command="{Binding CompressCommand}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
         <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
             <MenuItem Header="新建文件夹" 
@@ -41,6 +42,8 @@
                       Command="{Binding SelectAllCommand}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="全不选" 
                       Command="{Binding SelectNoCommand}" Padding="5 5" FontSize="15"></MenuItem>
+            <MenuItem Header="压缩选中文件/文件夹" 
+                      Command="{Binding CompressItemsCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
     </Page.Resources>
     <behaviors:Interaction.Triggers>
@@ -87,6 +90,19 @@
                         Command="{Binding RefreshCommandAsync}"
                         Width="120" Style="{StaticResource ButtonInfo}" Cursor="Hand"></Button>-->
                 <CheckBox Content="列表" Margin="20 0  0 0" ToolTip="切换为列表视图" FontSize="14" IsChecked="{Binding IsListView}" Cursor="Hand"></CheckBox>
+
+                <Label Background="Transparent" BorderThickness="0"
+                       Cursor="Hand" ToolTip="刷新"
+                       Margin="20 0 0 0">
+                    <behaviors:Interaction.Triggers>
+                        <behaviors:EventTrigger EventName="MouseLeftButtonDown">
+                            <behaviors:InvokeCommandAction Command="{Binding RefreshCommandAsync}"></behaviors:InvokeCommandAction>
+                        </behaviors:EventTrigger>
+                    </behaviors:Interaction.Triggers>
+                    <Path Data="{StaticResource refresh}"
+                          Stroke="{StaticResource PrimaryBrush}"
+                          Stretch="Uniform"></Path>
+                </Label>
             </StackPanel>
         </Border>
 
@@ -285,23 +301,23 @@
                                                     </TextBox>
 
                                                     <Popup PopupAnimation="Fade"
-                                       Placement="Mouse"
-                                       Focusable="False"
-                                       HorizontalOffset="50"
-                                       Effect="{StaticResource EffectShadow5}"
-                                       AllowsTransparency="True"
-                                       IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                                           Placement="Mouse"
+                                                           Focusable="False"
+                                                           HorizontalOffset="50"
+                                                           Effect="{StaticResource EffectShadow5}"
+                                                           AllowsTransparency="True"
+                                                           IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
                                                         <Border Background="{StaticResource PrimaryBrush}"
-                                            CornerRadius="5"
-                                            Padding="5"
-                                            Effect="{StaticResource EffectShadow5}">
+                                                                CornerRadius="5"
+                                                                Padding="5"
+                                                                Effect="{StaticResource EffectShadow5}">
                                                             <StackPanel Orientation="Vertical">
                                                                 <TextBlock Text="{Binding Name}" Margin="0 2" TextDecorations="Underline"  FontSize="16" Foreground="White"></TextBlock>
                                                                 <TextBlock Margin="0 2" Text="{Binding CreateTime,StringFormat=创建时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
                                                                 <TextBlock Margin="0 2" Text="{Binding LastUpdateTime,StringFormat=修改时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
                                                                 <TextBlock Margin="0 2" 
-                                                       Visibility="{Binding IsFolder,Converter={StaticResource Boolean2VisibilityReConverter}}"
-                                                       Text="{Binding SizeText,StringFormat=文件大小 : {0}}" FontSize="14" Foreground="White"></TextBlock>
+                                                                           Visibility="{Binding IsFolder,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                                                                           Text="{Binding SizeText,StringFormat=文件大小 : {0}}" FontSize="14" Foreground="White"></TextBlock>
                                                             </StackPanel>
                                                         </Border>
                                                     </Popup>
@@ -394,47 +410,47 @@
                                                         <ColumnDefinition Width="100"></ColumnDefinition>
                                                     </Grid.ColumnDefinitions>
                                                     <CheckBox Width="15"
-                                              Grid.Column="0"
-                                              IsEnabled="True"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"
-                                              IsChecked="{Binding IsSelected}"
-                                              Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
-                                              Style="{x:Null}">
+                                                              Grid.Column="0"
+                                                              IsEnabled="True"
+                                                              HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              IsChecked="{Binding IsSelected}"
+                                                              Visibility="{Binding IsSelected,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                                              Style="{x:Null}">
 
                                                     </CheckBox>
                                                     <hc:Gravatar Height="25" Width="25"
-                                                 Grid.Column="1"
-                                                 Name="icon"
-                                                 HorizontalAlignment="Center"
-                                                 VerticalAlignment="Center"
-                                                 Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
+                                                                 Grid.Column="1"
+                                                                 Name="icon"
+                                                                 HorizontalAlignment="Center"
+                                                                 VerticalAlignment="Center"
+                                                                 Source="{Binding Icon,UpdateSourceTrigger=PropertyChanged}">
                                                     </hc:Gravatar>
                                                     <TextBlock Text="{Binding Name}"
-                                               Grid.Column="2"
-                                               Margin="10 0 0 0"
-                                               Cursor="Hand"
-                                               ToolTip="{Binding Name}"
-                                               Foreground="Black"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontSize="13" 
-                                               Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                                               Grid.Column="2"
+                                                               Margin="10 0 0 0"
+                                                               Cursor="Hand"
+                                                               ToolTip="{Binding Name}"
+                                                               Foreground="Black"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="13" 
+                                                               Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityReConverter}}">
                                                     </TextBlock>
                                                     <TextBox Text="{Binding Name}"
-                                             ToolTip="{Binding Name}"
-                                             Name="txtUserName"
-                                             Margin="10 0 0 0"
-                                             Grid.Column="2"
-                                             Cursor="Hand"
-                                             Foreground="Black"
-                                             HorizontalAlignment="Left"
-                                             VerticalAlignment="Center"
-                                             GotFocus="txtUserName_GotFocus"
-                                             FontSize="13"
-                                             Focusable="True"
-                                             BorderThickness="1"
-                                             Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                                             ToolTip="{Binding Name}"
+                                                             Name="txtUserName"
+                                                             Margin="10 0 0 0"
+                                                             Grid.Column="2"
+                                                             Cursor="Hand"
+                                                             Foreground="Black"
+                                                             HorizontalAlignment="Left"
+                                                             VerticalAlignment="Center"
+                                                             GotFocus="txtUserName_GotFocus"
+                                                             FontSize="13"
+                                                             Focusable="True"
+                                                             BorderThickness="1"
+                                                             Visibility="{Binding IsRename,Converter={StaticResource Boolean2VisibilityConverter}}">
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox">
                                                                 <Style.Triggers>
@@ -460,14 +476,35 @@
                                                     </TextBlock>
 
                                                     <TextBlock Text="{Binding SizeText}"
-                                               Grid.Column="4"
-                                               Margin="20 0 0 0"
-                                               Foreground="#555"
-                                               HorizontalAlignment="Left"
-                                               VerticalAlignment="Center"
-                                               FontSize="13" >
+                                                               Grid.Column="4"
+                                                               Margin="20 0 0 0"
+                                                               Foreground="#555"
+                                                               HorizontalAlignment="Left"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="13" >
                                                     </TextBlock>
 
+                                                    <Popup PopupAnimation="Fade"
+                                                           Placement="Mouse"
+                                                           Focusable="False"
+                                                           HorizontalOffset="50"
+                                                           Effect="{StaticResource EffectShadow5}"
+                                                           AllowsTransparency="True"
+                                                           IsOpen="{Binding ElementName=icon,Path=IsMouseOver,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}">
+                                                        <Border Background="{StaticResource PrimaryBrush}"
+                                                                CornerRadius="5"
+                                                                Padding="5"
+                                                                Effect="{StaticResource EffectShadow5}">
+                                                            <StackPanel Orientation="Vertical">
+                                                                <TextBlock Text="{Binding Name}" Margin="0 2" TextDecorations="Underline"  FontSize="16" Foreground="White"></TextBlock>
+                                                                <TextBlock Margin="0 2" Text="{Binding CreateTime,StringFormat=创建时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
+                                                                <TextBlock Margin="0 2" Text="{Binding LastUpdateTime,StringFormat=修改时间 : {0},Converter={StaticResource UtcDateTimeToStringConverter}}" FontSize="14" Foreground="White"></TextBlock>
+                                                                <TextBlock Margin="0 2" 
+                                                                           Visibility="{Binding IsFolder,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                                                                           Text="{Binding SizeText,StringFormat=文件大小 : {0}}" FontSize="14" Foreground="White"></TextBlock>
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Popup>
                                                 </Grid>
                                             </Border>
                                         </ControlTemplate>

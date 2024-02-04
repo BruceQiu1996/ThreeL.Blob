@@ -47,9 +47,19 @@ message SendFolderResponse{
 	string fileName = 4;
 }
 
+message CancelSendFileRequest{
+	string token = 1;
+}
+
+message CancelSendFileResponse{
+	bool success = 1;
+	string message = 2;
+}
+
 service RpcContextAPIService{
 	rpc AddFriendApply(AddFriendApplyRequest) returns (CommonResponse);
 	rpc HandleAddFriendApply(HandleAddFriendApplyRequest) returns (HandleAddFriendApplyResponse);
 	rpc SendFile(SendFileRequest) returns (SendFileResponse);
 	rpc SendFolder(SendFolderRequest) returns (SendFolderResponse);
+	rpc CancelSendFile(CancelSendFileRequest) returns (CancelSendFileResponse);
 }

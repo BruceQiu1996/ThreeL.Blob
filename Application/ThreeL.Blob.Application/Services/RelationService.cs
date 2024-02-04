@@ -50,6 +50,14 @@ namespace ThreeL.Blob.Application.Services
         {
             var userName = serverCallContext.GetHttpContext().User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Sid)?.Value;
             var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
+            if (userId == request.Target) 
+            {
+                return new CommonResponse()
+                {
+                    Success = false,
+                    Message = "无法添加自己为好友"
+                };
+            }
             var friend = await _userEfBasicRepository.GetAsync(request.Target);
             if (friend == null)
             {
@@ -343,6 +351,21 @@ namespace ThreeL.Blob.Application.Services
                 Token = token,
                 FileName = file.Name,
             };
+        }
+
+        public async Task<CancelSendFileResponse> CancelSendFileAsync(CancelSendFileRequest request, ServerCallContext serverCallContext)
+        {
+            var userId = long.Parse(serverCallContext.GetHttpContext().User.Identity.Name!);
+            var record = await _FileObjectShareRecordEfBasicRepository
+                .FirstOrDefaultAsync(x => x.Token == request.Token && x.CreateBy == userId);
+
+            if (record != null) 
+            {
+                record.ExpireTime = DateTime.Now;
+                await _FileObjectShareRecordEfBasicRepository.UpdateAsync(record);
+            }
+
+            return new CancelSendFileResponse() { Success = true };
         }
     }
 }

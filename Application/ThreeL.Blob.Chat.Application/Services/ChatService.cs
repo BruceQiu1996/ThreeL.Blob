@@ -304,6 +304,11 @@ namespace ThreeL.Blob.Chat.Application.Services
             await _chatRecordRepository.UpdateAsync(message.Id, Builders<ChatRecord>.Update.Set(x => x.Withdraw, true)
                 .Set(x => x.WithdrawTime, DateTime.Now));
 
+            if (message.MessageType == Shared.Domain.Metadata.Message.MessageType.File) //撤回文件分享记录
+            {
+                await _rpcContextAPIServiceClient.CancelSendFileAsync(new CancelSendFileRequest() { Token = message.FileToken});
+            }
+
             {
                 //发送给两个人
                 await clients.User(resp.From.ToString()).SendAsync(HubConst.ReceiveWithdrawMessage, new HubMessageResponseDto<WithdrawMessageResponseDto>()

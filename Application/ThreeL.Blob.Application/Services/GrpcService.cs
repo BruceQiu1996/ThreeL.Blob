@@ -10,6 +10,7 @@ using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
 using ThreeL.Blob.Shared.Application.Contract.Services;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 
 namespace ThreeL.Blob.Application.Services
 {
@@ -219,7 +220,9 @@ namespace ThreeL.Blob.Application.Services
                     } while (await uploadFileRequest.MoveNext());
                 }
 
-                FileObject.Location = Path.ChangeExtension(FileObject.TempFileLocation, Path.GetExtension(FileObject.Name));
+                FileInfo fileInfo = new FileInfo(FileObject.TempFileLocation);
+                FileObject.Location = FileObject.Name.GetAvailableFileLocation(fileInfo.DirectoryName!);
+                FileObject.Name = Path.GetFileName(FileObject.Location);
                 File.Move(FileObject.TempFileLocation, FileObject.Location);
                 FileObject.Status = FileStatus.Normal;
                 await _efBasicRepository.UpdateAsync(FileObject);

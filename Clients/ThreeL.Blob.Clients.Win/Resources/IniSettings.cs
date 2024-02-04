@@ -19,6 +19,8 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public const string UserNameKey = "UserNameKey";
         public const string PasswordKey = "PasswordKey";
         public const string LoginTimeKey = "LoginTimeKey";
+        public const string ListModelKey = "ListModelKey";
+        public const string HiddenChatWindowKey = "HiddenChatWindowKey";
         #endregion
 
         #region 配置项
@@ -31,6 +33,8 @@ namespace ThreeL.Blob.Clients.Win.Resources
         public string UserName { get; set; }
         public string Password { get; set; }
         public string LoginTime { get; set; }
+        public bool ListMode { get; set; } //true列表显示，false warp显示
+        public bool HiddenChatWindow { get; set; }
         #endregion
 
         private readonly IniHelper _iniHelper;
@@ -49,6 +53,10 @@ namespace ThreeL.Blob.Clients.Win.Resources
             {
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 var downloadDir = Path.Combine(appDir.Substring(0, appDir.IndexOf('\\')), "ThreeLDownloads");
+                if (!Directory.Exists(downloadDir)) 
+                {
+                    Directory.CreateDirectory(downloadDir);
+                }
                 await WriteDownloadLocation(downloadDir);
             }
 
@@ -71,6 +79,8 @@ namespace ThreeL.Blob.Clients.Win.Resources
             Password = await _iniHelper.ReadAsync(ApplicationSectionKey, PasswordKey);
             UserName = await _iniHelper.ReadAsync(ApplicationSectionKey, UserNameKey);
             LoginTime = await _iniHelper.ReadAsync(ApplicationSectionKey, LoginTimeKey);
+            ListMode = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, ListModelKey), out var tempListModel) ? tempListModel : false;
+            HiddenChatWindow = bool.TryParse(await _iniHelper.ReadAsync(ApplicationSectionKey, HiddenChatWindowKey), out var tempHiddenChatWindow) ? tempHiddenChatWindow : false;
         }
 
         /// <summary>
@@ -109,6 +119,12 @@ namespace ThreeL.Blob.Clients.Win.Resources
             }
         }
 
+        public async Task WriteHiddenChatWindow(bool value)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, HiddenChatWindowKey, value.ToString());
+            HiddenChatWindow = value;
+        }
+
         public async Task WriteExitWithoutMin(bool value)
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, ExitWithoutMinKey, value.ToString());
@@ -125,6 +141,12 @@ namespace ThreeL.Blob.Clients.Win.Resources
         {
             await _iniHelper.WriteAsync(ApplicationSectionKey, MaxDownloadThreadsKey, value.ToString());
             MaxDownloadThreads = value;
+        }
+
+        public async Task WriteListMode(bool mode)
+        {
+            await _iniHelper.WriteAsync(ApplicationSectionKey, ListModelKey, mode.ToString());
+            ListMode = mode;
         }
 
         public async Task WriteUserInfo(string userName,string password,string loginTime)

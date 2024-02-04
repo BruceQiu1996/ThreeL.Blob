@@ -22,9 +22,11 @@
 		<None Remove="Images\folder.png" />
 		<None Remove="Images\html.png" />
 		<None Remove="Images\image.png" />
+		<None Remove="Images\json.png" />
 		<None Remove="Images\PPT.png" />
 		<None Remove="Images\sql.png" />
 		<None Remove="Images\TXT.png" />
+		<None Remove="Images\xml.png" />
 	</ItemGroup>
 
 	<ItemGroup>
