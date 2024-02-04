@@ -43,5 +43,26 @@ namespace ThreeL.Blob.Infra.Core.Extensions.System
 
             return newName;
         }
+
+        public static long GetDirectoryLength(this string dirPath)
+        {
+            long len = 0;
+            DirectoryInfo di = new DirectoryInfo(dirPath);
+            foreach (FileInfo fi in di.GetFiles())
+            {
+                len += fi.Length;
+            }
+
+            DirectoryInfo[] dis = di.GetDirectories();
+            if (dis.Length > 0)
+            {
+                for (int i = 0; i < dis.Length; i++)
+                {
+                    len += GetDirectoryLength(dis[i].FullName);
+                }
+            }
+
+            return len;
+        }
     }
 }

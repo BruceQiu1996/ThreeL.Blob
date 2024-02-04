@@ -270,22 +270,22 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
-        [HttpPost("zip")]
-        [Authorize]
-        public async Task<ActionResult> CompressFileObjectsAsync(CompressFileObjectsDto compressFileObjectsDto)
-        {
-            try
-            {
-                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-                var result = await _fileService.CompressFileObjectsAsync(userId, compressFileObjectsDto);
+        //[HttpPost("zip")]
+        //[Authorize]
+        //public async Task<ActionResult> CompressFileObjectsAsync(CompressFileObjectsDto compressFileObjectsDto)
+        //{
+        //    try
+        //    {
+        //        long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+        //        var result = await _fileService.CompressFileObjectsAsync(userId, compressFileObjectsDto);
 
-                return result.ToActionResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.ToString());
-                return Problem();
-            }
-        }
+        //        return result.ToActionResult();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex.ToString());
+        //        return Problem();
+        //    }
+        //}
     }
 }

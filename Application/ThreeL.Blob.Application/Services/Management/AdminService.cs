@@ -116,7 +116,7 @@ namespace ThreeL.Blob.Application.Services.Management
             }
             var roleEnum = role.ToEnum<Role>();
             var targetEnum = updateDto.Role.ToEnum<Role>();
-            if (roleEnum <= targetUser.Role || roleEnum <= targetEnum)
+            if (creator != target && (roleEnum <= targetUser.Role || roleEnum <= targetEnum))
             {
                 return new ServiceResult<MUserBriefResponseDto>(HttpStatusCode.BadRequest, "修改权限的权限不足");
             }

@@ -2,6 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -16,6 +17,7 @@ using ThreeL.Blob.Clients.Win.Resources;
 using ThreeL.Blob.Clients.Win.ViewModels.Item;
 using ThreeL.Blob.Clients.Win.ViewModels.Page;
 using ThreeL.Blob.Clients.Win.Windows;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Shared.Domain.Metadata.User;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels
@@ -61,6 +63,30 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
             get => _userName;
             set => SetProperty(ref _userName, value);
         }
+
+        private string _roleText;
+        public string RoleText
+        {
+            get => _roleText;
+            set => SetProperty(ref _roleText, value);
+        }
+
+        private string _usedRateText;
+        public string UsedRateText
+        {
+            get => _usedRateText;
+            set => SetProperty(ref _usedRateText, value);
+        }
+
+        private double _usedRate;
+        public double UsedRate
+        {
+            get => _usedRate;
+            set => SetProperty(ref _usedRate, value);
+        }
+
+        public long? MaxSpace { get; set; }
+        public long UsedSpace { get; set; }
 
         private BitmapImage _avatar;
         public BitmapImage Avatar
@@ -157,6 +183,25 @@ namespace ThreeL.Blob.Clients.Win.ViewModels
         private async Task LoadAsync()
         {
             UserName = App.UserProfile.UserName;
+            RoleText = App.UserProfile.Role;
+            MaxSpace = App.UserProfile.MaxSpaceSize;
+            UsedSpace = App.UserProfile.UsedSpaceSize;
+            if (MaxSpace == 0) //没有空间
+            {
+                UsedRate = 100;
+                UsedRateText = "没有空间";
+            }
+            else if (MaxSpace == null) //无限大空间
+            {
+                UsedRate = 0;
+                UsedRateText = "无限大";
+            }
+            else
+            {
+                UsedRate = Math.Round(UsedSpace * 1.0 / MaxSpace.Value * 100, 2);
+                UsedRateText = $"{UsedSpace.ToSizeText()}/{MaxSpace.Value.ToSizeText()}";
+            }
+
             if (App.UserProfile.Avatar != null) 
             {
                 var avatarResp = await _httpRequest.GetAsync(string.Format(Const.GET_AVATAR_IMAGE, App.UserProfile.Avatar.Replace("\\","/")));

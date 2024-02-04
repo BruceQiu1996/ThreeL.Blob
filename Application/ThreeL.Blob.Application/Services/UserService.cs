@@ -9,6 +9,7 @@ using System.Security.Claims;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Services;
 using ThreeL.Blob.Domain.Aggregate.User;
+using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Redis;
 using ThreeL.Blob.Infra.Repository.IRepositories;
 using ThreeL.Blob.Shared.Application.Contract.Configurations;
@@ -68,6 +69,9 @@ namespace ThreeL.Blob.Application.Services
                 respDto.AccessToken = token.accessToken;
                 respDto.Avatar = respDto.Avatar == null ? respDto.Avatar : respDto.Avatar.Replace(_configuration.GetSection("FileStorage:AvatarImagesLocation").Value!, null);
 
+                //获取占用大小
+                var len = user.Location.GetDirectoryLength();
+                respDto.UsedSpaceSize = len;
                 return new ServiceResult<UserLoginResponseDto>(respDto);
             }
         }

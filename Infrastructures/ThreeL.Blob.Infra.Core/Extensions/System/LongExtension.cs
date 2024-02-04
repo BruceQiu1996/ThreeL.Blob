@@ -13,15 +13,15 @@
             }
             else if (size >= 1024 && size < 1024 * 1024)
             {
-                return $"{size * 1.0 / 1024:0.00}KB";
+                return $"{size * 1.0 / 1024:0.0}KB";
             }
             else if (size >= 1024 * 1024 && size < 1024 * 1024 * 1024)
             {
-                return $"{size * 1.0 / (1024 * 1024):0.00}MB";
+                return $"{size * 1.0 / (1024 * 1024):0.0}MB";
             }
             else
             {
-                return $"{size * 1.0 / (1024 * 1024 * 1024):0.00}GB";
+                return $"{size * 1.0 / (1024 * 1024 * 1024):0.0}GB";
             }
         }
 

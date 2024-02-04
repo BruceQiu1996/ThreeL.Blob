@@ -13,7 +13,7 @@
         Background="Transparent"
         WindowStyle="None"
         ResizeMode="CanResize"
-        Title="主界面" Height="600" MinWidth="900" Width="900">
+        Title="主界面" Height="600" MinHeight="600" MinWidth="920" Width="920">
     <Window.Resources>
         <convert:String2BooleanConverter x:Key="String2BooleanConverter"></convert:String2BooleanConverter>
         <ContextMenu x:Key="iconMenu" Width="150">
@@ -42,7 +42,7 @@
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="65"/>
+                <ColumnDefinition Width="78"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Border MouseMove="Border_MouseMove" 
@@ -97,7 +97,7 @@
                 <StackPanel Orientation="Vertical">
                     <hc:Gravatar Id="{Binding UserName}" 
                                  Visibility="{Binding Avatar,Converter={StaticResource Object2VisibilityReConverter}}" 
-                                 Margin="0 5 0 0" Background="#eee" Style="{StaticResource GravatarCircle}" Width="50" Height="50">
+                                 Margin="0 5 0 0" Background="#eee" Style="{StaticResource GravatarCircle}" Width="60" Height="60">
 
                     </hc:Gravatar>
 
@@ -105,9 +105,18 @@
                                  Source="{Binding Avatar}"
                                  Margin="0 5 0 0" 
                                  Background="#eee" 
-                                 Style="{StaticResource GravatarCircle}" Width="50" Height="50">
+                                 Style="{StaticResource GravatarCircle}" Width="60" Height="60">
                         
                     </hc:Gravatar>
+
+                    <StackPanel Orientation="Vertical" Margin=" 0 5 0 0">
+                        <TextBlock Text="{Binding UserName}" HorizontalAlignment="Center" Foreground="Black" FontSize="14"></TextBlock>
+                        <hc:Tag Padding="5" ShowCloseButton="False" Width="72" ToolTip="{Binding RoleText}">
+                            <TextBlock Text="{Binding RoleText}" HorizontalAlignment="Center" Margin="0 5 0 0" Foreground="#555" 
+                                       
+                                       FontSize="10.5"></TextBlock>
+                        </hc:Tag>
+                    </StackPanel>
                     <ListBox Background="White" BorderThickness="0" Margin="0 20 0 0">
                         <ListBox.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -256,6 +265,11 @@
                             </Label>
                         </ListBoxItem>
                     </ListBox>
+
+                    <StackPanel Orientation="Vertical" Margin=" 0 80 0 0">
+                        <ProgressBar Value="{Binding UsedRate}" Margin="3 0"></ProgressBar>
+                        <TextBlock Text="{Binding UsedRateText}" HorizontalAlignment="Center" Margin="0 5 0 0" Foreground="#555" FontSize="10"></TextBlock>
+                    </StackPanel>
                 </StackPanel>
             </hc:Card>
 
