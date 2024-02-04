@@ -139,6 +139,11 @@ namespace ThreeL.Blob.Server
                 }
             });
 
+            if (!Directory.Exists(host.Configuration.GetSection("FileStorage:ThumbnailImagesLocation").Value!))
+            {
+                Directory.CreateDirectory(host.Configuration.GetSection("FileStorage:ThumbnailImagesLocation").Value!);
+            }
+
             ///缩略图
             host.UseFileServer(new FileServerOptions()
             {
@@ -146,6 +151,11 @@ namespace ThreeL.Blob.Server
                 RequestPath = new Microsoft.AspNetCore.Http.PathString("/api/thumbnailImages"),
                 EnableDirectoryBrowsing = false
             });
+
+            if (!Directory.Exists(host.Configuration.GetSection("FileStorage:AvatarImagesLocation").Value!))
+            {
+                Directory.CreateDirectory(host.Configuration.GetSection("FileStorage:AvatarImagesLocation").Value!);
+            }
 
             //头像
             host.UseFileServer(new FileServerOptions()

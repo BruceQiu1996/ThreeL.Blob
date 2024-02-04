@@ -7,6 +7,7 @@
         public const string REFRESH_TOKEN = "user/refresh/token";
         public const string UPLOAD_FILE = "file";
         public const string Get_FOLDERS = "file/folders";
+        public const string Get_ROOT = "file/root";
         public const string DELETE_FILE = "file/delete";
         public const string DOWNLOAD_FILE = "file/download/{0}";
         public const string DOWNLOAD_SHARED_FILE = "file/download-shared/{0}";

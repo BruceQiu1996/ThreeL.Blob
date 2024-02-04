@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -144,7 +145,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
         public RelayCommand DeleteCommand { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
         public RelayCommand SelectNoCommand { get; set; }
-        public RelayCommand RenameCommand { get; set; }
+        public RelayCommand<TextBox> RenameCommand { get; set; }
         public RelayCommand MoveCommand { get; set; }
         public RelayCommand SendToChatCommand { get; set; }
         public RelayCommand CompressCommand { get; set; }
@@ -164,7 +165,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Item
             DeleteCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuDelete); });
             SelectAllCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectAll); });
             SelectNoCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuSelectNo); });
-            RenameCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuRename); });
+            RenameCommand = new RelayCommand<TextBox>((txt) => { WeakReferenceMessenger.Default.Send(this, Const.MenuRename); });
             MoveCommand = new RelayCommand(() => { WeakReferenceMessenger.Default.Send(this, Const.MenuMove); });
         }
 

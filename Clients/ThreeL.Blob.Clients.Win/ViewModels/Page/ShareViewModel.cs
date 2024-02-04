@@ -1,11 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using ThreeL.Blob.Clients.Win.Entities;
 using ThreeL.Blob.Clients.Win.Request;
-using ThreeL.Blob.Clients.Win.ViewModels.Item;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {

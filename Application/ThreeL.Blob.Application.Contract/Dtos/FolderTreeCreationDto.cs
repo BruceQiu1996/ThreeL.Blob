@@ -14,6 +14,7 @@
         public string FolderName { get; set; }
         public string ParentClientId { get; set; }
         public string? Location { get; set; }
+        public string TrackPath { get; set; }
         public long ParentId { get; set; }
     }
 }

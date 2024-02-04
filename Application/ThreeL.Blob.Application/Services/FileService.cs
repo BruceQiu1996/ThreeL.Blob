@@ -1,6 +1,6 @@
-﻿using Amazon.Runtime.Internal.Util;
-using AutoMapper;
+﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net;
@@ -22,7 +22,7 @@ namespace ThreeL.Blob.Application.Services
         private readonly IEfBasicRepository<User, long> _userBasicRepository;
         private readonly IEfBasicRepository<FileObject, long> _fileBasicRepository;
         private readonly IEfBasicRepository<DownloadFileTask, string> _downloadTaskBasicRepository;
-        private readonly IEfBasicRepository<FileObjectShareRecord, long> _FileObjectShareRecordEfBasicRepository;
+        private readonly IEfBasicRepository<FileObjectShareRecord, long> _fileObjectShareRecordEfBasicRepository;
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
         private readonly IConfiguration _configuration;
@@ -32,7 +32,7 @@ namespace ThreeL.Blob.Application.Services
         public FileService(IEfBasicRepository<User, long> userBasicRepository,
                            IEfBasicRepository<FileObject, long> fileBasicRepository,
                            IEfBasicRepository<DownloadFileTask, string> downloadTaskBasicRepository,
-                           IEfBasicRepository<FileObjectShareRecord, long> FileObjectShareRecordEfBasicRepository,
+                           IEfBasicRepository<FileObjectShareRecord, long> fileObjectShareRecordEfBasicRepository,
                            IRedisProvider redisProvider,
                            IMapper mapper,
                            IConfiguration configuration,
@@ -44,11 +44,12 @@ namespace ThreeL.Blob.Application.Services
             _mapper = mapper;
             _redisProvider = redisProvider;
             _downloadTaskBasicRepository = downloadTaskBasicRepository;
-            _FileObjectShareRecordEfBasicRepository = FileObjectShareRecordEfBasicRepository;
+            _fileObjectShareRecordEfBasicRepository = fileObjectShareRecordEfBasicRepository;
             _userBasicRepository = userBasicRepository;
             _fileBasicRepository = fileBasicRepository;
             _configuration = configuration;
             _deleteFilesChannel = deleteFilesChannel;
+            _compressFileObjectsChannel = compressFileObjectsChannel;
         }
 
         public async Task<ServiceResult<PreDownloadFolderResponseDto>> PreDownloadFolderAsync(long folderId)
@@ -113,26 +114,12 @@ namespace ThreeL.Blob.Application.Services
 
         public async Task<ServiceResult<FileObjDto>> CreateFolderAsync(FolderCreationDto folderCreationDto, long userId)
         {
-            string parentFolderLocation = null;
-            if (folderCreationDto.ParentId != 0)
+            var parentFolder = await _fileBasicRepository.GetAsync(folderCreationDto.ParentId);
+            if (parentFolder == null || !parentFolder.IsFolder || !Directory.Exists(parentFolder.Location))
             {
-                var parentFolder = await _fileBasicRepository.GetAsync(folderCreationDto.ParentId);
-                if (parentFolder == null || !parentFolder.IsFolder || !Directory.Exists(parentFolder.Location))
-                {
-                    return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
-                }
-                parentFolderLocation = parentFolder.Location;
+                return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
             }
-            else
-            {
-                var user = await _userBasicRepository.GetAsync(userId);
-                if (user == null || !Directory.Exists(user.Location))
-                {
-                    return new ServiceResult<FileObjDto>(HttpStatusCode.BadRequest, "目录数据异常");
-                }
-                parentFolderLocation = user.Location;
-            }
-
+            var parentFolderLocation = parentFolder.Location;
             var exist = await _fileBasicRepository
                 .FirstOrDefaultAsync(x => x.IsFolder && x.Name == folderCreationDto.FolderName && x.ParentFolder == folderCreationDto.ParentId && x.CreateBy == userId);
             if (exist != null)
@@ -165,7 +152,8 @@ namespace ThreeL.Blob.Application.Services
                 Name = folderCreationDto.FolderName,
                 ParentFolder = folderCreationDto.ParentId,
                 Location = folderLocation,
-                Status = FileStatus.Normal
+                Status = FileStatus.Normal,
+                TrackPath = string.IsNullOrEmpty(parentFolder.TrackPath) ? $"{parentFolder.Id}" : $"{parentFolder.TrackPath},{parentFolder.Id}"
             };
             await _fileBasicRepository.InsertAsync(FileObject);
 
@@ -302,17 +290,11 @@ namespace ThreeL.Blob.Application.Services
             if (user == null)
                 return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "用户未授权");
 
-            string location = null;
-            if (uploadFileDto.ParentFolder != default)
-            {
-                var folder = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Id == uploadFileDto.ParentFolder && x.CreateBy == userId);
-                if (folder == null)
-                    return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "文件夹不存在");
+            var folder = await _fileBasicRepository.FirstOrDefaultAsync(x => x.IsFolder && x.Id == uploadFileDto.ParentFolder && x.CreateBy == userId);
+            if (folder == null)
+                return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "文件夹不存在");
 
-                location = folder.Location!;
-            }
-            else
-                location = user.Location;
+            var location = folder.Location!;
 
             if (!Directory.Exists(location))
                 return new ServiceResult<UploadFileResponseDto>(HttpStatusCode.BadRequest, "数据异常");
@@ -350,21 +332,15 @@ namespace ThreeL.Blob.Application.Services
                 return new ServiceResult(HttpStatusCode.BadRequest, "数据异常");
             }
 
-            long parentId = 0;
-            if (updateFileObjectLocationDto.ParentFolder != 0)
+            var parent = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == updateFileObjectLocationDto.ParentFolder && x.CreateBy == userId);
+            if (parent == null)
             {
-                var parent = await _fileBasicRepository.FirstOrDefaultAsync(x => x.Id == updateFileObjectLocationDto.ParentFolder && x.CreateBy == userId);
-                if (parent == null)
-                {
-                    return new ServiceResult(HttpStatusCode.BadRequest, "目标目录异常");
-                }
-
-                parentId = parent.Id;
+                return new ServiceResult(HttpStatusCode.BadRequest, "目标目录异常");
             }
 
             //目标目录下存在同名文件
             var oldfiles = await _fileBasicRepository
-            .Where(x => x.ParentFolder == parentId && x.CreateBy == userId).ToListAsync();
+            .Where(x => x.ParentFolder == parent.Id && x.CreateBy == userId).ToListAsync();
 
             if (oldfiles.Any(x => roots.FirstOrDefault(y => y.Name == x.Name) != null))
             {
@@ -390,7 +366,7 @@ namespace ThreeL.Blob.Application.Services
 
             roots.ForEach(x =>
             {
-                x.ParentFolder = parentId;
+                x.ParentFolder = parent.Id;
                 x.LastUpdateTime = DateTime.Now;
             });
             await _fileBasicRepository.UpdateRangeAsync(roots);
@@ -400,27 +376,15 @@ namespace ThreeL.Blob.Application.Services
 
         public async Task<ServiceResult<IEnumerable<FolderTreeCreationResponseDto>>> CreateFoldersAsync(FolderTreeCreationDto folderTreeCreationDto, long userId)
         {
-            string parentFolderLocation = null;
-            if (folderTreeCreationDto.ParentId != 0)
+            var parentFolder = await _fileBasicRepository.GetAsync(folderTreeCreationDto.ParentId);
+            if (parentFolder == null || !parentFolder.IsFolder || !Directory.Exists(parentFolder.Location))
             {
-                var parentFolder = await _fileBasicRepository.GetAsync(folderTreeCreationDto.ParentId);
-                if (parentFolder == null || !parentFolder.IsFolder || !Directory.Exists(parentFolder.Location))
-                {
-                    return new ServiceResult<IEnumerable<FolderTreeCreationResponseDto>>(HttpStatusCode.BadRequest, "目录数据异常");
-                }
-                parentFolderLocation = parentFolder.Location;
+                return new ServiceResult<IEnumerable<FolderTreeCreationResponseDto>>(HttpStatusCode.BadRequest, "目录数据异常");
             }
-            else
-            {
-                var user = await _userBasicRepository.GetAsync(userId);
-                if (user == null || !Directory.Exists(user.Location))
-                {
-                    return new ServiceResult<IEnumerable<FolderTreeCreationResponseDto>>(HttpStatusCode.BadRequest, "目录数据异常");
-                }
-                parentFolderLocation = user.Location;
-            }
+
             folderTreeCreationDto.Items.First().ParentId = folderTreeCreationDto.ParentId;
-            folderTreeCreationDto.Items.First().ParentFolderLocation = parentFolderLocation;
+            folderTreeCreationDto.Items.First().ParentFolderLocation = parentFolder.Location;
+            folderTreeCreationDto.Items.First().TrackPath = string.IsNullOrEmpty(parentFolder.TrackPath) ? $"{parentFolder.Id}" : $"{parentFolder.TrackPath},{parentFolder.Id}";
             await LoopCreateFoldersAsync(folderTreeCreationDto.Items, userId);
 
             return new ServiceResult<IEnumerable<FolderTreeCreationResponseDto>>(folderTreeCreationDto.Items.Select(_mapper.Map<FolderTreeCreationResponseDto>));
@@ -442,7 +406,7 @@ namespace ThreeL.Blob.Application.Services
                     var folderLocation = Path.Combine(item.ParentFolderLocation, item.FolderName);
                     Directory.CreateDirectory(folderLocation);
 
-                    var FileObject = new FileObject()
+                    var fileObject = new FileObject()
                     {
                         CreateBy = userId,
                         CreateTime = DateTime.Now,
@@ -452,18 +416,20 @@ namespace ThreeL.Blob.Application.Services
                         Name = item.FolderName,
                         ParentFolder = item.ParentId,
                         Location = folderLocation,
-                        Status = FileStatus.Normal
+                        Status = FileStatus.Normal,
+                        TrackPath = item.TrackPath
                     };
 
-                    await _fileBasicRepository.InsertAsync(FileObject);
-                    item.RemoteId = FileObject.Id;
+                    await _fileBasicRepository.InsertAsync(fileObject);
+                    item.RemoteId = fileObject.Id;
                     foreach (var innerItem in creationDtos.Where(x => x.ParentClientId == item.ClientId))
                     {
-                        innerItem.ParentId = FileObject.Id;
-                        innerItem.ParentFolderLocation = FileObject.Location;
+                        innerItem.ParentId = fileObject.Id;
+                        innerItem.ParentFolderLocation = fileObject.Location;
+                        innerItem.TrackPath = $"{fileObject.TrackPath},{fileObject.Id}";
                     }
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
                     _logger.LogError(ex.ToString());
                     continue;
@@ -473,7 +439,7 @@ namespace ThreeL.Blob.Application.Services
 
         public async Task<ServiceResult<DownloadFileResponseDto>> DownloadSharedAsync(string token, long userId)
         {
-            var record = await _FileObjectShareRecordEfBasicRepository.FirstOrDefaultAsync(x => x.Token == token);
+            var record = await _fileObjectShareRecordEfBasicRepository.FirstOrDefaultAsync(x => x.Token == token);
             if (record == null || record.ExpireTime < DateTime.Now || (record.Target != null && record.Target != userId && record.CreateBy != userId))
             {
                 return new ServiceResult<DownloadFileResponseDto>(HttpStatusCode.BadRequest, "文件分享已过期或者分享码错误");
@@ -519,32 +485,65 @@ namespace ThreeL.Blob.Application.Services
             }
 
             string rootLocaiton = string.Empty;
-            long rootId = 0;
-            if (files.First().ParentFolder == null || files.First().ParentFolder == 0)
+            var folder = await _fileBasicRepository.GetAsync(files.First().ParentFolder!.Value);
+            if (folder == null || !Directory.Exists(folder.Location))
             {
-                var user = await _userBasicRepository.GetAsync(sender);
-                if (user == null || !Directory.Exists(user.Location))
+                return new ServiceResult(HttpStatusCode.BadRequest, "目录数据异常");
+            }
+
+            await _compressFileObjectsChannel.WriteMessageAsync((compressFileObjectsDto.ZipName, folder, sender, files.ToArray()));
+
+            return new ServiceResult();
+        }
+
+        public async Task<ServiceResult<(int, IEnumerable<FileObjectShareRecordDto>)>> GetShareFileRecordsAsyncByPage(long userId, string keyWord, int page)
+        {
+            var query = _fileObjectShareRecordEfBasicRepository.Where(x => x.CreateBy == userId)
+                .LeftJoin(_userBasicRepository.All(), x => x.Target, x => x.Id, (x, y) =>
+                new FileObjectShareRecordDto
                 {
-                    return new ServiceResult(HttpStatusCode.BadRequest, "目录数据异常");
-                }
+                    Id = x.Id,
+                    Token = x.Token,
+                    FileObjectId = x.FileObjectId,
+                    CreateTime = x.CreateTime,
+                    ExpireTime = x.ExpireTime,
+                    TargetName = y.UserName
+                }).LeftJoin(_fileBasicRepository.All(), x => x.FileObjectId, x => x.Id, (x, y) =>
+                new FileObjectShareRecordDto
+                {
+                    Id = x.Id,
+                    Token = x.Token,
+                    FileObjectId = x.FileObjectId,
+                    CreateTime = x.CreateTime,
+                    ExpireTime = x.ExpireTime,
+                    TargetName = x.TargetName,
+                    FileObjectName = y.Name,
+                    FileSize = y.Size,
+                    IsFolder = y.IsFolder
+                });
 
-        //        rootLocaiton = user.Location;
-        //    }
-        //    else
-        //    {
-        //        var folder = await _fileBasicRepository.GetAsync(files.First().ParentFolder!.Value);
-        //        if (folder == null || !Directory.Exists(folder.Location))
-        //        {
-        //            return new ServiceResult(HttpStatusCode.BadRequest, "目录数据异常");
-        //        }
+            if (!string.IsNullOrEmpty(keyWord))
+            {
+                query.Where(x => x.TargetName.Contains(keyWord) || x.FileObjectName.Contains(keyWord));
+            }
 
-        //        rootLocaiton = folder.Location;
-        //        rootId = folder.Id;
-        //    }
+            var count = query.Count();
+            query.Skip((page - 1) * 20).Take(20).OrderByDescending(x => x.CreateTime);
 
-        //    await _compressFileObjectsChannel.WriteMessageAsync((compressFileObjectsDto.ZipName, rootLocaiton, rootId, sender, files.ToArray()));
+            return new ServiceResult<(int, IEnumerable<FileObjectShareRecordDto>)>((count, await query.ToListAsync()));
+        }
 
-        //    return new ServiceResult();
-        //}
+        public async Task<ServiceResult<FileObjDto>> GetRootItemAsync(long userId)
+        {
+            var fileObj = await _fileBasicRepository
+                .FirstOrDefaultAsync(x => x.CreateBy == userId && x.IsFolder && x.ParentFolder == null);
+
+            if (fileObj == null)
+            {
+                return new ServiceResult<FileObjDto>(HttpStatusCode.NotFound, "找不到根目录");
+            }
+
+            return new ServiceResult<FileObjDto>(_mapper.Map<FileObjDto>(fileObj));
+        }
     }
 }

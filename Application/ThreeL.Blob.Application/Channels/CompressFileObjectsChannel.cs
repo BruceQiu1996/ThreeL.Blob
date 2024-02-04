@@ -11,8 +11,8 @@ namespace ThreeL.Blob.Application.Channels
 {
     public class CompressFileObjectsChannel
     {
-        private readonly ChannelWriter<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> _writeChannel;
-        private readonly ChannelReader<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> _readChannel;
+        private readonly ChannelWriter<(string zipName, FileObject parent, long userId, FileObject[] items)> _writeChannel;
+        private readonly ChannelReader<(string zipName, FileObject parent, long userId, FileObject[] items)> _readChannel;
         private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         private readonly IServiceProvider _provider;
 
@@ -20,7 +20,7 @@ namespace ThreeL.Blob.Application.Channels
         {
             _provider = provider;
             var channel = Channel
-                .CreateUnbounded<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)>();
+                .CreateUnbounded<(string zipName, FileObject parent, long userId, FileObject[] items)>();
             _writeChannel = channel.Writer;
             _readChannel = channel.Reader;
             MessageCustomer readOperateLogService = new MessageCustomer(_readChannel,
@@ -35,18 +35,18 @@ namespace ThreeL.Blob.Application.Channels
             _cancellationTokenSource.Dispose();
         }
 
-        public async Task WriteMessageAsync((string zipName, string rootLocation, long rootId, long userId, FileObject[] items) task)
+        public async Task WriteMessageAsync((string zipName, FileObject parent, long userId, FileObject[] items) task)
         {
             await _writeChannel.WriteAsync(task);
         }
 
         public class MessageCustomer
         {
-            private readonly ChannelReader<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> _readChannel;
+            private readonly ChannelReader<(string zipName, FileObject parent, long userId, FileObject[] items)> _readChannel;
             private readonly ILogger<MessageCustomer> _logger;
             private readonly IEfBasicRepository<FileObject, long> _efBasicRepository;
 
-            public MessageCustomer(ChannelReader<(string zipName, string rootLocation, long rootId, long userId, FileObject[] items)> readChannel,
+            public MessageCustomer(ChannelReader<(string zipName, FileObject parent, long userId, FileObject[] items)> readChannel,
                                    ILogger<MessageCustomer> logger,
                                    IEfBasicRepository<FileObject, long> efBasicRepository)
             {
@@ -61,7 +61,7 @@ namespace ThreeL.Blob.Application.Channels
                 {
                     while (_readChannel.TryRead(out var temp))
                     {
-                        var newFolder = Path.Combine(temp.rootLocation, Guid.NewGuid().ToString());
+                        var newFolder = Path.Combine(temp.parent.Location, Guid.NewGuid().ToString());
                         try
                         {
                             Directory.CreateDirectory(newFolder);
@@ -70,13 +70,14 @@ namespace ThreeL.Blob.Application.Channels
                                 await CopyFileObjectsToFolderAsync(newFolder, item, temp.userId);
                             }
 
-                            var newLocation = $"{temp.zipName}.zip".GetAvailableFileLocation(temp.rootLocation);
+                            var newLocation = $"{temp.zipName}.zip".GetAvailableFileLocation(temp.parent.Location);
                             ZipFile.CreateFromDirectory(newFolder, newLocation);
                             using (var fs = File.OpenRead(newLocation))
                             {
                                 //创建文件
                                 var fileObj =
-                                    new FileObject(Path.GetFileName(newLocation), newLocation, fs.ToSHA256(), temp.rootId, temp.userId, DateTime.Now, fs.Length);
+                                    new FileObject(Path.GetFileName(newLocation), newLocation, fs.ToSHA256(), temp.parent.Id, temp.userId, DateTime.Now, fs.Length);
+                                fileObj.TrackPath = string.IsNullOrEmpty(temp.parent.TrackPath) ? $"{temp.parent.Id}" : $"{temp.parent.TrackPath},{temp.parent.Id}";
                                 await _efBasicRepository.InsertAsync(fileObj);
                             }
                         }
@@ -93,7 +94,7 @@ namespace ThreeL.Blob.Application.Channels
                                 {
                                     Directory.Delete(newFolder, true);
                                 }
-                                catch (Exception ex) 
+                                catch (Exception ex)
                                 {
                                     _logger.LogError(ex.ToString());
                                 }

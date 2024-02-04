@@ -5,6 +5,7 @@ using System.Net;
 using ThreeL.Blob.Application.Contract.Dtos;
 using ThreeL.Blob.Application.Contract.Dtos.Management;
 using ThreeL.Blob.Application.Contract.Services;
+using ThreeL.Blob.Domain.Aggregate.FileObject;
 using ThreeL.Blob.Domain.Aggregate.User;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Redis;
@@ -18,6 +19,7 @@ namespace ThreeL.Blob.Application.Services.Management
     public class AdminService : IAdminService, IAppService
     {
         private readonly IEfBasicRepository<User, long> _userBasicRepository;
+        private readonly IEfBasicRepository<FileObject, long> _fileObjectBaseRepository;
         private readonly PasswordHelper _passwordHelper;
         private readonly IRedisProvider _redisProvider;
         private readonly IMapper _mapper;
@@ -25,6 +27,7 @@ namespace ThreeL.Blob.Application.Services.Management
         private readonly IConfiguration _configuration;
 
         public AdminService(IEfBasicRepository<User, long> userBasicRepository,
+                            IEfBasicRepository<FileObject, long> fileObjectBaseRepository,
                             PasswordHelper passwordHelper,
                             IRedisProvider redisProvider,
                             IMapper mapper,
@@ -37,6 +40,7 @@ namespace ThreeL.Blob.Application.Services.Management
             _userBasicRepository = userBasicRepository;
             _passwordHelper = passwordHelper;
             _configuration = configuration;
+            _fileObjectBaseRepository = fileObjectBaseRepository;
         }
 
         public async Task<ServiceResult<MUserLoginResponseDto>> LoginAsync(UserLoginDto userLoginDto)
@@ -92,6 +96,8 @@ namespace ThreeL.Blob.Application.Services.Management
             }
             user.Location = userLocation;
             await _userBasicRepository.InsertAsync(user);
+            var fileObject = new FileObject("我的网盘", user.Location, user.Id);
+            await _fileObjectBaseRepository.InsertAsync(fileObject);
 
             return new ServiceResult();
         }

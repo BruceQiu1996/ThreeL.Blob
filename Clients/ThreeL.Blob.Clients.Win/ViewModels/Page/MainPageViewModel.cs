@@ -26,8 +26,6 @@ using ThreeL.Blob.Clients.Win.Windows;
 using ThreeL.Blob.Infra.Core.Extensions.System;
 using ThreeL.Blob.Infra.Core.Serializers;
 using ThreeL.Blob.Shared.Domain.Metadata.FileObject;
-using ThreeL.Blob.Infra.Core.Extensions.System;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 {
@@ -53,6 +51,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
         public AsyncRelayCommand RefreshCommandAsync { get; set; }
         public AsyncRelayCommand NewFolderCommandAsync { get; set; }
         public RelayCommand SelectAllCommand { get; set; }
+        public RelayCommand SelectNoCommand { get; set; }
         public AsyncRelayCommand CompressItemsCommandAsync { get; set; }
 
 
@@ -149,16 +148,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             FileObjectsChooseDragCommand = new RelayCommand<MouseButtonEventArgs>(FileObjectsChooseDrag);
             FileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
             AllFileObjViewModels = new ObservableCollection<FileObjItemViewModel>();
-            Urls = new ObservableCollection<FileObjItemViewModel>()
-            {
-                new FileObjItemViewModel
-                {
-                    Id = 0,
-                    Name = "我的网盘",
-                    IsUrlSelected = true,
-                    IsFolder = true
-                }
-            };
             SortOptions = new List<string>()
             {
                 "时间 ↑","时间 ↓","文件大小 ↑","文件大小 ↓","文件名","文件类型"
@@ -240,8 +229,26 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private async Task LoadAsync()
         {
-            await RefreshByParentAsync(_currentParent);
-            IsListView = _iniSettings.ListMode;
+            //获取主页的数据
+            var resp = await _httpRequest.GetAsync(Const.Get_ROOT);
+            if (resp != null)
+            {
+                var rootObj = JsonSerializer
+                    .Deserialize<FileObjDto>(await resp.Content.ReadAsStringAsync(), SystemTextJsonSerializer.GetDefaultOptions());
+                Urls = new ObservableCollection<FileObjItemViewModel>()
+                {
+                    new FileObjItemViewModel
+                    {
+                        Id = rootObj.Id,
+                        Name = rootObj.Name,
+                        IsUrlSelected = true,
+                        IsFolder = true
+                    }
+                };
+                _currentParent = rootObj.Id;
+                await RefreshByParentAsync(_currentParent);
+                IsListView = _iniSettings.ListMode;
+            }
         }
 
         private async Task RefreshAsync()
@@ -296,7 +303,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        private  object GetDataFromListBox(ListBox source, Point point)
+        private object GetDataFromListBox(ListBox source, Point point)
         {
             UIElement element = source.InputHitTest(point) as UIElement;
             if (element != null)
@@ -353,13 +360,16 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
                 item.IsSelected = true;
             }
         }
-
+   
         public void SelectNo()
         {
             foreach (var item in FileObjViewModels)
             {
                 item.IsSelected = false;
             }
+        }
+        #endregion
+
         /// <summary>
         /// 压缩文件/文件夹
         /// </summary>
@@ -370,7 +380,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             dialog.Owner = App.ServiceProvider!.GetRequiredService<MainWindow>();
             (dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipFileObjectsEnsure = dialog;
             var result = dialog.ShowDialog();
-            if (string.IsNullOrEmpty((dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipName)) 
+            if (string.IsNullOrEmpty((dialog.DataContext as ZipFileObjectsEnsureViewModel)!.ZipName))
             {
                 _growlHelper.Warning("名字不能为空");
                 return;
@@ -395,9 +405,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
             }
         }
 
-        }
-
-        #endregion
         //拖拽上传文件
         private async void Drop(DragEventArgs e)
         {
@@ -481,6 +488,7 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private async Task RenameAsync(FileObjItemViewModel fileObjItemViewModel)
         {
+            Keyboard.Focus();
             fileObjItemViewModel.IsRename = true;
             await Task.Delay(100);
             fileObjItemViewModel.IsFocus = true;

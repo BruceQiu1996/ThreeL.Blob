@@ -31,7 +31,7 @@
             <MenuItem Header="压缩文件/文件夹" 
                       Command="{Binding CompressCommand}" Padding="5 5" FontSize="15"></MenuItem>
         </ContextMenu>
-        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="150" Padding="0" Cursor="Hand">
+        <ContextMenu x:Key="filemenu" BorderThickness="0" Width="200" Padding="0" Cursor="Hand">
             <MenuItem Header="新建文件夹" 
                       Command="{Binding NewFolderCommandAsync}" Padding="5 5" FontSize="15"></MenuItem>
             <MenuItem Header="上传文件" 
@@ -287,7 +287,7 @@
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox">
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsFocus}" Value="True">
+                                                                    <DataTrigger Binding="{Binding IsFocus,UpdateSourceTrigger=PropertyChanged,Mode=OneWay}" Value="True">
                                                                         <Setter Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtUserName}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
@@ -454,7 +454,7 @@
                                                         <TextBox.Style>
                                                             <Style TargetType="TextBox">
                                                                 <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding IsFocus}" Value="True">
+                                                                    <DataTrigger Binding="{Binding IsFocus,UpdateSourceTrigger=PropertyChanged,Mode=OneWay}" Value="True">
                                                                         <Setter Property="FocusManager.FocusedElement" Value="{Binding ElementName=txtUserName}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>

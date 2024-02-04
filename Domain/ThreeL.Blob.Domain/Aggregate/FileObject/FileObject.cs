@@ -20,6 +20,7 @@ namespace ThreeL.Blob.Domain.Aggregate.FileObject
         public FileStatus? Status { get; set; }
         public string? TempFileLocation { get; set; }
         public string? ThumbnailImageLocation { get; set; }
+        public string? TrackPath { get; set; } //追踪路径
 
         public FileObject() { }
 
@@ -37,6 +38,25 @@ namespace ThreeL.Blob.Domain.Aggregate.FileObject
             IsFolder = false;
             Status = FileStatus.Normal;
             Size = size;
+        }
+
+        /// <summary>
+        /// 创建用户根目录
+        /// </summary>
+        /// <param name="name">目录名字</param>
+        /// <param name="location">目录位置</param>
+        /// <param name="createBy">谁创建的</param>
+        public FileObject(string name, string location, long createBy)
+        {
+            Name = name;
+            Location = location;
+            ParentFolder = null;
+            CreateBy = createBy;
+            CreateTime = DateTime.Now;
+            UploadFinishTime = DateTime.Now;
+            LastUpdateTime = DateTime.Now;
+            IsFolder = true;
+            Status = FileStatus.Normal;
         }
     }
 }

@@ -238,6 +238,24 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
+        [HttpGet("root")]
+        [Authorize]
+        public async Task<ActionResult> GetRootItemAsync()
+        {
+            try
+            {
+                long.TryParse(HttpContext.User.Identity?.Name, out var userId);
+                var result = await _fileService.GetRootItemAsync(userId);
+
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
+
         [HttpGet("folders")]
         [Authorize]
         public async Task<ActionResult> GetFoldersAsync()
@@ -274,14 +292,6 @@ namespace ThreeL.Blob.Server.Controllers
             }
         }
 
-        //[HttpPost("zip")]
-        //[Authorize]
-        //public async Task<ActionResult> CompressFileObjectsAsync(CompressFileObjectsDto compressFileObjectsDto)
-        //{
-        //    try
-        //    {
-        //        long.TryParse(HttpContext.User.Identity?.Name, out var userId);
-        //        var result = await _fileService.CompressFileObjectsAsync(userId, compressFileObjectsDto);
         [HttpPost("zip")]
         [ParamValidate(typeof(CompressFileObjectsDtoValidator))]
         [Authorize]
@@ -292,13 +302,13 @@ namespace ThreeL.Blob.Server.Controllers
                 long.TryParse(HttpContext.User.Identity?.Name, out var userId);
                 var result = await _fileService.CompressFileObjectsAsync(userId, compressFileObjectsDto);
 
-        //        return result.ToActionResult();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex.ToString());
-        //        return Problem();
-        //    }
-        //}
+                return result.ToActionResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                return Problem();
+            }
+        }
     }
 }
