@@ -488,7 +488,6 @@ namespace ThreeL.Blob.Clients.Win.ViewModels.Page
 
         private async Task RenameAsync(FileObjItemViewModel fileObjItemViewModel)
         {
-            Keyboard.Focus();
             fileObjItemViewModel.IsRename = true;
             await Task.Delay(100);
             fileObjItemViewModel.IsFocus = true;
